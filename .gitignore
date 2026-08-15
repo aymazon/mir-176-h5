@@ -225,3 +225,11 @@ cscope.files
 /.kube/cache
 omo/
 /tmp*
+
+# mir-176-h5 project
+frontend/dist/
+frontend/node_modules/
+backend/.venv/
+backend/.env
+scripts/artifacts/
+frontend/e2e/artifacts/
