@@ -1,4 +1,4 @@
-"""Typed application settings loaded from environment variables.
+"""Typed application settings loaded from environment variables (see .env.example).
 
 Defaults mirror ``.env.example`` so the app starts without a ``.env`` file.
 """
@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     server_port: int = 8000
     tick_rate_ms: int = 100
     snapshot_ms: int = 200
+    ws_auth_timeout_s: float = 5.0
+    ws_heartbeat_timeout_s: float = 90.0
+    ws_reconnect_buffer_s: float = 5.0
     save_interval_s: int = 30
     xp_rate: float = 1.0
     gold_min: float = 0.8

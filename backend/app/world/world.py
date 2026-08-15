@@ -136,6 +136,13 @@ class GameWorld:
     def get_player(self, player_id: str) -> Player | None:
         return self._players.get(player_id)
 
+    def remove_player(self, player_id: str) -> Player | None:
+        """Remove a player from the world (logout, kick, or disconnect); return it, or None if absent."""
+        player = self._players.pop(player_id, None)
+        if player is not None:
+            player.cancel_move()
+        return player
+
     def portal_at(self, map_id: str, x: int, y: int) -> Portal | None:
         """Return the portal on the given cell, if any."""
         return self._portals.get((map_id, x, y))
