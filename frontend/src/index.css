@@ -1,0 +1,61 @@
+:root {
+  --color-bg: #120e0b;
+  --color-bg-soft: #1c1611;
+  --color-fg: #ece4d4;
+  --color-muted: #9d8f79;
+  --color-accent: #d2a24c;
+  --font-display: Georgia, 'Times New Roman', 'Songti SC', SimSun, serif;
+  --font-body: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(120% 80% at 50% 0%, var(--color-bg-soft) 0%, var(--color-bg) 60%);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.app-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-fg);
+}
+
+.app-title__version {
+  color: var(--color-accent);
+}
+
+.app-subtitle {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  color: var(--color-muted);
+}

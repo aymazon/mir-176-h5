@@ -229,6 +229,7 @@ omo/
 # mir-176-h5 project
 frontend/dist/
 frontend/node_modules/
+frontend/test-results/
 backend/.venv/
 backend/.env
 scripts/artifacts/
