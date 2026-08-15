@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
+from app.api.characters import router as characters_router
 from app.db.pool import close_pool, init_pool
 
 
@@ -21,6 +22,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="mir-176-h5", lifespan=lifespan)
 app.include_router(auth_router, prefix="/api")
+app.include_router(characters_router, prefix="/api")
 
 
 @app.get("/api/health")
