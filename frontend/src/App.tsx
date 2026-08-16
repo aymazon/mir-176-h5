@@ -1,10 +1,44 @@
+// Flow router: no JWT → AuthScreen; JWT → CharSelect; active character → GameView.
+
+import { useCallback, useState } from 'react';
+
+import { getJwt, type CharacterOut } from './api/rest';
+import AuthScreen from './ui/AuthScreen';
+import CharSelect from './ui/CharSelect';
+import GameView from './ui/GameView';
+
+type Screen =
+  | { readonly kind: 'auth' }
+  | { readonly kind: 'chars'; readonly notice?: string }
+  | { readonly kind: 'game'; readonly character: CharacterOut };
+
 export default function App() {
-  return (
-    <main className="app-shell">
-      <h1 className="app-title">
-        Mir <span className="app-title__version">1.76</span> H5
-      </h1>
-      <p className="app-subtitle">传奇 1.76 · 竖屏挂机 · MVP 前端脚手架</p>
-    </main>
+  const [screen, setScreen] = useState<Screen>(() =>
+    getJwt() !== null ? { kind: 'chars' } : { kind: 'auth' },
   );
+
+  const handleAuthenticated = useCallback(() => setScreen({ kind: 'chars' }), []);
+  const handleEnter = useCallback(
+    (character: CharacterOut) => setScreen({ kind: 'game', character }),
+    [],
+  );
+  const handleExit = useCallback(
+    (reason?: string) => setScreen({ kind: 'chars', notice: reason }),
+    [],
+  );
+
+  switch (screen.kind) {
+    case 'auth':
+      return <AuthScreen onAuthenticated={handleAuthenticated} />;
+    case 'chars':
+      return <CharSelect notice={screen.notice} onEnter={handleEnter} />;
+    case 'game':
+      return (
+        <GameView
+          key={screen.character.id}
+          character={screen.character}
+          onExit={handleExit}
+        />
+      );
+  }
 }
