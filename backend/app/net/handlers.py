@@ -12,6 +12,8 @@ from fastapi import WebSocketDisconnect
 from typing import assert_never
 
 from app.api.auth import verify_ws_token
+from app.config import Settings
+from app.net.chat import ChatRules, load_sensitive_words
 from app.net.protocol import (
     AuthMsg,
     CharacterState,
@@ -43,6 +45,12 @@ from app.net.session import (
 from app.net.snapshot import vision_entities
 from app.world.map import MapNotFoundError
 from app.world.world import InvalidPositionError, PlayerAlreadyExistsError
+
+# D14 chat rules, process-wide so the per-character rate-limit map survives a
+# character reconnecting on a fresh connection (keyed by character_id, not session).
+CHAT_RULES: Final[ChatRules] = ChatRules(
+    words=load_sensitive_words(Settings().chat_sensitive_words_path)
+)
 
 _FETCH_CHARACTER_QUERY: Final[str] = (
     "SELECT id, name, class, level, exp, hp, mp, gold, bound_city, map_id, x, y "
@@ -146,12 +154,15 @@ async def _broadcast_chat(session: PlayerSession, text: str) -> None:
     if session.character is None:
         return
     character = session.character
+    broadcast_text = CHAT_RULES.process(character.id, text)
+    if broadcast_text is None:
+        return  # over-length or rate-limited: drop silently (no error frame)
     event = EventMsg(
         kind="chat",
         data={
             "character_id": character.id,
             "name": character.name,
-            "text": text,
+            "text": broadcast_text,
             "server_time": now_ms(),
         },
     )

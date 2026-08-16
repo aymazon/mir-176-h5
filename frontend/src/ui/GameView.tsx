@@ -9,15 +9,18 @@ import { World } from '../game/world';
 import { cellFromScreenDelta } from '../game/mapLayer';
 import type { SpriteDirection } from '../game/assets';
 import { WsClient, type WsEventMap } from '../net/wsClient';
-import { ViewStore } from '../store/viewStore';
+import { ViewStore, type VisibleEntity } from '../store/viewStore';
 import type { CharacterState } from '../net/protocol';
 
 import HUD from './HUD';
+import ChatPanel from './ChatPanel';
 
 export interface Mir176DebugHook {
   readonly move: (x: number, y: number) => boolean;
   readonly char: CharacterState | undefined;
   readonly seq: number | null;
+  // e2e-only: the other entities currently in view (id, name, interpolated position).
+  readonly entities: readonly VisibleEntity[];
 }
 
 declare global {
@@ -70,6 +73,8 @@ export default function GameView({ character, onExit }: GameViewProps) {
   const viewStore = viewStoreRef.current;
 
   const clientRef = useRef<WsClient | null>(null);
+  if (clientRef.current === null) clientRef.current = new WsClient();
+  const client = clientRef.current;
   const worldRef = useRef<World | null>(null);
   const holdTimerRef = useRef<number | null>(null);
   const onExitRef = useRef(onExit);
@@ -132,8 +137,6 @@ export default function GameView({ character, onExit }: GameViewProps) {
     let disposed = false;
     let kicked = false;
 
-    const client = new WsClient();
-    clientRef.current = client;
     const world = new World({ container, viewStore });
     worldRef.current = world;
 
@@ -186,6 +189,9 @@ export default function GameView({ character, onExit }: GameViewProps) {
       get seq() {
         return viewStore.lastAppliedSeq;
       },
+      get entities() {
+        return viewStore.visibleEntities(performance.now());
+      },
     };
 
     return () => {
@@ -199,7 +205,6 @@ export default function GameView({ character, onExit }: GameViewProps) {
       if (!kicked && client.isOpen) client.logoutChar();
       client.disconnect();
       world.stop();
-      clientRef.current = null;
       worldRef.current = null;
       if (window.__mir176 !== undefined) delete window.__mir176;
     };
@@ -209,6 +214,7 @@ export default function GameView({ character, onExit }: GameViewProps) {
     <div className="game-view">
       <div className="game-view__play" ref={containerRef} onClick={handleWorldClick} />
       <HUD viewStore={viewStore} />
+      <ChatPanel client={client} />
       <div className="dpad" role="group" aria-label="移动方向键" onContextMenu={(event) => event.preventDefault()}>
         <DPadButton direction="up" delta={[0, -1]} onHold={startHold} onRelease={stopHold} />
         <DPadButton direction="left" delta={[-1, 0]} onHold={startHold} onRelease={stopHold} />

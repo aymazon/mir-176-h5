@@ -31,3 +31,6 @@ class Settings(BaseSettings):
     gold_max: float = 1.2
     sell_rate: float = 0.5
     log_level: str = "INFO"
+    # D14 sensitive-word list; resolved against the server cwd (backend/), so
+    # the default points at the repo file deploy/sensitive_words.txt.
+    chat_sensitive_words_path: str = "../deploy/sensitive_words.txt"

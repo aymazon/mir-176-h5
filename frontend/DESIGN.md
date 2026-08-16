@@ -152,6 +152,19 @@ All spacing derives from **4px**.
 - **Structure**: `--color-bg-soft` fill, 1px --color-border, 8px radius
 - **Usage**: auth form, char cards, create form, modal panel
 
+### ChatPanel
+- **Structure**: bottom-left column — `.chat__log` (latest 50 lines of global chat,
+  `{name}: {text}`, newest at the bottom, auto-scrolls, 13px) + `.chat__form` row
+  (`.chat__input` maxLength 100, aria-label 聊天, Enter or 发送 submits)
+- **Placement**: absolute, left/bottom --space-3 (16px), 224px wide — clears the d-pad
+  (bottom-right) and the HUD veil (top)
+- **Pointer events**: wrapper is `pointer-events: none`; only the log, input, and send
+  button re-enable them — the panel never blocks world clicks or the d-pad
+- **States**: empty (muted 暂无消息 line); lines in --color-fg; input focus = accent
+  border + soft gold ring (same as .field); empty submit is a no-op (form guard)
+- **Tokens**: --color-panel log background, --color-border, --radius-sm, --text-sm
+  (13px Chinese floor), --space-1/2/3
+
 ## 6. Motion & Interaction
 
 ### Timing
