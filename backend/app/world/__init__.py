@@ -1,9 +1,8 @@
 """World simulation core: procedural maps, A*, entities, combat, game loop."""
 
-from app.world.loop import GameLoop, JitterStats
 from app.world.combat import (
-    AttackKind,
     AttackerKind,
+    AttackKind,
     Mitigation,
     RegenGain,
     RegenTracker,
@@ -21,6 +20,7 @@ from app.world.combat import (
     skill_multiplier,
     skill_ready,
 )
+from app.world.loop import GameLoop, JitterStats
 from app.world.map import (
     MAP_PORTALS,
     MAP_SPECS,
@@ -30,14 +30,16 @@ from app.world.map import (
     Portal,
     create_map,
 )
+from app.world.monster_ai import Monster, MonsterAI, MonsterState
 from app.world.pathfinding import Cell, find_path
 from app.world.settlement import (
     Attack,
-    AttackResult,
     Attacker,
+    AttackResult,
     KillRewards,
     Settlement,
 )
+from app.world.spawner import Spawner, SpawnerError, SpawnPoint
 from app.world.world import (
     GameWorld,
     InvalidPositionError,
@@ -48,31 +50,37 @@ from app.world.world import (
 __all__ = [
     "MAP_PORTALS",
     "MAP_SPECS",
-    "Cell",
-    "GameLoop",
-    "GameWorld",
-    "InvalidPositionError",
-    "JitterStats",
-    "Map",
-    "MapNotFoundError",
-    "MapSpec",
-    "Player",
-    "PlayerAlreadyExistsError",
-    "Portal",
-    "create_map",
-    "find_path",
     "Attack",
     "AttackKind",
     "AttackResult",
     "Attacker",
     "AttackerKind",
+    "Cell",
+    "GameLoop",
+    "GameWorld",
+    "InvalidPositionError",
+    "JitterStats",
     "KillRewards",
+    "Map",
+    "MapNotFoundError",
+    "MapSpec",
     "Mitigation",
+    "Monster",
+    "MonsterAI",
+    "MonsterState",
+    "Player",
+    "PlayerAlreadyExistsError",
+    "Portal",
     "RegenGain",
     "RegenTracker",
     "Settlement",
+    "SpawnPoint",
+    "Spawner",
+    "SpawnerError",
     "attack_ready",
+    "create_map",
     "exp_award",
+    "find_path",
     "heal_amount",
     "hit_chance",
     "kill_credit",
