@@ -139,5 +139,5 @@ def apply_item_stats(
         if rng is not None:
             delta[lo_attr] = delta.get(lo_attr, 0) + rng.min
             delta[hi_attr] = delta.get(hi_attr, 0) + rng.max
-    updates = {key: value for key, value in delta.items() if value}
+    updates = {key: getattr(stats, key) + value for key, value in delta.items() if value}
     return replace(stats, **updates) if updates else stats

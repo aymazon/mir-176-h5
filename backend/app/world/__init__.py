@@ -21,6 +21,13 @@ from app.world.combat import (
     skill_ready,
 )
 from app.world.drops import Bonus, Drop, DropManager
+from app.world.inventory import (
+    BAG_SIZE,
+    DURABILITY_TICK_MS,
+    Inventory,
+    InventoryError,
+    ItemInstance,
+)
 from app.world.loop import GameLoop, JitterStats
 from app.world.map import (
     MAP_PORTALS,
@@ -41,6 +48,14 @@ from app.world.settlement import (
     Settlement,
 )
 from app.world.spawner import Spawner, SpawnerError, SpawnPoint
+from app.world.stats import (
+    BONUS_ATTRS,
+    BonusError,
+    CharacterStats,
+    apply_item_stats,
+    class_base_stats,
+    parse_bonus,
+)
 from app.world.world import (
     GameWorld,
     InvalidPositionError,
@@ -49,6 +64,9 @@ from app.world.world import (
 )
 
 __all__ = [
+    "BAG_SIZE",
+    "BONUS_ATTRS",
+    "DURABILITY_TICK_MS",
     "MAP_PORTALS",
     "MAP_SPECS",
     "Attack",
@@ -57,12 +75,17 @@ __all__ = [
     "Attacker",
     "AttackerKind",
     "Bonus",
+    "BonusError",
     "Cell",
+    "CharacterStats",
     "Drop",
     "DropManager",
     "GameLoop",
     "GameWorld",
     "InvalidPositionError",
+    "Inventory",
+    "InventoryError",
+    "ItemInstance",
     "JitterStats",
     "KillRewards",
     "Map",
@@ -81,13 +104,16 @@ __all__ = [
     "SpawnPoint",
     "Spawner",
     "SpawnerError",
+    "apply_item_stats",
     "attack_ready",
+    "class_base_stats",
     "create_map",
     "exp_award",
     "find_path",
     "heal_amount",
     "hit_chance",
     "kill_credit",
+    "parse_bonus",
     "regen_per_second",
     "roll_attack_damage",
     "roll_damage",
