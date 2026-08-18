@@ -1,6 +1,26 @@
-"""World simulation core: procedural maps, A*, entities, game loop."""
+"""World simulation core: procedural maps, A*, entities, combat, game loop."""
 
 from app.world.loop import GameLoop, JitterStats
+from app.world.combat import (
+    AttackKind,
+    AttackerKind,
+    Mitigation,
+    RegenGain,
+    RegenTracker,
+    attack_ready,
+    exp_award,
+    heal_amount,
+    hit_chance,
+    kill_credit,
+    regen_per_second,
+    roll_attack_damage,
+    roll_damage,
+    roll_gold,
+    roll_hit,
+    skill_available_at,
+    skill_multiplier,
+    skill_ready,
+)
 from app.world.map import (
     MAP_PORTALS,
     MAP_SPECS,
@@ -11,6 +31,13 @@ from app.world.map import (
     create_map,
 )
 from app.world.pathfinding import Cell, find_path
+from app.world.settlement import (
+    Attack,
+    AttackResult,
+    Attacker,
+    KillRewards,
+    Settlement,
+)
 from app.world.world import (
     GameWorld,
     InvalidPositionError,
@@ -34,4 +61,27 @@ __all__ = [
     "Portal",
     "create_map",
     "find_path",
+    "Attack",
+    "AttackKind",
+    "AttackResult",
+    "Attacker",
+    "AttackerKind",
+    "KillRewards",
+    "Mitigation",
+    "RegenGain",
+    "RegenTracker",
+    "Settlement",
+    "attack_ready",
+    "exp_award",
+    "heal_amount",
+    "hit_chance",
+    "kill_credit",
+    "regen_per_second",
+    "roll_attack_damage",
+    "roll_damage",
+    "roll_gold",
+    "roll_hit",
+    "skill_available_at",
+    "skill_multiplier",
+    "skill_ready",
 ]
