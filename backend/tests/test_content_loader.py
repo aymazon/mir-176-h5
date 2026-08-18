@@ -13,9 +13,17 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from app.content.loader import CONTENT_MODELS, Content, ContentError, load_all_content
-from app.content.models import ClassesFile, ExpCurve, ItemsFile, SkillsFile
+from app.content.models import (
+    ClassesFile,
+    ExpCurve,
+    ItemsFile,
+    MapConnectionsFile,
+    MapsFile,
+    MonstersFile,
+    SkillsFile,
+    SpawnsFile,
+)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "game_data"
 REGISTERED: tuple[str, ...] = tuple(CONTENT_MODELS)
@@ -32,7 +40,7 @@ def _write_content_dir(
     mutators: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] | None = None,
     extra: dict[str, object] | None = None,
 ) -> Path:
-    """Copy the four registered files into a fresh dir, with optional edits."""
+    """Copy the registered files into a fresh dir, with optional edits."""
     target = tmp_path / "content"
     target.mkdir()
     mutators = mutators or {}
@@ -104,10 +112,10 @@ def test_schema_violation_raises_naming_file(
 def test_unregistered_json_warns_on_stderr_but_loads(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    target = _write_content_dir(tmp_path, extra={"monsters.json": {"monsters": []}})
+    target = _write_content_dir(tmp_path, extra={"future_wave.json": {"whatever": 1}})
     content = load_all_content(target)
     captured = capsys.readouterr()
-    assert "monsters.json" in captured.err
+    assert "future_wave.json" in captured.err
     assert "skipping" in captured.err
     assert content.extras == {}
 
@@ -119,6 +127,10 @@ def test_real_game_data_validates_into_named_fields() -> None:
     assert isinstance(content.classes, ClassesFile)
     assert isinstance(content.skills, SkillsFile)
     assert isinstance(content.items, ItemsFile)
+    assert isinstance(content.maps, MapsFile)
+    assert isinstance(content.monsters, MonstersFile)
+    assert isinstance(content.spawns, SpawnsFile)
+    assert isinstance(content.map_connections, MapConnectionsFile)
     assert [entry.level for entry in content.exp_curve.levels] == list(range(1, 40))
     assert sorted(cls.code for cls in content.classes.classes) == ["mage", "taoist", "warrior"]
     assert len(content.skills.skills) == len(_raw("skills.json")["skills"])

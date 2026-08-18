@@ -6,6 +6,10 @@ Covers the four data-only tables under ``backend/game_data/``:
 - ``classes.json``   (doc 4.2)        -> :class:`ClassesFile`
 - ``skills.json``    (doc 4.5)        -> :class:`SkillsFile`
 - ``items.json``     (doc 4.7 + 4.8)  -> :class:`ItemsFile`
+- ``maps.json``      (doc 5.1)        -> :class:`MapsFile`
+- ``monsters.json``  (doc 5.3)        -> :class:`MonstersFile`
+- ``spawns.json``    (doc 5.4)        -> :class:`SpawnsFile`
+- ``map_connections.json`` (doc 5.2)  -> :class:`MapConnectionsFile`
 
 W2T1's ``app/content/loader.py`` reuses these models to validate the full
 def-table set. Keep this module dependency-free (pydantic only).
@@ -45,6 +49,12 @@ ItemCategory = Literal[
 ]
 
 CODE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+# Base map code, e.g. ``m1``.
+MAP_CODE_RE = re.compile(r"^m\d+$$")
+# World-instance code: base maps use their bare code, multi-layer maps use
+# ``{code}-{layer}`` (doc 5.1). Spawn/portal references may use either form.
+INSTANCE_CODE_RE = re.compile(r"^m\d+(-\d+)?$")
+LEVEL_BAND_RE = re.compile(r"^(\d+)(?:-(\d+)|\+)$")
 
 
 def _check_code(kind: str, value: str) -> str:
@@ -276,10 +286,9 @@ class Item(BaseModel):
     @field_validator("class_req")
     @classmethod
     def _validate_class_req(cls, v: ClassReq) -> ClassReq:
-        if isinstance(v, list):
-            if not v or len(v) != len(set(v)):
-                msg = f"class_req list must be non-empty and unique, got {v!r}"
-                raise ValueError(msg)
+        if isinstance(v, list) and (not v or len(v) != len(set(v))):
+            msg = f"class_req list must be non-empty and unique, got {v!r}"
+            raise ValueError(msg)
         return v
 
     @model_validator(mode="after")
@@ -332,5 +341,213 @@ class ItemsFile(BaseModel):
         codes = [i.code for i in self.items]
         if len(codes) != len(set(codes)):
             msg = "duplicate item codes"
+            raise ValueError(msg)
+        return self
+
+
+# ---------------------------------------------------------------------------
+# maps.json (doc 5.1)
+# ---------------------------------------------------------------------------
+class MapDef(BaseModel):
+    """One base map (doc 5.1); multi-layer maps expand to ``{code}-{layer}`` instances."""
+
+    code: str
+    name: str  # Chinese display name
+    width: int = Field(ge=2)
+    height: int = Field(ge=2)
+    layers: int = Field(ge=1)
+    level_band: str
+    safe_zone: tuple[int, int, int, int] | None = None
+    safe_all: bool = False
+    note: str = ""
+
+    @field_validator("code")
+    @classmethod
+    def _validate_code(cls, v: str) -> str:
+        if not MAP_CODE_RE.match(v):
+            msg = f"map code must look like m1..m13, got {v!r}"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("level_band")
+    @classmethod
+    def _validate_level_band(cls, v: str) -> str:
+        match = LEVEL_BAND_RE.match(v)
+        if not match:
+            msg = f"level_band must look like '1-4' or '22+', got {v!r}"
+            raise ValueError(msg)
+        lo = int(match.group(1))
+        hi = int(match.group(2)) if match.group(2) else 40
+        if not (1 <= lo <= hi <= 40):
+            msg = f"level_band out of 1..40: {v!r}"
+            raise ValueError(msg)
+        return v
+
+    @model_validator(mode="after")
+    def _check_safe_zone(self) -> MapDef:
+        if self.safe_all and self.safe_zone is not None:
+            msg = f"{self.code}: safe_all and safe_zone are mutually exclusive"
+            raise ValueError(msg)
+        zone = self.safe_zone
+        if zone is not None:
+            x0, y0, x1, y1 = zone
+            if not (0 <= x0 < x1 < self.width and 0 <= y0 < y1 < self.height):
+                msg = f"{self.code}: safe_zone {zone} not inside the {self.width}x{self.height} grid"
+                raise ValueError(msg)
+        return self
+
+
+class MapsFile(BaseModel):
+    maps: list[MapDef]
+
+    @model_validator(mode="after")
+    def _check_unique(self) -> MapsFile:
+        codes = [m.code for m in self.maps]
+        if len(codes) != len(set(codes)):
+            msg = "duplicate map codes"
+            raise ValueError(msg)
+        return self
+
+    def instance_codes(self) -> tuple[str, ...]:
+        """All world instances: bare code for single-layer maps, ``{code}-{i}`` per layer otherwise."""
+        codes: list[str] = []
+        for m in self.maps:
+            if m.layers == 1:
+                codes.append(m.code)
+            else:
+                codes.extend(f"{m.code}-{i}" for i in range(1, m.layers + 1))
+        return tuple(codes)
+
+
+# ---------------------------------------------------------------------------
+# monsters.json (doc 5.3)
+# ---------------------------------------------------------------------------
+class MonsterDef(BaseModel):
+    code: str
+    name: str  # Chinese display name
+    level: int = Field(ge=1, le=40)
+    hp: int = Field(ge=1)
+    attack_min: int = Field(ge=1)
+    attack_max: int = Field(ge=1)
+    defense: int = Field(ge=0)
+    magic_def: int = Field(ge=0)
+    exp: int = Field(ge=1)
+    gold_min: int = Field(ge=0)
+    gold_max: int = Field(ge=0)
+    aggressive: bool = False
+    map_codes: list[str]
+    is_boss: bool = False
+    # doc 5.3/N20: attack interval 800..1200 ms, default 1000 (per-monster override).
+    attack_ms: int = Field(ge=800, le=1200)
+    move_ms: int = Field(ge=1)
+    attack_range: int = Field(ge=1)
+    undead: bool = False
+
+    @field_validator("code")
+    @classmethod
+    def _validate_code(cls, v: str) -> str:
+        return _check_code("monster", v)
+
+    @field_validator("map_codes")
+    @classmethod
+    def _validate_map_codes(cls, v: list[str]) -> list[str]:
+        if not v or len(v) != len(set(v)):
+            msg = f"map_codes must be a non-empty unique list, got {v!r}"
+            raise ValueError(msg)
+        for code in v:
+            if not INSTANCE_CODE_RE.match(code):
+                msg = f"map code must look like m1 or m4-2, got {code!r}"
+                raise ValueError(msg)
+        return v
+
+    @model_validator(mode="after")
+    def _check_orders(self) -> MonsterDef:
+        if self.attack_min > self.attack_max:
+            msg = f"{self.code}: attack_min exceeds attack_max"
+            raise ValueError(msg)
+        if self.gold_min > self.gold_max:
+            msg = f"{self.code}: gold_min exceeds gold_max"
+            raise ValueError(msg)
+        return self
+
+
+class MonstersFile(BaseModel):
+    monsters: list[MonsterDef]
+
+    @model_validator(mode="after")
+    def _check_unique(self) -> MonstersFile:
+        codes = [m.code for m in self.monsters]
+        if len(codes) != len(set(codes)):
+            msg = "duplicate monster codes"
+            raise ValueError(msg)
+        return self
+
+
+# ---------------------------------------------------------------------------
+# spawns.json (doc 5.4)
+# ---------------------------------------------------------------------------
+class SpawnDef(BaseModel):
+    map_code: str
+    monster_code: str
+    max_alive: int = Field(ge=1)
+    respawn_s: int = Field(ge=1)
+
+    @field_validator("map_code")
+    @classmethod
+    def _validate_map_code(cls, v: str) -> str:
+        if not INSTANCE_CODE_RE.match(v):
+            msg = f"map code must look like m1 or m4-2, got {v!r}"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("monster_code")
+    @classmethod
+    def _validate_monster_code(cls, v: str) -> str:
+        return _check_code("monster", v)
+
+
+class SpawnsFile(BaseModel):
+    spawns: list[SpawnDef]
+
+    @model_validator(mode="after")
+    def _check_unique(self) -> SpawnsFile:
+        pairs = [(s.map_code, s.monster_code) for s in self.spawns]
+        if len(pairs) != len(set(pairs)):
+            msg = "duplicate (map_code, monster_code) spawn entries"
+            raise ValueError(msg)
+        return self
+
+
+# ---------------------------------------------------------------------------
+# map_connections.json (doc 5.2)
+# ---------------------------------------------------------------------------
+class ConnectionDef(BaseModel):
+    """One directed walk-through: stepping on (from_map, from_x, from_y) lands on (to_map, to_x, to_y)."""
+
+    from_map: str
+    from_x: int = Field(ge=0)
+    from_y: int = Field(ge=0)
+    to_map: str
+    to_x: int = Field(ge=0)
+    to_y: int = Field(ge=0)
+    note: str = ""
+
+    @field_validator("from_map", "to_map")
+    @classmethod
+    def _validate_map_code(cls, v: str) -> str:
+        if not INSTANCE_CODE_RE.match(v):
+            msg = f"map code must look like m1 or m4-2, got {v!r}"
+            raise ValueError(msg)
+        return v
+
+
+class MapConnectionsFile(BaseModel):
+    connections: list[ConnectionDef]
+
+    @model_validator(mode="after")
+    def _check_unique_cells(self) -> MapConnectionsFile:
+        cells = [(c.from_map, c.from_x, c.from_y) for c in self.connections]
+        if len(cells) != len(set(cells)):
+            msg = "duplicate portal cells (one walk-through per cell)"
             raise ValueError(msg)
         return self

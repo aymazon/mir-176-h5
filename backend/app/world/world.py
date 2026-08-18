@@ -111,6 +111,11 @@ class GameWorld:
             raise MapNotFoundError(code) from None
 
     @property
+    def codes(self) -> tuple[str, ...]:
+        """All loaded map instance codes in insertion order."""
+        return tuple(self._maps)
+
+    @property
     def players(self) -> Mapping[str, Player]:
         return self._players
 

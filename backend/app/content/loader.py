@@ -9,9 +9,8 @@ exits at boot with an actionable diagnostic (W2T1 / plan task 13).
 Extensibility contract: a later wave adds its model plus ONE
 filename -> model entry in :data:`CONTENT_MODELS` and the loader picks it
 up automatically (validated tables land in :attr:`Content.extras` until
-promoted to a named field). Unregistered ``*.json`` files (monsters /
-spawns / maps / map_connections — no models yet) are skipped with a stderr
-warning so partial waves never block startup.
+promoted to a named field). Unregistered ``*.json`` files are skipped with
+a stderr warning so partial waves never block startup.
 """
 
 from __future__ import annotations
@@ -24,7 +23,16 @@ from typing import Final
 
 from pydantic import BaseModel, ValidationError
 
-from app.content.models import ClassesFile, ExpCurve, ItemsFile, SkillsFile
+from app.content.models import (
+    ClassesFile,
+    ExpCurve,
+    ItemsFile,
+    MapConnectionsFile,
+    MapsFile,
+    MonstersFile,
+    SkillsFile,
+    SpawnsFile,
+)
 
 __all__ = ["CONTENT_MODELS", "Content", "ContentError", "load_all_content"]
 
@@ -40,23 +48,34 @@ CONTENT_MODELS: Final[dict[str, type[BaseModel]]] = {
     "classes.json": ClassesFile,
     "skills.json": SkillsFile,
     "items.json": ItemsFile,
+    "maps.json": MapsFile,
+    "monsters.json": MonstersFile,
+    "spawns.json": SpawnsFile,
+    "map_connections.json": MapConnectionsFile,
 }
 
 #: Registered files mapped to a named :class:`Content` field; any other
 #: registered file is exposed through :attr:`Content.extras`.
 _NAMED_FIELDS: Final[frozenset[str]] = frozenset(
-    {"exp_curve.json", "classes.json", "skills.json", "items.json"}
+    {
+        "exp_curve.json", "classes.json", "skills.json", "items.json",
+        "maps.json", "monsters.json", "spawns.json", "map_connections.json",
+    }
 )
 
 
 @dataclass(frozen=True, slots=True)
 class Content:
-    """Validated game content: the four core tables plus future extensions."""
+    """Validated game content: core numeric tables plus world tables (maps/monsters/spawns/connections)."""
 
     exp_curve: ExpCurve
     classes: ClassesFile
     skills: SkillsFile
     items: ItemsFile
+    maps: MapsFile
+    monsters: MonstersFile
+    spawns: SpawnsFile
+    map_connections: MapConnectionsFile
     extras: dict[str, BaseModel] = field(default_factory=dict)
 
 
@@ -114,5 +133,11 @@ def load_all_content(data_dir: Path) -> Content:
         classes=_as(tables["classes.json"], ClassesFile, "classes.json"),
         skills=_as(tables["skills.json"], SkillsFile, "skills.json"),
         items=_as(tables["items.json"], ItemsFile, "items.json"),
+        maps=_as(tables["maps.json"], MapsFile, "maps.json"),
+        monsters=_as(tables["monsters.json"], MonstersFile, "monsters.json"),
+        spawns=_as(tables["spawns.json"], SpawnsFile, "spawns.json"),
+        map_connections=_as(
+            tables["map_connections.json"], MapConnectionsFile, "map_connections.json"
+        ),
         extras={name: table for name, table in tables.items() if name not in _NAMED_FIELDS},
     )

@@ -1,0 +1,610 @@
+{
+  "spawns": [
+    {
+      "map_code": "m1",
+      "monster_code": "chicken",
+      "max_alive": 8,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m1",
+      "monster_code": "deer",
+      "max_alive": 8,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m1",
+      "monster_code": "scarecrow",
+      "max_alive": 8,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m2",
+      "monster_code": "chicken",
+      "max_alive": 6,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m2",
+      "monster_code": "deer",
+      "max_alive": 6,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m2",
+      "monster_code": "scarecrow",
+      "max_alive": 6,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "deer",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "scarecrow",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "hook_cat",
+      "max_alive": 25,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "rake_cat",
+      "max_alive": 25,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "orc",
+      "max_alive": 25,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "forest_snowman",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "armor_beetle",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "orc_fighter",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m3",
+      "monster_code": "orc_warrior",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m6",
+      "monster_code": "zombie",
+      "max_alive": 8,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m6",
+      "monster_code": "corpse_king",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m7",
+      "monster_code": "red_snake",
+      "max_alive": 20,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m7",
+      "monster_code": "tiger_snake",
+      "max_alive": 15,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m7",
+      "monster_code": "orc",
+      "max_alive": 15,
+      "respawn_s": 60
+    },
+    {
+      "map_code": "m8",
+      "monster_code": "forest_snowman",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m8",
+      "monster_code": "orc_warrior",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m8",
+      "monster_code": "woma_warrior",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m10",
+      "monster_code": "orc_warrior",
+      "max_alive": 10,
+      "respawn_s": 90
+    },
+    {
+      "map_code": "m10",
+      "monster_code": "woma_warrior",
+      "max_alive": 10,
+      "respawn_s": 90
+    },
+    {
+      "map_code": "m10",
+      "monster_code": "red_boar",
+      "max_alive": 10,
+      "respawn_s": 90
+    },
+    {
+      "map_code": "m4-1",
+      "monster_code": "skeleton",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-1",
+      "monster_code": "skeleton_warrior",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-1",
+      "monster_code": "skeleton_general",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-2",
+      "monster_code": "skeleton",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-2",
+      "monster_code": "skeleton_warrior",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-2",
+      "monster_code": "skeleton_general",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m4-2",
+      "monster_code": "skeleton_elf",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m5-1",
+      "monster_code": "zombie",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m5-1",
+      "monster_code": "corpse",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m5-1",
+      "monster_code": "electric_zombie",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m5-2",
+      "monster_code": "zombie",
+      "max_alive": 20,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m5-2",
+      "monster_code": "corpse",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m5-2",
+      "monster_code": "electric_zombie",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-1",
+      "monster_code": "woma_warrior",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-1",
+      "monster_code": "woma_elite",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-1",
+      "monster_code": "woma_general",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-2",
+      "monster_code": "woma_warrior",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-2",
+      "monster_code": "woma_elite",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-2",
+      "monster_code": "woma_general",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-3",
+      "monster_code": "woma_general",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-3",
+      "monster_code": "dark_warrior",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m9-3",
+      "monster_code": "woma_lord",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m11-1",
+      "monster_code": "centipede",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-1",
+      "monster_code": "giant_worm",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-1",
+      "monster_code": "jumping_bee",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-1",
+      "monster_code": "pincer_bug",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-2",
+      "monster_code": "centipede",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-2",
+      "monster_code": "giant_worm",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-2",
+      "monster_code": "jumping_bee",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-2",
+      "monster_code": "pincer_bug",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-3",
+      "monster_code": "pincer_bug",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-3",
+      "monster_code": "black_grub",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m11-3",
+      "monster_code": "evil_pincer",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m12-1",
+      "monster_code": "red_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-1",
+      "monster_code": "black_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-1",
+      "monster_code": "wedge_moth",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-2",
+      "monster_code": "red_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-2",
+      "monster_code": "black_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-2",
+      "monster_code": "wedge_moth",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-3",
+      "monster_code": "red_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-3",
+      "monster_code": "black_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-3",
+      "monster_code": "wedge_moth",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-4",
+      "monster_code": "red_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-4",
+      "monster_code": "black_boar",
+      "max_alive": 15,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-4",
+      "monster_code": "wedge_moth",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-5",
+      "monster_code": "black_boar",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-5",
+      "monster_code": "wedge_moth",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-5",
+      "monster_code": "white_boar",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m12-6",
+      "monster_code": "wedge_moth",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-6",
+      "monster_code": "black_grub",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-7",
+      "monster_code": "wedge_moth",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-7",
+      "monster_code": "black_grub",
+      "max_alive": 10,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m12-7",
+      "monster_code": "tou_long_god",
+      "max_alive": 1,
+      "respawn_s": 7200
+    },
+    {
+      "map_code": "m13-1",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-1",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-1",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-2",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-2",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-2",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-3",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-3",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-3",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-4",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-4",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-4",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-5",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-5",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-5",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-6",
+      "monster_code": "zuma_guard",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-6",
+      "monster_code": "zuma_statue",
+      "max_alive": 12,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-6",
+      "monster_code": "zuma_archer",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-7",
+      "monster_code": "zuma_guard",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-7",
+      "monster_code": "zuma_statue",
+      "max_alive": 8,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-7",
+      "monster_code": "zuma_archer",
+      "max_alive": 5,
+      "respawn_s": 75
+    },
+    {
+      "map_code": "m13-7",
+      "monster_code": "zuma_lord",
+      "max_alive": 1,
+      "respawn_s": 7200
+    }
+  ]
+}

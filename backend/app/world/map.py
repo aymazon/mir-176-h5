@@ -52,7 +52,8 @@ class MapSpec:
     """Static definition of one map (MVP-DESIGN 5.1/5.2, D9).
 
     ``safe_zone`` is an inclusive (x0, y0, x1, y1) rectangle, or None when
-    the whole map is safe. ``wall_density`` is the per-cell probability of a
+    the safe semantics come from ``safe_all`` (True: whole map safe; False:
+    no safe cells). ``wall_density`` is the per-cell probability of a
     random interior wall.
     """
 
@@ -62,12 +63,13 @@ class MapSpec:
     spawn: tuple[int, int]
     safe_zone: tuple[int, int, int, int] | None
     wall_density: float
+    safe_all: bool = False
 
 
 MAP_SPECS: Final[dict[str, MapSpec]] = {
-    "m1": MapSpec("m1", 60, 60, (30, 30), None, 0.10),
-    "m2": MapSpec("m2", 60, 60, (30, 30), None, 0.10),
-    "m3": MapSpec("m3", 300, 300, (150, 150), (120, 120, 180, 180), 0.12),
+    "m1": MapSpec("m1", 60, 60, (30, 30), None, 0.10, True),
+    "m2": MapSpec("m2", 60, 60, (30, 30), None, 0.10, True),
+    "m3": MapSpec("m3", 300, 300, (150, 150), (120, 120, 180, 180), 0.12, False),
 }
 
 # Walking exits/entries for the first three maps (MVP-DESIGN 5.2).
@@ -89,6 +91,7 @@ class Map:
     safe_zone: tuple[int, int, int, int] | None
     spawn: tuple[int, int]
     portals: tuple[Portal, ...]
+    safe_all: bool = False
 
     def __init__(
         self,
@@ -99,6 +102,7 @@ class Map:
         safe_zone: tuple[int, int, int, int] | None,
         spawn: tuple[int, int],
         portals: tuple[Portal, ...],
+        safe_all: bool = False,
     ) -> None:
         self.code = code
         self.width = width
@@ -107,6 +111,7 @@ class Map:
         self.safe_zone = safe_zone
         self.spawn = spawn
         self.portals = portals
+        self.safe_all = safe_all
 
     @classmethod
     def from_strings(cls, code: str, rows: Sequence[str]) -> Map:
@@ -122,7 +127,7 @@ class Map:
             for x, ch in enumerate(row):
                 if ch == ".":
                     cells[y * width + x] = WALKABLE
-        return cls(code, width, height, bytes(cells), None, (1, 1), ())
+        return cls(code, width, height, bytes(cells), None, (1, 1), (), safe_all=True)
 
     def is_in_bounds(self, x: int, y: int) -> bool:
         """True when (x, y) lies inside the grid."""
@@ -133,10 +138,12 @@ class Map:
         return self.is_in_bounds(x, y) and self.cells[y * self.width + x] == WALKABLE
 
     def is_safe(self, x: int, y: int) -> bool:
-        """True when (x, y) lies in the map's safe zone (no active monsters)."""
+        """True when (x, y) is safe (no aggressive monsters): the safe zone rect, or the whole map when ``safe_all``."""
+        if not self.is_in_bounds(x, y):
+            return False
         zone = self.safe_zone
         if zone is None:
-            return self.is_in_bounds(x, y)
+            return self.safe_all
         x0, y0, x1, y1 = zone
         return x0 <= x <= x1 and y0 <= y <= y1
 
@@ -160,7 +167,7 @@ def create_map(code: str) -> Map:
         _carve_patch(cells, width, height, portal.x, portal.y)
     _carve_patch(cells, width, height, spec.spawn[0], spec.spawn[1])
     _connect_portals(cells, width, height, spec.spawn, portals)
-    return Map(code, width, height, bytes(cells), spec.safe_zone, spec.spawn, portals)
+    return Map(code, width, height, bytes(cells), spec.safe_zone, spec.spawn, portals, safe_all=spec.safe_all)
 
 
 def _carve_rect(cells: bytearray, width: int, height: int, rect: tuple[int, int, int, int]) -> None:
