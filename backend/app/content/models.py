@@ -551,3 +551,91 @@ class MapConnectionsFile(BaseModel):
             msg = "duplicate portal cells (one walk-through per cell)"
             raise ValueError(msg)
         return self
+
+
+# ---------------------------------------------------------------------------
+# drops.json (doc 5.5)
+# ---------------------------------------------------------------------------
+# Drop pools are weight tables per roll (doc 5.5 note: 实现时用权重表). The "none"
+# outcome is implicit with weight 100 - sum(entries), so each item's marginal
+# per-roll probability equals its table weight. Normal monsters roll their
+# level-band pool twice; each boss rolls its own table three times.
+# ---------------------------------------------------------------------------
+class DropEntry(BaseModel):
+    item: str
+    weight: float = Field(gt=0)  # percent; the implicit none bucket is 100 - sum(weights)
+    qty: int = Field(default=1, ge=1)  # 1 for equipment; BOSS potion stacks use 3
+
+    @field_validator("item")
+    @classmethod
+    def _validate_item(cls, v: str) -> str:
+        return _check_code("drop item", v)
+
+
+def _check_pool_entries(kind: str, entries: list[DropEntry]) -> None:
+    if not entries:
+        msg = f"{kind}: drop pool needs at least one entry"
+        raise ValueError(msg)
+    total = sum(e.weight for e in entries)
+    if total > 100.0 + 1e-9:
+        msg = f"{kind}: drop weights sum {total:.3f} exceeds 100 (none bucket would be negative)"
+        raise ValueError(msg)
+
+
+class LevelBandPool(BaseModel):
+    level_lo: int = Field(ge=1, le=40)
+    level_hi: int = Field(ge=1, le=40)
+    entries: list[DropEntry]
+
+    @model_validator(mode="after")
+    def _check_band(self) -> LevelBandPool:
+        if self.level_lo > self.level_hi:
+            msg = f"level band {self.level_lo}-{self.level_hi} is inverted"
+            raise ValueError(msg)
+        _check_pool_entries(f"band {self.level_lo}-{self.level_hi}", self.entries)
+        return self
+
+
+class BossPool(BaseModel):
+    boss: str
+    entries: list[DropEntry]
+
+    @field_validator("boss")
+    @classmethod
+    def _validate_boss(cls, v: str) -> str:
+        return _check_code("boss", v)
+
+    @model_validator(mode="after")
+    def _check_pool(self) -> BossPool:
+        _check_pool_entries(f"boss {self.boss}", self.entries)
+        return self
+
+
+class DropsFile(BaseModel):
+    normal_bands: list[LevelBandPool]
+    boss_tables: list[BossPool]
+
+    @model_validator(mode="after")
+    def _check(self) -> DropsFile:
+        if not self.normal_bands:
+            msg = "drops.json needs at least one normal band"
+            raise ValueError(msg)
+        _check_bands_tile(self.normal_bands)
+        boss_codes = [b.boss for b in self.boss_tables]
+        if len(boss_codes) != len(set(boss_codes)):
+            msg = f"duplicate boss drop tables: {boss_codes}"
+            raise ValueError(msg)
+        return self
+
+
+def _check_bands_tile(bands: list[LevelBandPool]) -> None:
+    ranges = sorted((b.level_lo, b.level_hi) for b in bands)
+    expected_lo = 1
+    for lo, hi in ranges:
+        if lo != expected_lo:
+            msg = f"normal bands must tile 1..40 with no gap/overlap; gap or overlap at {lo}, expected {expected_lo}"
+            raise ValueError(msg)
+        expected_lo = hi + 1
+    if expected_lo - 1 != 40:
+        msg = f"normal bands must cover through level 40, they stop at {expected_lo - 1}"
+        raise ValueError(msg)

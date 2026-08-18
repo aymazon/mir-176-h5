@@ -25,6 +25,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.content.models import (
     ClassesFile,
+    DropsFile,
     ExpCurve,
     ItemsFile,
     MapConnectionsFile,
@@ -52,6 +53,7 @@ CONTENT_MODELS: Final[dict[str, type[BaseModel]]] = {
     "monsters.json": MonstersFile,
     "spawns.json": SpawnsFile,
     "map_connections.json": MapConnectionsFile,
+    "drops.json": DropsFile,
 }
 
 #: Registered files mapped to a named :class:`Content` field; any other
@@ -59,7 +61,7 @@ CONTENT_MODELS: Final[dict[str, type[BaseModel]]] = {
 _NAMED_FIELDS: Final[frozenset[str]] = frozenset(
     {
         "exp_curve.json", "classes.json", "skills.json", "items.json",
-        "maps.json", "monsters.json", "spawns.json", "map_connections.json",
+        "maps.json", "monsters.json", "spawns.json", "map_connections.json", "drops.json",
     }
 )
 
@@ -76,6 +78,7 @@ class Content:
     monsters: MonstersFile
     spawns: SpawnsFile
     map_connections: MapConnectionsFile
+    drops: DropsFile
     extras: dict[str, BaseModel] = field(default_factory=dict)
 
 
@@ -139,5 +142,6 @@ def load_all_content(data_dir: Path) -> Content:
         map_connections=_as(
             tables["map_connections.json"], MapConnectionsFile, "map_connections.json"
         ),
+        drops=_as(tables["drops.json"], DropsFile, "drops.json"),
         extras={name: table for name, table in tables.items() if name not in _NAMED_FIELDS},
     )

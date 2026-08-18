@@ -20,6 +20,7 @@ from app.world.combat import (
     skill_multiplier,
     skill_ready,
 )
+from app.world.drops import Bonus, Drop, DropManager
 from app.world.loop import GameLoop, JitterStats
 from app.world.map import (
     MAP_PORTALS,
@@ -55,7 +56,10 @@ __all__ = [
     "AttackResult",
     "Attacker",
     "AttackerKind",
+    "Bonus",
     "Cell",
+    "Drop",
+    "DropManager",
     "GameLoop",
     "GameWorld",
     "InvalidPositionError",

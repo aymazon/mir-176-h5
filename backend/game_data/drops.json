@@ -1,0 +1,227 @@
+{
+  "normal_bands": [
+    {
+      "level_lo": 1,
+      "level_hi": 4,
+      "entries": [
+        { "item": "small_hp_potion", "weight": 15 },
+        { "item": "small_mp_potion", "weight": 10 },
+        { "item": "wooden_sword", "weight": 2 }
+      ]
+    },
+    {
+      "level_lo": 5,
+      "level_hi": 9,
+      "entries": [
+        { "item": "small_hp_potion", "weight": 15 },
+        { "item": "medium_hp_potion", "weight": 8 },
+        { "item": "small_mp_potion", "weight": 10 },
+        { "item": "bronze_sword", "weight": 2 },
+        { "item": "light_armor", "weight": 2 }
+      ]
+    },
+    {
+      "level_lo": 10,
+      "level_hi": 14,
+      "entries": [
+        { "item": "medium_hp_potion", "weight": 12 },
+        { "item": "medium_mp_potion", "weight": 8 },
+        { "item": "short_sword", "weight": 1.5 },
+        { "item": "medium_armor", "weight": 1.5 },
+        { "item": "ancient_bronze_ring", "weight": 2 }
+      ]
+    },
+    {
+      "level_lo": 15,
+      "level_hi": 19,
+      "entries": [
+        { "item": "medium_hp_potion", "weight": 12 },
+        { "item": "medium_mp_potion", "weight": 10 },
+        { "item": "large_hp_potion", "weight": 5 },
+        { "item": "iron_sword", "weight": 1 },
+        { "item": "heavy_armor", "weight": 1 },
+        { "item": "half_moon", "weight": 0.8 },
+        { "item": "tao_ring", "weight": 1.5 },
+        { "item": "return_scroll", "weight": 5 }
+      ]
+    },
+    {
+      "level_lo": 20,
+      "level_hi": 24,
+      "entries": [
+        { "item": "large_hp_potion", "weight": 10 },
+        { "item": "large_mp_potion", "weight": 8 },
+        { "item": "asura", "weight": 0.5 },
+        { "item": "frost", "weight": 0.4 },
+        { "item": "magic_wand", "weight": 0.4 },
+        { "item": "silver_snake", "weight": 0.4 },
+        { "item": "sturdy_gloves", "weight": 1.5 },
+        { "item": "power_ring", "weight": 0.8 },
+        { "item": "soul_war_robe", "weight": 0.5 },
+        { "item": "sun_water", "weight": 3 },
+        { "item": "return_scroll", "weight": 5 }
+      ]
+    },
+    {
+      "level_lo": 25,
+      "level_hi": 29,
+      "entries": [
+        { "item": "large_hp_potion", "weight": 10 },
+        { "item": "large_mp_potion", "weight": 8 },
+        { "item": "jing_zhong_yue", "weight": 0.3 },
+        { "item": "purgatory", "weight": 0.4 },
+        { "item": "magic_wand", "weight": 0.4 },
+        { "item": "silver_snake", "weight": 0.4 },
+        { "item": "death_god_gloves", "weight": 0.8 },
+        { "item": "purple_spiral", "weight": 0.6 },
+        { "item": "life_necklace", "weight": 0.6 },
+        { "item": "war_god_armor", "weight": 0.4 },
+        { "item": "ghost_war_robe", "weight": 0.3 },
+        { "item": "demon_robe", "weight": 0.3 },
+        { "item": "sun_water", "weight": 4 }
+      ]
+    },
+    {
+      "level_lo": 30,
+      "level_hi": 34,
+      "entries": [
+        { "item": "large_hp_potion", "weight": 12 },
+        { "item": "large_mp_potion", "weight": 10 },
+        { "item": "sun_water", "weight": 5 },
+        { "item": "blood_drinker", "weight": 0.2 },
+        { "item": "wuji_pole", "weight": 0.2 },
+        { "item": "memory_necklace", "weight": 0.5 },
+        { "item": "ruby_ring", "weight": 0.4 },
+        { "item": "dragon_ring", "weight": 0.4 },
+        { "item": "black_iron_helmet", "weight": 0.3 },
+        { "item": "strong_sun_water", "weight": 2 }
+      ]
+    },
+    {
+      "level_lo": 35,
+      "level_hi": 40,
+      "entries": [
+        { "item": "large_hp_potion", "weight": 12 },
+        { "item": "large_mp_potion", "weight": 10 },
+        { "item": "sun_water", "weight": 5 },
+        { "item": "strong_sun_water", "weight": 2 },
+        { "item": "moon_water", "weight": 2 },
+        { "item": "judgement_rod", "weight": 0.1 },
+        { "item": "dragon_pattern_sword", "weight": 0.1 },
+        { "item": "bone_jade_staff", "weight": 0.1 },
+        { "item": "holy_war_helmet", "weight": 0.15 },
+        { "item": "holy_war_necklace", "weight": 0.15 },
+        { "item": "holy_war_bracelet", "weight": 0.15 },
+        { "item": "holy_war_ring", "weight": 0.15 },
+        { "item": "fa_shen_helmet", "weight": 0.15 },
+        { "item": "fa_shen_necklace", "weight": 0.15 },
+        { "item": "fa_shen_bracelet", "weight": 0.15 },
+        { "item": "fa_shen_ring", "weight": 0.15 },
+        { "item": "tian_zun_helmet", "weight": 0.15 },
+        { "item": "tian_zun_necklace", "weight": 0.15 },
+        { "item": "tian_zun_bracelet", "weight": 0.15 },
+        { "item": "tian_zun_ring", "weight": 0.15 },
+        { "item": "heavenly_demon_armor", "weight": 0.05 },
+        { "item": "fa_shen_cloak", "weight": 0.05 },
+        { "item": "tian_zun_robe", "weight": 0.05 }
+      ]
+    }
+  ],
+  "boss_tables": [
+    {
+      "boss": "skeleton_elf",
+      "entries": [
+        { "item": "sun_water", "weight": 20 },
+        { "item": "half_moon", "weight": 5 },
+        { "item": "iron_sword", "weight": 10 },
+        { "item": "sturdy_gloves", "weight": 8 },
+        { "item": "large_hp_potion", "weight": 30, "qty": 3 }
+      ]
+    },
+    {
+      "boss": "corpse_king",
+      "entries": [
+        { "item": "life_necklace", "weight": 5 },
+        { "item": "soul_necklace", "weight": 3 },
+        { "item": "frost", "weight": 5 },
+        { "item": "magic_wand", "weight": 3 },
+        { "item": "silver_snake", "weight": 3 },
+        { "item": "sun_water", "weight": 15 },
+        { "item": "large_mp_potion", "weight": 30, "qty": 3 }
+      ]
+    },
+    {
+      "boss": "white_boar",
+      "entries": [
+        { "item": "jing_zhong_yue", "weight": 2 },
+        { "item": "purgatory", "weight": 2 },
+        { "item": "magic_wand", "weight": 2 },
+        { "item": "silver_snake", "weight": 2 },
+        { "item": "memory_necklace", "weight": 3 },
+        { "item": "ghost_necklace", "weight": 5 },
+        { "item": "sun_water", "weight": 15 },
+        { "item": "strong_sun_water", "weight": 5 }
+      ]
+    },
+    {
+      "boss": "evil_pincer",
+      "entries": [
+        { "item": "death_god_gloves", "weight": 3 },
+        { "item": "dragon_ring", "weight": 2 },
+        { "item": "purple_spiral", "weight": 3 },
+        { "item": "ghost_war_robe", "weight": 2 },
+        { "item": "demon_robe", "weight": 2 },
+        { "item": "strong_sun_water", "weight": 6 }
+      ]
+    },
+    {
+      "boss": "tou_long_god",
+      "entries": [
+        { "item": "jing_zhong_yue", "weight": 3 },
+        { "item": "blood_drinker", "weight": 2 },
+        { "item": "silver_snake", "weight": 3 },
+        { "item": "death_god_gloves", "weight": 4 },
+        { "item": "black_iron_helmet", "weight": 3 },
+        { "item": "moon_water", "weight": 8 }
+      ]
+    },
+    {
+      "boss": "woma_lord",
+      "entries": [
+        { "item": "dragon_pattern_sword", "weight": 3 },
+        { "item": "bone_jade_staff", "weight": 2 },
+        { "item": "wuji_pole", "weight": 3 },
+        { "item": "war_god_armor", "weight": 5 },
+        { "item": "ghost_war_robe", "weight": 5 },
+        { "item": "demon_robe", "weight": 5 },
+        { "item": "memory_necklace", "weight": 5 },
+        { "item": "moon_water", "weight": 8 }
+      ]
+    },
+    {
+      "boss": "zuma_lord",
+      "entries": [
+        { "item": "judgement_rod", "weight": 3 },
+        { "item": "bone_jade_staff", "weight": 3 },
+        { "item": "dragon_pattern_sword", "weight": 3 },
+        { "item": "holy_war_helmet", "weight": 1.5 },
+        { "item": "holy_war_necklace", "weight": 1.5 },
+        { "item": "holy_war_bracelet", "weight": 1.5 },
+        { "item": "holy_war_ring", "weight": 1.5 },
+        { "item": "fa_shen_helmet", "weight": 1.5 },
+        { "item": "fa_shen_necklace", "weight": 1.5 },
+        { "item": "fa_shen_bracelet", "weight": 1.5 },
+        { "item": "fa_shen_ring", "weight": 1.5 },
+        { "item": "tian_zun_helmet", "weight": 1.5 },
+        { "item": "tian_zun_necklace", "weight": 1.5 },
+        { "item": "tian_zun_bracelet", "weight": 1.5 },
+        { "item": "tian_zun_ring", "weight": 1.5 },
+        { "item": "heavenly_demon_armor", "weight": 1 },
+        { "item": "fa_shen_cloak", "weight": 1 },
+        { "item": "tian_zun_robe", "weight": 1 },
+        { "item": "strong_sun_water", "weight": 10 },
+        { "item": "moon_water", "weight": 10 }
+      ]
+    }
+  ]
+}
