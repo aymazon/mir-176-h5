@@ -1,0 +1,16 @@
+{
+  "id": "newbie_kill_5",
+  "name": "除害新手村",
+  "kind": "kill",
+  "level_req": 1,
+  "target_id": "chicken",
+  "target_count": 5,
+  "reward_gold": 100,
+  "reward_exp": 50,
+  "reward_items": ["wooden_sword"],
+  "dialogue": {
+    "accept": "村外的鸡太多了，帮我杀 5 只。",
+    "progress": "还没杀够，继续加油。",
+    "complete": "干得漂亮，这是你的奖励。"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "map_id": "yin-xing-cun",
+  "monster_id": "chicken",
+  "density": 5,
+  "respawn_seconds": 60,
+  "count": 10,
+  "locations": [
+    { "x": 100, "y": 100 },
+    { "x": 120, "y": 110 }
+  ]
+}

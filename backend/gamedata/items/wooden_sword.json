@@ -1,0 +1,19 @@
+{
+  "id": "wooden_sword",
+  "name": "木剑",
+  "kind": "weapon",
+  "need_level": 1,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 7,
+  "stackable": false,
+  "max_durability": 4,
+  "sell_price": 50,
+  "buy_price": 100,
+  "stats": {
+    "dc_min": 2,
+    "dc_max": 5
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,8 @@
+{
+  "id": "healer_npc",
+  "name": "村庄医师",
+  "map_id": "yin-xing-cun",
+  "kind": "vendor",
+  "shop_items": ["wooden_sword"],
+  "dialogue": ["欢迎来到银杏村。", "需要点什么吗？"]
+}

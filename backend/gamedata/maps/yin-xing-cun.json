@@ -1,0 +1,9 @@
+{
+  "id": "yin-xing-cun",
+  "name": "银杏村",
+  "level_min": 0,
+  "level_max": 7,
+  "region": "newbie",
+  "adjacent": [],
+  "boss_spawns": []
+}
