@@ -12,6 +12,6 @@ class MapDef(GameDataModel):
     level_max: int = Field(ge=0)
     region: str = Field(min_length=1)
     # 交叉引用（校验期检查）：相邻地图 id 列表
-    adjacent: list[IdSlug] = []
+    adjacent: list[IdSlug] = Field(default_factory=list)
     # 交叉引用（校验期检查）：本图 BOSS 怪 id 列表
-    boss_spawns: list[IdSlug] = []
+    boss_spawns: list[IdSlug] = Field(default_factory=list)

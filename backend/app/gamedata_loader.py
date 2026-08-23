@@ -207,7 +207,7 @@ def _check_cross_references(
 
 def load_all(
     root: Path | str | None = None,
-    strict: bool = True,  # noqa: ARG001 - strict lint 规则在 todo 22 扩展，基础交叉引用始终执行
+    strict: bool = True,
 ) -> dict[str, dict[str, GameDataModel]]:
     """加载并校验全部 gamedata，返回 {category: {key: model}}。
 

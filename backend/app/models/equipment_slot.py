@@ -2,7 +2,8 @@
 
 import enum
 
-from sqlalchemy import Enum as SAEnum, ForeignKey, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base

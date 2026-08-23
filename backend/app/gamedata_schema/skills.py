@@ -35,7 +35,7 @@ class SkillDef(GameDataModel):
     level_exp_required: list[int] = Field(min_length=1)
     target: SkillTarget
     # 效果参数包（倍率/dot/召唤等），键为参数名
-    effect_params: dict[str, int | float] = {}
+    effect_params: dict[str, int | float] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _level_exp_matches_max_level(self) -> "SkillDef":

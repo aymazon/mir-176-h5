@@ -37,6 +37,6 @@ class ItemDef(GameDataModel):
     sell_price: int = Field(ge=0)
     buy_price: int = Field(ge=0)
     # 自由属性包（dc_min/dc_max/mc_min/... 等战斗修正），键为属性名
-    stats: dict[str, int] = {}
+    stats: dict[str, int] = Field(default_factory=dict)
     # 极品词缀上限条数
     prefix_max: int = Field(default=0, ge=0)

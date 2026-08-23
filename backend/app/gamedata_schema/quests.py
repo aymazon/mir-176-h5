@@ -26,6 +26,6 @@ class QuestDef(GameDataModel):
     reward_gold: int = Field(default=0, ge=0)
     reward_exp: int = Field(default=0, ge=0)
     # 交叉引用（校验期检查）：奖励物品 id 列表
-    reward_items: list[IdSlug] = []
+    reward_items: list[IdSlug] = Field(default_factory=list)
     # 阶段文案：accept/progress/complete 等
-    dialogue: dict[str, str] = {}
+    dialogue: dict[str, str] = Field(default_factory=dict)

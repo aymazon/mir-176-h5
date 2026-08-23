@@ -22,5 +22,5 @@ class NpcDef(GameDataModel):
     map_id: IdSlug
     kind: NpcKind
     # 交叉引用（校验期检查）：商店售卖的物品 id 列表（非 vendor 一般为空）
-    shop_items: list[IdSlug] = []
-    dialogue: list[str] = []
+    shop_items: list[IdSlug] = Field(default_factory=list)
+    dialogue: list[str] = Field(default_factory=list)
