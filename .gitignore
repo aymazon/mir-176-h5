@@ -234,3 +234,9 @@ backend/.venv/
 backend/.env
 scripts/artifacts/
 frontend/e2e/artifacts/
+
+# generic node / test tooling
+node_modules/
+.pytest_cache/
+.playwright/
+playwright-report/
