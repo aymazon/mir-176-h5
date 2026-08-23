@@ -1,0 +1,17 @@
+{
+  "id": "orc",
+  "name": "半兽人",
+  "level": 15,
+  "hp": 90,
+  "attack": 13,
+  "defense": 5,
+  "magic_defense": 0,
+  "accuracy": 9,
+  "agility": 7,
+  "exp": 60,
+  "attack_speed": 1,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

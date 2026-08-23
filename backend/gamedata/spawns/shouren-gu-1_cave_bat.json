@@ -1,0 +1,17 @@
+{
+  "map_id": "shouren-gu-1",
+  "monster_id": "cave_bat",
+  "density": 4,
+  "respawn_seconds": 90,
+  "count": 8,
+  "locations": [
+    {
+      "x": 45,
+      "y": 70
+    },
+    {
+      "x": 65,
+      "y": 85
+    }
+  ]
+}

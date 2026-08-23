@@ -1,0 +1,29 @@
+{
+  "monster_id": "scarecrow",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 50,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 10,
+      "gold_max": 30
+    },
+    {
+      "item_id": "potion_hp_small",
+      "weight": 10,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "cloth_robe",
+      "weight": 8,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

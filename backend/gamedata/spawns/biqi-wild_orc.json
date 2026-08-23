@@ -1,0 +1,17 @@
+{
+  "map_id": "biqi-wild",
+  "monster_id": "orc",
+  "density": 4,
+  "respawn_seconds": 120,
+  "count": 8,
+  "locations": [
+    {
+      "x": 160,
+      "y": 120
+    },
+    {
+      "x": 175,
+      "y": 135
+    }
+  ]
+}

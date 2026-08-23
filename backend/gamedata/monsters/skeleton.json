@@ -1,0 +1,17 @@
+{
+  "id": "skeleton",
+  "name": "骷髅",
+  "level": 18,
+  "hp": 110,
+  "attack": 16,
+  "defense": 7,
+  "magic_defense": 2,
+  "accuracy": 10,
+  "agility": 7,
+  "exp": 80,
+  "attack_speed": 1,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

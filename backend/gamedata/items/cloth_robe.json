@@ -1,0 +1,19 @@
+{
+  "id": "cloth_robe",
+  "name": "布衣",
+  "kind": "armor",
+  "need_level": 1,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 10,
+  "stackable": false,
+  "max_durability": 6,
+  "sell_price": 30,
+  "buy_price": 60,
+  "stats": {
+    "ac_min": 2,
+    "ac_max": 3
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,17 @@
+{
+  "id": "deer",
+  "name": "鹿",
+  "level": 8,
+  "hp": 40,
+  "attack": 4,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 5,
+  "agility": 7,
+  "exp": 20,
+  "attack_speed": 1,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 60
+}

@@ -1,0 +1,17 @@
+{
+  "id": "axe_skeleton",
+  "name": "掷斧骷髅",
+  "level": 19,
+  "hp": 120,
+  "attack": 18,
+  "defense": 8,
+  "magic_defense": 2,
+  "accuracy": 12,
+  "agility": 7,
+  "exp": 90,
+  "attack_speed": 1,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

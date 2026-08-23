@@ -1,0 +1,17 @@
+{
+  "id": "rake_cat",
+  "name": "钉耙猫",
+  "level": 13,
+  "hp": 65,
+  "attack": 9,
+  "defense": 3,
+  "magic_defense": 0,
+  "accuracy": 8,
+  "agility": 8,
+  "exp": 35,
+  "attack_speed": 1,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 90
+}

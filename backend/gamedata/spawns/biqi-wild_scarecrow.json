@@ -1,0 +1,17 @@
+{
+  "map_id": "biqi-wild",
+  "monster_id": "scarecrow",
+  "density": 5,
+  "respawn_seconds": 90,
+  "count": 10,
+  "locations": [
+    {
+      "x": 75,
+      "y": 100
+    },
+    {
+      "x": 95,
+      "y": 115
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "comment": "内置兜底经验曲线（confidence=low）。GeeM2 Exps.ini 就位后由 scripts/convert_gamedata.py 覆盖。exp_to_next = 升到下一级所需经验。",
+  "levels": [
+    {
+      "level": 1,
+      "exp_to_next": 100
+    },
+    {
+      "level": 2,
+      "exp_to_next": 200
+    },
+    {
+      "level": 3,
+      "exp_to_next": 350
+    },
+    {
+      "level": 4,
+      "exp_to_next": 550
+    },
+    {
+      "level": 5,
+      "exp_to_next": 800
+    },
+    {
+      "level": 6,
+      "exp_to_next": 1200
+    },
+    {
+      "level": 7,
+      "exp_to_next": 1700
+    },
+    {
+      "level": 8,
+      "exp_to_next": 2400
+    },
+    {
+      "level": 9,
+      "exp_to_next": 3300
+    },
+    {
+      "level": 10,
+      "exp_to_next": 4500
+    },
+    {
+      "level": 11,
+      "exp_to_next": 6000
+    },
+    {
+      "level": 12,
+      "exp_to_next": 8000
+    },
+    {
+      "level": 13,
+      "exp_to_next": 10500
+    },
+    {
+      "level": 14,
+      "exp_to_next": 13600
+    },
+    {
+      "level": 15,
+      "exp_to_next": 17500
+    },
+    {
+      "level": 16,
+      "exp_to_next": 22300
+    },
+    {
+      "level": 17,
+      "exp_to_next": 28200
+    },
+    {
+      "level": 18,
+      "exp_to_next": 35400
+    },
+    {
+      "level": 19,
+      "exp_to_next": 44200
+    },
+    {
+      "level": 20,
+      "exp_to_next": 54800
+    },
+    {
+      "level": 21,
+      "exp_to_next": 67600
+    },
+    {
+      "level": 22,
+      "exp_to_next": 82900
+    },
+    {
+      "level": 23,
+      "exp_to_next": 101200
+    },
+    {
+      "level": 24,
+      "exp_to_next": 123000
+    },
+    {
+      "level": 25,
+      "exp_to_next": 148900
+    },
+    {
+      "level": 26,
+      "exp_to_next": 179500
+    },
+    {
+      "level": 27,
+      "exp_to_next": 215700
+    },
+    {
+      "level": 28,
+      "exp_to_next": 258300
+    },
+    {
+      "level": 29,
+      "exp_to_next": 308600
+    },
+    {
+      "level": 30,
+      "exp_to_next": 368000
+    }
+  ]
+}

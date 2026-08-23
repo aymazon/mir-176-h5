@@ -1,0 +1,6 @@
+# todo 13：原始模拟器数据文件绝不入库（转换器源文件只放 /tmp/mir176-sources/）
+/tmp/mir176-sources/
+**/*.db
+**/*.ini
+# alembic.ini 是迁移配置（todo 2 工件），非游戏原始数据，显式豁免
+!alembic.ini

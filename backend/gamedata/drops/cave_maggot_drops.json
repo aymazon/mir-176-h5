@@ -1,0 +1,29 @@
+{
+  "monster_id": "cave_maggot",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 50,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 22,
+      "gold_max": 60
+    },
+    {
+      "item_id": "meat",
+      "weight": 20,
+      "min_qty": 1,
+      "max_qty": 3,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_hp_small",
+      "weight": 12,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

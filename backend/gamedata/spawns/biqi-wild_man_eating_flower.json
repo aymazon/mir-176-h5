@@ -1,0 +1,17 @@
+{
+  "map_id": "biqi-wild",
+  "monster_id": "man_eating_flower",
+  "density": 3,
+  "respawn_seconds": 120,
+  "count": 6,
+  "locations": [
+    {
+      "x": 100,
+      "y": 130
+    },
+    {
+      "x": 125,
+      "y": 140
+    }
+  ]
+}

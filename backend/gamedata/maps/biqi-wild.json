@@ -1,0 +1,12 @@
+{
+  "id": "biqi-wild",
+  "name": "比奇野外",
+  "level_min": 5,
+  "level_max": 15,
+  "region": "bichi",
+  "adjacent": [
+    "yin-xing-cun",
+    "shouren-gu-1"
+  ],
+  "boss_spawns": []
+}

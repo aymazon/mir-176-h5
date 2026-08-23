@@ -1,0 +1,12 @@
+{
+  "id": "shouren-gu-2",
+  "name": "兽人古墓二层",
+  "level_min": 16,
+  "level_max": 24,
+  "region": "orc_tomb",
+  "adjacent": [
+    "shouren-gu-1",
+    "shouren-gu-3"
+  ],
+  "boss_spawns": []
+}

@@ -1,0 +1,17 @@
+{
+  "id": "hook_cat",
+  "name": "多钩猫",
+  "level": 11,
+  "hp": 55,
+  "attack": 7,
+  "defense": 2,
+  "magic_defense": 0,
+  "accuracy": 7,
+  "agility": 8,
+  "exp": 30,
+  "attack_speed": 1,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 90
+}

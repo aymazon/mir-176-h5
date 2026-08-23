@@ -1,0 +1,18 @@
+{
+  "id": "potion_mp_small",
+  "name": "魔法药（小量）",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 12,
+  "buy_price": 30,
+  "stats": {
+    "mp_restore": 20
+  },
+  "prefix_max": 0
+}

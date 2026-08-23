@@ -1,0 +1,19 @@
+{
+  "id": "sun_water",
+  "name": "太阳水",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 40,
+  "buy_price": 90,
+  "stats": {
+    "hp_restore": 50,
+    "mp_restore": 30
+  },
+  "prefix_max": 0
+}

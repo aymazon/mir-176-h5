@@ -1,0 +1,21 @@
+{
+  "map_id": "shouren-gu-1",
+  "monster_id": "skeleton",
+  "density": 5,
+  "respawn_seconds": 150,
+  "count": 10,
+  "locations": [
+    {
+      "x": 30,
+      "y": 30
+    },
+    {
+      "x": 55,
+      "y": 45
+    },
+    {
+      "x": 80,
+      "y": 60
+    }
+  ]
+}

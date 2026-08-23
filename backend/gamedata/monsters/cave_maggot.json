@@ -1,0 +1,17 @@
+{
+  "id": "cave_maggot",
+  "name": "洞蛆",
+  "level": 17,
+  "hp": 95,
+  "attack": 14,
+  "defense": 6,
+  "magic_defense": 2,
+  "accuracy": 9,
+  "agility": 3,
+  "exp": 70,
+  "attack_speed": 1,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

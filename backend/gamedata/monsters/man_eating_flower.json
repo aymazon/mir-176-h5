@@ -1,0 +1,17 @@
+{
+  "id": "man_eating_flower",
+  "name": "食人花",
+  "level": 14,
+  "hp": 70,
+  "attack": 10,
+  "defense": 3,
+  "magic_defense": 0,
+  "accuracy": 9,
+  "agility": 2,
+  "exp": 40,
+  "attack_speed": 1,
+  "move_speed": 0,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

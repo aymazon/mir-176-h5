@@ -1,0 +1,13 @@
+{
+  "map_id": "shouren-gu-3",
+  "monster_id": "orc_champion",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 150,
+      "y": 150
+    }
+  ]
+}

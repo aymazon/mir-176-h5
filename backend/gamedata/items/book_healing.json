@@ -1,0 +1,16 @@
+{
+  "id": "book_healing",
+  "name": "治愈术（书）",
+  "kind": "book",
+  "need_level": 7,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 150,
+  "buy_price": 500,
+  "stats": {},
+  "prefix_max": 0
+}

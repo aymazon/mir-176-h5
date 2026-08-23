@@ -4,6 +4,8 @@
   "level_min": 0,
   "level_max": 7,
   "region": "newbie",
-  "adjacent": [],
+  "adjacent": [
+    "biqi-wild"
+  ],
   "boss_spawns": []
 }
