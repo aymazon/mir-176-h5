@@ -41,6 +41,7 @@ from app.models.item_instance import ItemInstance
 from app.sse.session_state import SessionState, get_or_create_session
 
 if TYPE_CHECKING:
+    from app.sim.pet import Pet
     from app.sim.zone import ZoneInstance
 
 LOG = logging.getLogger(__name__)
@@ -102,6 +103,8 @@ class PlayerSession:
     last_cast_ticks: dict[str, int] = field(default_factory=dict)
     # 场上怪当前 HP 记账：instance_id → 剩余 HP（MonsterInstance 不携带血量）
     monster_hp: dict[str, int] = field(default_factory=dict)
+    # 召唤物列表（todo 16 内存实体；不入库，session 注销时由 pet.disperse_all 清空）
+    pets: list[Pet] = field(default_factory=list)
     # 吃药策略覆盖键（hp_pct/mp_pct/urgent_hp_pct/free_slots），空 dict = 全默认
     potion_policy: dict[str, object] = field(default_factory=dict)
     auto_pickup: bool = True

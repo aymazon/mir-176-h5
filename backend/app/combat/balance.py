@@ -25,8 +25,12 @@ __all__ = [
     "BAG_CAPACITY",
     "BAG_FREE_SLOTS_RECALL",
     "BIRTH_MAP_ID",
+    "CHARM_LEVEL_TOLERANCE",
+    "CHARM_MAX_PER_CASTER",
     "CURSE_HIT_BIAS",
     "DEF_DAMAGE_REDUCTION_FACTOR",
+    "DOG_BASE_HP",
+    "DOG_GROWTH_PER_LEVEL",
     "DROP_TIER_BONUS_MAX",
     "DROP_TIER_RATES",
     "GLOBAL_DROP_RATE",
@@ -41,6 +45,8 @@ __all__ = [
     "POTION_MP_PCT",
     "POTION_URGENT_HP_PCT",
     "SKILL_MULTIPLIER_BASE",
+    "SKULL_BASE_HP",
+    "SKULL_GROWTH_PER_LEVEL",
 ]
 
 # --- 命中 -------------------------------------------------------------------
@@ -136,3 +142,24 @@ DROP_TIER_BONUS_MAX: Final[dict[str, int]] = {
     "rare": 3,
     "epic": 7,
 }
+
+# --- 召唤物（todo 16 sim/pet.py）--------------------------------------------------
+
+# 诱惑之光同时魅惑存活的怪物数量上限（同一施法者）。
+# 出处: 自创占位（社区只记"法师可诱惑多只怪"概念，无公认数值）; 置信度: low
+CHARM_MAX_PER_CASTER: Final[int] = 5
+# 可魅惑怪物的等级宽容度：怪物等级 ≤ 主人等级 + 本值，超出则诱惑失败。
+# 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
+CHARM_LEVEL_TOLERANCE: Final[int] = 7
+# 召唤骷髅基础 HP：max_hp = 本值 + SKULL_GROWTH_PER_LEVEL × 技能等级。
+# 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
+SKULL_BASE_HP: Final[int] = 30
+# 召唤骷髅每级技能等级的 HP 成长。
+# 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
+SKULL_GROWTH_PER_LEVEL: Final[int] = 10
+# 召唤神兽基础 HP：max_hp = 本值 + DOG_GROWTH_PER_LEVEL × 技能等级。
+# 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
+DOG_BASE_HP: Final[int] = 60
+# 召唤神兽每级技能等级的 HP 成长。
+# 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
+DOG_GROWTH_PER_LEVEL: Final[int] = 15
