@@ -23,9 +23,12 @@ from app.core.config import BIRTH_MAP_ID
 __all__ = [
     "ATTACK_INTERVAL_TICKS",
     "BAG_CAPACITY",
+    "BAG_FREE_SLOTS_RECALL",
     "BIRTH_MAP_ID",
     "CURSE_HIT_BIAS",
     "DEF_DAMAGE_REDUCTION_FACTOR",
+    "DROP_TIER_BONUS_MAX",
+    "DROP_TIER_RATES",
     "GLOBAL_DROP_RATE",
     "GRACE_PERIOD_SECONDS",
     "LUCK_HIT_BIAS",
@@ -33,8 +36,10 @@ __all__ = [
     "MAX_HIT_RATE",
     "MIN_DAMAGE",
     "MIN_HIT_RATE",
+    "POTION_COOLDOWN_TICKS",
     "POTION_HP_PCT",
     "POTION_MP_PCT",
+    "POTION_URGENT_HP_PCT",
     "SKILL_MULTIPLIER_BASE",
 ]
 
@@ -93,6 +98,15 @@ POTION_HP_PCT: Final[float] = 0.30
 # MP 低于最大值 20% 触发自动喝魔法药。
 # 出处: 自创默认（同上）; 置信度: low
 POTION_MP_PCT: Final[float] = 0.20
+# HP 低于最大值 15% 视为危险：跳过普通药直接优先太阳水等瞬回药。
+# 出处: docs/MVP/README.md §8 药品表（"太阳水保命用"），具体线自创，todo 37 校准; 置信度: low
+POTION_URGENT_HP_PCT: Final[float] = 0.15
+# 同一药品使用后的冷却 tick 数（tick=1s）：防低血线上连续多瓶抖动浪费。
+# 出处: 自创近似（176 药品冷却社区记载模糊，按挂机手感定）; 置信度: low
+POTION_COOLDOWN_TICKS: Final[int] = 5
+# 背包剩余空格少于 N 格触发自动回城动作（potion.py 追加 recall 动作）。
+# 出处: docs/MVP/README.md §8（"背包空格<N 时自动回城"），N 具体值自创; 置信度: medium
+BAG_FREE_SLOTS_RECALL: Final[int] = 5
 
 # --- 背包 / 掉落 ----------------------------------------------------------------
 
@@ -104,3 +118,21 @@ BAG_CAPACITY: Final[int] = 40
 # 具体每怪掉落权重在 gamedata/drops/*.json（todo 20），此处只做全局乘子。
 # 出处: 自创（中性默认值）; 置信度: high
 GLOBAL_DROP_RATE: Final[float] = 1.0
+# 掉落词缀档位概率分布：普通/优秀/稀有/史诗（合计 ≈ 1，残差归普通档兜底）。
+# 消费方：combat/drops.py roll_tier（todo 12）；期望计数 = 次数 × 本表。
+# 出处: 自创占位（社区只记词缀概念无档位表）; 置信度: low
+DROP_TIER_RATES: Final[dict[str, float]] = {
+    "normal": 0.94,
+    "excellent": 0.05,
+    "rare": 0.008,
+    "epic": 0.002,
+}
+# 各档位词缀数值上限：普通档无词缀，优秀 +1、稀有 +3、史诗 +7；
+# 实际词缀值再被物品 prefix_max 钳制（drops.py D5 规则，todo 12）。
+# 出处: 自创占位（社区只记词缀概念无档位表）; 置信度: low
+DROP_TIER_BONUS_MAX: Final[dict[str, int]] = {
+    "normal": 0,
+    "excellent": 1,
+    "rare": 3,
+    "epic": 7,
+}
