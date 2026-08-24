@@ -29,6 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentPlayerId, DbSession
+from app.combat import balance
 from app.combat.stats import (
     PANEL_KEYS,
     ClassKey,
@@ -42,7 +43,7 @@ from app.models.character import Character
 from app.models.equipment_slot import EquipmentSlot, EquipmentSlotType
 from app.models.item_instance import ItemInstance
 from app.sim.session import PlayerSession, get_or_create_player_session
-from app.sim.tick_loop import EV_STAT
+from app.sim.tick_loop import EV_STAT, reload_equip_cache
 
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
@@ -85,6 +86,30 @@ class UnequipOut(BaseModel):
     panel: StatPanel
 
 
+# 修理 SSE 事件名（todo 24；与 stat 并行推送，前端按需监听）
+EV_REPAIR: Final[str] = "repair"
+
+
+class RepairIn(BaseModel):
+    # 单槽位名（EquipmentSlotType 值）或 "all"（全修所有已穿戴装备）
+    slot: str
+
+
+class RepairedItem(BaseModel):
+    slot: EquipmentSlotType
+    item_instance_id: int
+    item_id: str
+    durability_before: int
+    durability_after: int
+
+
+class RepairOut(BaseModel):
+    slot: str
+    cost: int
+    gold_after: int
+    repaired: list[RepairedItem]
+    panel: StatPanel
+
 @lru_cache(maxsize=1)
 def _items() -> dict[str, ItemDef]:
     """进程内缓存已校验物品目录（tick_loop._gamedata 同款）。"""
@@ -124,6 +149,8 @@ def _equipment_inputs(
                 lucky=inst.lucky,
                 curse=inst.curse,
                 extra_json=extra,
+                # 耐久透传（todo 24）：0 = 已磨坏，compute_panel 输入侧过滤不计入
+                durability=inst.durability,
             )
         )
     return inputs
@@ -288,6 +315,8 @@ async def equip(
             target.item_instance_id = inst.id
         await db.commit()
         await session.flush_snapshot()
+        # 磨损记账缓存同步（todo 24）：槽位引用变了，tick 侧武器/衣服定位要新鲜
+        await reload_equip_cache(character.id)
         new_panel = _panel_for(char_row, slots, instances, items)
 
     _publish_stat(session, reason="equip", panel=new_panel)
@@ -333,10 +362,135 @@ async def unequip(
         row.item_instance_id = None
         await db.commit()
         await session.flush_snapshot()
+        await reload_equip_cache(character.id)  # 磨损记账缓存同步（todo 24）
         slots, instances = await _load_equipment_state(db, character.id)
         new_panel = _panel_for(char_row, slots, instances, items)
 
     _publish_stat(session, reason="unequip", panel=new_panel)
     return UnequipOut(
         slot=payload.slot, item_instance_id=item_instance_id, panel=new_panel
+    )
+
+
+@router.post("/repair")
+async def repair(
+    payload: RepairIn, db: DbSession, player_id: CurrentPlayerId
+) -> RepairOut:
+    """商店普修（todo 24）：耐久回满、上限不变（特修不在 MVP）。
+
+    cost = Σ(max_durability - current) × REPAIR_PRICE_PER_DURABILITY；金币不足
+    422（不扣不修）、槽位空 409。锁内 DB 事务 + flush_snapshot，SSE 恒在锁外。
+    """
+    character = await _character_of(db, player_id)
+    session = await get_or_create_player_session(db, character.id)
+    items = _items()
+
+    async with session.lock:
+        char_row = await db.get(Character, character.id)
+        if char_row is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="角色不存在"
+            )
+        await db.refresh(char_row)
+
+        slots, instances = await _load_equipment_state(db, character.id)
+        if payload.slot == "all":
+            targets = [row for row in slots if row.item_instance_id is not None]
+            if not targets:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="没有已穿戴的装备"
+                )
+        else:
+            try:
+                slot_type = EquipmentSlotType(payload.slot)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"未知槽位: {payload.slot}",
+                ) from None
+            row = next((r for r in slots if r.slot == slot_type), None)
+            if row is None or row.item_instance_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="槽位未装备"
+                )
+            targets = [row]
+
+        # 费用试算：cost = Σ(max - current) × 单价；durability NULL 视为满（存量兼容）
+        cost = 0
+        plans: list[tuple[EquipmentSlot, ItemInstance, int]] = []  # (槽位行, 实例, max)
+        for row in targets:
+            instance_id = row.item_instance_id
+            if instance_id is None:  # 槽位引用悬空（实例被删）——按空槽处理
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="槽位未装备"
+                )
+            inst = instances.get(instance_id)
+            if inst is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="槽位未装备"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="槽位未装备"
+                )
+            item_def = items.get(inst.item_id)
+            if item_def is None:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"未知物品定义: {inst.item_id}",
+                )
+            max_durability = item_def.max_durability
+            current = inst.durability if inst.durability is not None else max_durability
+            current = min(current, max_durability)
+            cost += (max_durability - current) * balance.REPAIR_PRICE_PER_DURABILITY
+            plans.append((row, inst, max_durability))
+
+        if cost > char_row.gold:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"金币不足：修理需 {cost}，身上只有 {char_row.gold}",
+            )
+
+        # 扣费 + 全部回满（普修不掉上限）；commit 后 flush 重读保证内存=DB
+        char_row.gold -= cost
+        repaired = [
+            RepairedItem(
+                slot=row.slot,
+                item_instance_id=inst.id,
+                item_id=inst.item_id,
+                durability_before=(
+                    inst.durability
+                    if inst.durability is not None
+                    else max_durability
+                ),
+                durability_after=max_durability,
+            )
+            for row, inst, max_durability in plans
+        ]
+        for _, inst, max_durability in plans:
+            inst.durability = max_durability
+        await db.commit()
+        await session.flush_snapshot()
+        new_panel = _panel_for(char_row, slots, instances, items)
+        gold_after = session.char_snapshot.gold
+
+    # SSE 推送在锁外：stat（金币/面板变化）+ repair（明细）
+    _publish_stat(session, reason="repair", panel=new_panel)
+    session.sse_state.publish(
+        EV_REPAIR,
+        json.dumps(
+            {
+                "slot": payload.slot,
+                "cost": cost,
+                "gold_after": gold_after,
+                "repaired": [item.model_dump() for item in repaired],
+            },
+            ensure_ascii=False,
+        ),
+    )
+    return RepairOut(
+        slot=payload.slot,
+        cost=cost,
+        gold_after=gold_after,
+        repaired=repaired,
+        panel=new_panel,
     )

@@ -36,14 +36,15 @@ from contextlib import suppress
 from functools import lru_cache
 from typing import TYPE_CHECKING, Final, cast
 
-from sqlalchemy import delete, func, update
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.combat import balance
 from app.combat.damage import physical_damage
 from app.combat.drops import DroppedItem, roll_drop
 from app.combat.effects import get_effect, tick_effect
 from app.combat.hit import hit_check
-from app.combat.potion import plan_potion_use
+from app.combat.potion import PotionSpec, plan_potion_use
 from app.combat.skills import SkillRegistry, load_registry, try_cast
 from app.combat.stats import ClassKey, StatPanel, compute_panel
 from app.core.config import settings
@@ -51,13 +52,13 @@ from app.core.db import SessionLocal
 from app.gamedata_loader import load_all
 from app.gamedata_schema.skills import SkillTarget
 from app.models.character import Character
+from app.models.equipment_slot import EquipmentSlot
 from app.models.item_instance import ItemInstance
 from app.sim.session import (
     PlayerSession,
     build_potion_catalog,
     release_session,
 )
-from app.combat.potion import PotionSpec
 
 if TYPE_CHECKING:
     from app.combat.drops import DropResult
@@ -74,6 +75,29 @@ EV_LOG: Final[str] = "log"
 EV_STAT: Final[str] = "stat"
 EV_DROP: Final[str] = "drop"
 EV_EXP: Final[str] = "exp"
+
+# 装备槽缓存：character_id → {slot.value: item_instance_id | None}（todo 24）。
+# simulate_tick 是纯内存计算（无 DB），磨损需要知道哪件实例穿在武器/衣服槽——
+# 映射由 start_tick_loop 启动时、persist_session_state 落库事务内、以及
+# inventory equip/unequip 提交后（reload_equip_cache）刷新；测试可直接写本表
+# 驱动纯内存用例。注销路径（shutdown/宽限超时）弹出防陈旧增长。
+_EQUIP_CACHE: Final[dict[int, dict[str, int | None]]] = {}
+
+
+async def _refresh_equip_cache(db: AsyncSession, character_id: int) -> None:
+    """DB→内存重读装备槽映射（调用方保证在 session.lock 临界区内）。"""
+    rows = (
+        await db.execute(
+            select(EquipmentSlot).where(EquipmentSlot.character_id == character_id)
+        )
+    ).scalars().all()
+    _EQUIP_CACHE[character_id] = {r.slot.value: r.item_instance_id for r in rows}
+
+
+async def reload_equip_cache(character_id: int) -> None:
+    """独立连接重读装备槽缓存（equip/unequip 提交后调用，保持磨损记账新鲜）。"""
+    async with SessionLocal() as db:
+        await _refresh_equip_cache(db, character_id)
 
 
 @lru_cache(maxsize=1)
@@ -118,6 +142,12 @@ async def start_tick_loop(
                 session.char_snapshot.map_id,
                 session.character_id,
             )
+    try:  # 装备槽缓存预加载（磨损记账依据）；失败不阻断挂机启动
+        await reload_equip_cache(session.character_id)
+    except Exception:
+        LOG.exception(
+            "equip cache load failed for character %s", session.character_id
+        )
     session.mark_connected()
     task = asyncio.create_task(
         tick_loop(session, interval=interval),
@@ -152,6 +182,7 @@ async def shutdown_session(character_id: int) -> bool:
         with suppress(KeyError):
             await leave_map(zone.map_id, character_id)
         session.zone = None
+    _EQUIP_CACHE.pop(character_id, None)  # 磨损记账缓存随会话注销清理（todo 24）
     async with SessionLocal() as db:
         await db.execute(
             update(Character)
@@ -180,6 +211,7 @@ async def shutdown_all_sessions() -> None:
             with suppress(KeyError):
                 await leave_map(zone.map_id, character_id)
             session.zone = None
+        _EQUIP_CACHE.pop(character_id, None)
     reset_sessions()
 
 
@@ -194,6 +226,7 @@ async def _teardown_on_grace_timeout(session: PlayerSession) -> None:
             await leave_map(zone.map_id, session.character_id)
         session.zone = None
     release_session(session.character_id)
+    _EQUIP_CACHE.pop(session.character_id, None)
     session.tick_task = None
     LOG.info("grace period expired; tick loop stopped for %s", session.character_id)
 
@@ -229,7 +262,7 @@ async def tick_loop(
                 try:
                     async with session.lock:
                         await persist_session_state(session)
-                except Exception:  # noqa: BLE001 — 单次落库失败不终止挂机
+                except Exception:
                     LOG.exception(
                         "tick persist failed for character %s", session.character_id
                     )
@@ -242,11 +275,13 @@ async def tick_loop(
 
 
 async def persist_session_state(session: PlayerSession) -> None:
-    """增量落库：character 行（HP/MP/exp/gold/last_active_at）+ 背包增删改。
+    """增量落库：character 行（HP/MP/exp/gold/last_active_at）+ 背包增删改 + 耐久。
 
     **必须在 ``session.lock`` 临界区内调用**（与 REST 写事务同一把锁串行化，
     防 commit 与 flush 之间的调度窗口被以旧快照覆盖）；commit 后锁内调
     flush_snapshot（DB→内存重读）。buff_json 待 todo 26 接入（列尚未迁移）。
+    耐久（todo 24）：装备槽引用的实例随每 PERSIST_EVERY_TICKS 批次一并 UPDATE
+    （磨损每 tick 只改内存，不逐 tick 写库），同事务刷新装备槽缓存。
     """
     snap = session.char_snapshot
     async with SessionLocal() as db:
@@ -273,6 +308,25 @@ async def persist_session_state(session: PlayerSession) -> None:
                 )
         for row in session.pending_items:
             db.add(row)
+        # 耐久落库（todo 24）：只写装备槽引用的实例（≤10 行），背包物不涉及。
+        equipped_ids = {
+            iid
+            for iid in _EQUIP_CACHE.get(session.character_id, {}).values()
+            if iid is not None
+        }
+        for row in session.inventory:
+            if (
+                row.id is not None
+                and row.id in equipped_ids
+                and row.durability is not None
+            ):
+                await db.execute(
+                    update(ItemInstance)
+                    .where(ItemInstance.id == row.id)
+                    .values(durability=row.durability)
+                )
+        # 同事务刷新装备槽映射（穿戴变更由 equip/unequip 提交后即时刷新兜底）
+        await _refresh_equip_cache(db, session.character_id)
         await db.commit()
     await session.flush_snapshot()
 
@@ -340,6 +394,30 @@ def _tick_buffs(session: PlayerSession) -> int:
     return total
 
 
+def _wear_equipment(session: PlayerSession, slot_key: str, amount: int) -> int | None:
+    """扣指定槽位装备耐久（todo 24，纯内存；落库随每 5 tick 批次）.
+
+    返回扣减后的耐久值；无装备/物品无耐久概念/已破碎返回 None（不重复扣减、
+    不重复播报）。durability 为 NULL 的存量实例按满耐久初始化（seed 兼容）。
+    """
+    iid = _EQUIP_CACHE.get(session.character_id, {}).get(slot_key)
+    if iid is None:
+        return None
+    row = next((r for r in session.inventory if r.id == iid), None)
+    if row is None:
+        return None
+    item_def = cast("dict[str, ItemDef]", _gamedata()["items"]).get(row.item_id)
+    max_durability = item_def.max_durability if item_def is not None else 0
+    if max_durability <= 0:
+        return None  # 无耐久概念的物品不磨损
+    if row.durability is None:
+        row.durability = max_durability
+    if row.durability <= 0:
+        return None
+    row.durability = max(0, row.durability - amount)
+    return row.durability
+
+
 def _player_attack(
     session: PlayerSession,
     panel: StatPanel,
@@ -359,6 +437,14 @@ def _player_attack(
             _log_event("miss", f"你攻击{target.monster_def.name}未命中")
         )
         return
+    # 武器磨损（todo 24）：出手命中即扣（未命中不扣）；归零时播报属性失效。
+    weapon_durability = _wear_equipment(
+        session, "weapon", balance.DURABILITY_LOSS_PER_ATTACK
+    )
+    if weapon_durability == 0:
+        events.append(
+            _log_event("durability", "你的武器耐久已耗尽，属性失效（商店可修理）")
+        )
     dmg = physical_damage(
         session.rng,
         attack_min=panel.dc_min,
@@ -530,6 +616,14 @@ def _monster_ai(
             _log_event("dodge", f"{monster.monster_def.name}攻击你未命中")
         )
         return 0
+    # 防具磨损（todo 24）：被命中即扣衣服槽耐久（未命中不扣）；归零播报失效。
+    armor_durability = _wear_equipment(
+        session, "armor", balance.DURABILITY_LOSS_PER_HIT
+    )
+    if armor_durability == 0:
+        events.append(
+            _log_event("durability", "你的衣服耐久已耗尽，属性失效（商店可修理）")
+        )
     dmg = physical_damage(
         session.rng,
         attack_min=monster.monster_def.attack,

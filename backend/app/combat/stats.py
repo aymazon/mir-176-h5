@@ -104,6 +104,9 @@ class EquipmentInput(BaseModel):
     curse: int = Field(default=0, ge=0)
     # 极品词缀包（drops.py D5/D7 产出形如 {"dc_max": 1}）
     extra_json: StatDict = Field(default_factory=dict)
+    # 当前耐久：None = 无耐久概念（不参与失效过滤）；0 = 已磨坏（面板不计入，
+    # "属性失效"的输入侧过滤——stats 计算本体不动，todo 24）。
+    durability: int | None = Field(default=None, ge=0)
 
 
 class PassiveInput(BaseModel):
@@ -224,6 +227,8 @@ def compute_panel(
         for key, (base, gain, per) in growth.items()
     }
     for item in equipment:
+        if item.durability == 0:
+            continue  # 耐久耗尽 → 属性失效（输入侧过滤；修理后恢复计入）
         for key, value in item.stats.items():
             totals[key] += value
         for key, value in item.extra_json.items():

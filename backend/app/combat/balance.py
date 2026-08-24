@@ -33,6 +33,8 @@ __all__ = [
     "DOG_GROWTH_PER_LEVEL",
     "DROP_TIER_BONUS_MAX",
     "DROP_TIER_RATES",
+    "DURABILITY_LOSS_PER_ATTACK",
+    "DURABILITY_LOSS_PER_HIT",
     "GLOBAL_DROP_RATE",
     "GRACE_PERIOD_SECONDS",
     "LUCK_HIT_BIAS",
@@ -44,6 +46,7 @@ __all__ = [
     "POTION_HP_PCT",
     "POTION_MP_PCT",
     "POTION_URGENT_HP_PCT",
+    "REPAIR_PRICE_PER_DURABILITY",
     "SKILL_MULTIPLIER_BASE",
     "SKULL_BASE_HP",
     "SKULL_GROWTH_PER_LEVEL",
@@ -165,6 +168,19 @@ DOG_BASE_HP: Final[int] = 60
 # 召唤神兽每级技能等级的 HP 成长。
 # 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
 DOG_GROWTH_PER_LEVEL: Final[int] = 15
+
+# --- 耐久（todo 24 磨损/失效/普修）-----------------------------------------------
+
+# 玩家每次出手命中扣武器耐久的点数（整数化：不做小数磨损，扣完钳 0）.
+# 出处: 自创占位（176 社区只记"装备会掉耐久"概念，无单次磨损数值）; 置信度: low
+DURABILITY_LOSS_PER_ATTACK: Final[int] = 1
+# 玩家每次被怪物命中扣防具（衣服槽）耐久的点数（与武器磨损对称建模）.
+# 出处: 自创占位（同上，社区无单次磨损数值）; 置信度: low
+DURABILITY_LOSS_PER_HIT: Final[int] = 1
+# 商店普修单价：修复 1 点耐久的金币费用；cost = Σ(max_durability - current)
+# × 本值（只修不降上限——特修不在 MVP 范围）。
+# 出处: 自创占位（社区无普修价目表，按挂机金币产出量级定）; 置信度: low
+REPAIR_PRICE_PER_DURABILITY: Final[int] = 100
 
 # --- 跨地图行进（todo 30 传送/跑图消费）---------------------------------------
 
