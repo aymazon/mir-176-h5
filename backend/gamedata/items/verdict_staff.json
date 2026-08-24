@@ -1,0 +1,18 @@
+{
+  "id": "verdict_staff",
+  "name": "裁决之杖",
+  "kind": "weapon",
+  "need_level": 30,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 80,
+  "stackable": false,
+  "max_durability": 32000,
+  "sell_price": 25000,
+  "buy_price": 50000,
+  "stats": {
+    "dc_max": 30
+  },
+  "prefix_max": 1
+}

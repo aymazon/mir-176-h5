@@ -1,0 +1,20 @@
+{
+  "id": "magic_helmet",
+  "name": "魔法头盔",
+  "kind": "helmet",
+  "need_level": 14,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 4,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 900,
+  "buy_price": 1800,
+  "stats": {
+    "ac_max": 1,
+    "mac_min": 1,
+    "mac_max": 1
+  },
+  "prefix_max": 1
+}

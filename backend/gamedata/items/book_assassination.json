@@ -1,0 +1,16 @@
+{
+  "id": "book_assassination",
+  "name": "刺杀剑术（书）",
+  "kind": "book",
+  "need_level": 22,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 4000,
+  "buy_price": 8000,
+  "stats": {},
+  "prefix_max": 0
+}

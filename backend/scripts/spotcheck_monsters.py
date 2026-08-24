@@ -37,9 +37,13 @@ _REPO_ROOT = _BACKEND_ROOT.parent
 _MONSTERS_DIR = _BACKEND_ROOT / "gamedata" / "monsters"
 _DOCS_COVERAGE = _REPO_ROOT / "docs" / "data-coverage.md"
 
-# 抽查 5 只（任务规格指定）：全部取主源 Crystal 同名记录做字段级 diff
 SPOTCHECK_PROBES: Final[tuple[str, ...]] = (
     "半兽战士", "尸王", "白野猪", "沃玛教主", "祖玛教主",
+)
+
+# docs/data-coverage.md 中物品区块的起始标题（todo 19 起归 spotcheck_items 所有）
+_ITEMS_SECTION_MARKER: Final[str] = (
+    "## 2. 物品全量录入：双源出处、字段裁决与映射样本"
 )
 
 _PROBE_TO_ID: Final[dict[str, str]] = {
@@ -269,25 +273,29 @@ def _section1_lines() -> list[str]:
 def render_coverage(
     samples: list[SpotSample], om_rows: list[OmDiffRow]
 ) -> None:
-    lines = _section1_lines()
-    lines.append("")
-    lines.append("## 2. OpenMir2 第二源抽检差异报告（HP/经验/攻上限/物防）")
-    lines.append("")
-    lines.append(
+    """重写本脚本拥有的两个区块：§1 怪物录入 与 §3/§4 抽检报告。
+
+    §2（物品全量录入，todo 19 起）归 spotcheck_items.py 所有，原样保留。
+    """
+    section1 = _section1_lines()
+    section34: list[str] = [""]
+    section34.append("## 3. OpenMir2 第二源抽检差异报告（HP/经验/攻上限/物防）")
+    section34.append("")
+    section34.append(
         "两源为独立发行版，数值差异属预期；主源取数后差异 >30% 的字段列入 M5 校准观察。"
     )
-    lines.append("")
-    lines.append(
+    section34.append("")
+    section34.append(
         "| 怪物 | 等级(本方/OM2) | HP 本方/OM2(差%) | 经验 本方/OM2(差%) "
         "| 攻上限 本方/OM2(差%) | 物防 本方/OM2(差%) |"
     )
-    lines.append("| --- | --- | --- | --- | --- | --- |")
+    section34.append("| --- | --- | --- | --- | --- | --- |")
     for row in om_rows:
         cells = [f"{row['name']} ({row['level_ours']}/{row['level_om2']})"]
         for field, _col in _OPENMIR2_FIELD_MAP:
             ours, theirs, pct = row["diffs"][field]
             cells.append(f"{ours}/{theirs}({pct:+.1f}%)")
-        lines.append("| " + " | ".join(cells) + " |")
+        section34.append("| " + " | ".join(cells) + " |")
     big = sum(
         1
         for row in om_rows
@@ -295,22 +303,22 @@ def render_coverage(
         if abs(row["diffs"][field][2]) > 30
     )
     total = len(om_rows) * len(_OPENMIR2_FIELD_MAP)
-    lines += ["", ""]
-    lines[-1] = (
+    section34.append("")
+    section34.append(
         f"共比对 {len(om_rows)} 只（≥{OPENMIR2_MIN_MONSTERS} 达标）、"
         f"{total} 个字段值，其中差异 >30% 的 {big} 个列入 M5 校准观察。"
     )
-    lines.append("")
-    lines.append("## 3. 转换器字段映射样本（5 只抽查怪：原始记录 → JSON）")
-    lines.append("")
+    section34.append("")
+    section34.append("## 4. 转换器字段映射样本（5 只抽查怪：原始记录 → JSON）")
+    section34.append("")
     for sample in samples:
         raw = sample["raw"]
         monster = sample["monster"]
         values = def_values(monster)
-        lines.append(f"### {sample['name']}（{probe_id(sample['name'])}.json）")
-        lines.append("")
-        lines.append("```")
-        lines.append(
+        section34.append(f"### {sample['name']}（{probe_id(sample['name'])}.json）")
+        section34.append("")
+        section34.append("```")
+        section34.append(
             f"Crystal raw : index={raw['index']} name={raw['name']} "
             f"level={raw['level']} hp={raw['hp']} "
             f"MinAC={raw['min_ac']} MaxAC={raw['max_ac']} "
@@ -320,31 +328,39 @@ def render_coverage(
             f"AttackSpeed={raw['attack_speed_ms']}ms "
             f"MoveSpeed={raw['move_speed_ms']}ms Exp={raw['exp']}"
         )
-        lines.append(
+        section34.append(
             "map         : level←level hp←hp attack←MaxDC defense←MaxAC "
             "magic_defense←MaxMAC accuracy←Accuracy agility←Agility exp←Exp "
             "attack_speed←round(AttackSpeed/1000) "
             "move_speed←round(MoveSpeed/1000)"
         )
-        lines.append("```")
-        lines.append("")
-        lines.append("| 字段 | 值 |")
-        lines.append("| --- | --- |")
+        section34.append("```")
+        section34.append("")
+        section34.append("| 字段 | 值 |")
+        section34.append("| --- | --- |")
         for key, value in values.items():
-            lines.append(f"| {key} | {value} |")
-        lines.append("")
+            section34.append(f"| {key} | {value} |")
+        section34.append("")
+
     existing = _DOCS_COVERAGE.read_text(encoding="utf-8")
-    marker = "## 1. 怪物全量录入：双源出处与字段映射"
-    if marker in existing:
-        head = existing.partition(marker)[0]
-        _DOCS_COVERAGE.write_text(
-            head.rstrip("\n") + "\n" + "\n".join(lines), encoding="utf-8"
+    head = existing.partition("## 1. 怪物全量录入：双源出处与字段映射")[0]
+    # §2 物品区块（spotcheck_items 所有）：定位并原样保留
+    items_start = existing.find(_ITEMS_SECTION_MARKER)
+    items_block = ""
+    if items_start >= 0:
+        items_end = existing.find(
+            "## 3. OpenMir2 第二源抽检差异报告", items_start
         )
-    else:
-        _DOCS_COVERAGE.write_text(
-            existing.rstrip("\n") + "\n" + "\n".join(lines) + "\n", encoding="utf-8"
-        )
-    print(f"[write] {_DOCS_COVERAGE.relative_to(_REPO_ROOT)} §1–§3")
+        items_block = existing[items_start : items_end if items_end >= 0 else len(existing)]
+    doc = head + "\n".join(section1) + "\n"
+    if items_block:
+        doc += items_block.rstrip("\n") + "\n\n"
+    doc += "\n".join(section34)
+    _DOCS_COVERAGE.write_text(doc, encoding="utf-8")
+    print(
+        f"[write] {_DOCS_COVERAGE.relative_to(_REPO_ROOT)} "
+        "§1 + §3–§4（§2 物品区块保留）"
+    )
 
 
 def main() -> int:

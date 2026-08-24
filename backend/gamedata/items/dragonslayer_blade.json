@@ -1,0 +1,19 @@
+{
+  "id": "dragonslayer_blade",
+  "name": "屠龙",
+  "kind": "weapon",
+  "need_level": 34,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 99,
+  "stackable": false,
+  "max_durability": 33000,
+  "sell_price": 35000,
+  "buy_price": 70000,
+  "stats": {
+    "dc_min": 5,
+    "dc_max": 35
+  },
+  "prefix_max": 1
+}

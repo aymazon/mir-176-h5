@@ -1,0 +1,23 @@
+{
+  "id": "heavenly_taoist_robe",
+  "name": "天尊道袍",
+  "kind": "armor",
+  "need_level": 40,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 37,
+  "stackable": false,
+  "max_durability": 30000,
+  "sell_price": 17500,
+  "buy_price": 35000,
+  "stats": {
+    "ac_min": 4,
+    "ac_max": 9,
+    "mac_min": 4,
+    "mac_max": 6,
+    "sc_min": 2,
+    "sc_max": 5
+  },
+  "prefix_max": 1
+}

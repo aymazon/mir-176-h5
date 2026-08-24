@@ -1,0 +1,21 @@
+{
+  "id": "three_eye_bracelet",
+  "name": "三眼手镯",
+  "kind": "bracelet",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 22,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 7000,
+  "sell_price": 5000,
+  "buy_price": 10000,
+  "stats": {
+    "ac_min": 1,
+    "ac_max": 1,
+    "sc_min": 1,
+    "sc_max": 3
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,16 @@
+{
+  "id": "book_ice_roar",
+  "name": "冰咆哮（书）",
+  "kind": "book",
+  "need_level": 35,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 10000,
+  "buy_price": 20000,
+  "stats": {},
+  "prefix_max": 0
+}

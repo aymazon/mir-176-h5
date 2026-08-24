@@ -1,0 +1,18 @@
+{
+  "id": "ghost_gloves",
+  "name": "幽灵手套",
+  "kind": "bracelet",
+  "need_level": 25,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 5,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 4000,
+  "buy_price": 8000,
+  "stats": {
+    "ac_max": 3
+  },
+  "prefix_max": 1
+}

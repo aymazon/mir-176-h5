@@ -1,0 +1,21 @@
+{
+  "id": "bone_jade_staff",
+  "name": "骨玉权杖",
+  "kind": "weapon",
+  "need_level": 35,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 20,
+  "stackable": false,
+  "max_durability": 18000,
+  "sell_price": 25000,
+  "buy_price": 50000,
+  "stats": {
+    "dc_min": 6,
+    "dc_max": 12,
+    "mc_min": 2,
+    "mc_max": 6
+  },
+  "prefix_max": 1
+}

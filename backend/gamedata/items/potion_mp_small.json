@@ -9,10 +9,10 @@
   "weight": 1,
   "stackable": true,
   "max_durability": 0,
-  "sell_price": 12,
-  "buy_price": 30,
+  "sell_price": 20,
+  "buy_price": 40,
   "stats": {
-    "mp_restore": 20
+    "mp_restore": 40
   },
   "prefix_max": 0
 }

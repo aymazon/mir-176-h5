@@ -1,0 +1,19 @@
+{
+  "id": "zhanma_blade",
+  "name": "斩马刀",
+  "kind": "weapon",
+  "need_level": 20,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 27,
+  "stackable": false,
+  "max_durability": 19000,
+  "sell_price": 3000,
+  "buy_price": 6000,
+  "stats": {
+    "dc_min": 5,
+    "dc_max": 15
+  },
+  "prefix_max": 1
+}

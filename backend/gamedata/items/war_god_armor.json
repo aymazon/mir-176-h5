@@ -1,0 +1,21 @@
+{
+  "id": "war_god_armor",
+  "name": "战神盔甲",
+  "kind": "armor",
+  "need_level": 0,
+  "need_strength": 46,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 45,
+  "stackable": false,
+  "max_durability": 30000,
+  "sell_price": 17500,
+  "buy_price": 35000,
+  "stats": {
+    "ac_min": 5,
+    "ac_max": 9,
+    "mac_min": 3,
+    "mac_max": 5
+  },
+  "prefix_max": 1
+}

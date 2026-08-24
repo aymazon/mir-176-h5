@@ -1,0 +1,21 @@
+{
+  "id": "seasoul_staff",
+  "name": "海魂",
+  "kind": "weapon",
+  "need_level": 15,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 12,
+  "stackable": false,
+  "max_durability": 12000,
+  "sell_price": 1500,
+  "buy_price": 3000,
+  "stats": {
+    "dc_min": 3,
+    "dc_max": 10,
+    "mc_min": 1,
+    "mc_max": 2
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,21 @@
+{
+  "id": "heavy_armor",
+  "name": "重盔甲",
+  "kind": "armor",
+  "need_level": 22,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 23,
+  "stackable": false,
+  "max_durability": 25000,
+  "sell_price": 6000,
+  "buy_price": 12000,
+  "stats": {
+    "ac_min": 4,
+    "ac_max": 7,
+    "mac_min": 2,
+    "mac_max": 3
+  },
+  "prefix_max": 1
+}

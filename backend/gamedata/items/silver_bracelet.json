@@ -1,0 +1,18 @@
+{
+  "id": "silver_bracelet",
+  "name": "银手镯",
+  "kind": "bracelet",
+  "need_level": 7,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 2,
+  "stackable": false,
+  "max_durability": 7000,
+  "sell_price": 750,
+  "buy_price": 1500,
+  "stats": {
+    "mac_max": 1
+  },
+  "prefix_max": 1
+}

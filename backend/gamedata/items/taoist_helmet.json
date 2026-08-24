@@ -1,0 +1,21 @@
+{
+  "id": "taoist_helmet",
+  "name": "道士头盔",
+  "kind": "helmet",
+  "need_level": 24,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 3,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 2500,
+  "buy_price": 5000,
+  "stats": {
+    "ac_min": 1,
+    "ac_max": 2,
+    "mac_min": 2,
+    "mac_max": 3
+  },
+  "prefix_max": 1
+}

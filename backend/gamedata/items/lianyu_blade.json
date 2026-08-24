@@ -1,0 +1,18 @@
+{
+  "id": "lianyu_blade",
+  "name": "炼狱",
+  "kind": "weapon",
+  "need_level": 26,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 60,
+  "stackable": false,
+  "max_durability": 28000,
+  "sell_price": 10000,
+  "buy_price": 20000,
+  "stats": {
+    "dc_max": 25
+  },
+  "prefix_max": 1
+}

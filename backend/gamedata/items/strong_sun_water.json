@@ -1,0 +1,19 @@
+{
+  "id": "strong_sun_water",
+  "name": "强效太阳水",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 4,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 1000,
+  "buy_price": 2000,
+  "stats": {
+    "hp_restore": 110,
+    "mp_restore": 180
+  },
+  "prefix_max": 0
+}

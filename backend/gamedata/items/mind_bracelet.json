@@ -1,0 +1,19 @@
+{
+  "id": "mind_bracelet",
+  "name": "心灵手镯",
+  "kind": "bracelet",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 24,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 7000,
+  "sell_price": 6500,
+  "buy_price": 13000,
+  "stats": {
+    "sc_min": 1,
+    "sc_max": 2
+  },
+  "prefix_max": 1
+}

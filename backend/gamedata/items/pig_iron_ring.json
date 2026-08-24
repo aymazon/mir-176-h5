@@ -1,0 +1,19 @@
+{
+  "id": "pig_iron_ring",
+  "name": "生铁戒指",
+  "kind": "ring",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 9,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 5000,
+  "sell_price": 1500,
+  "buy_price": 3000,
+  "stats": {
+    "ac_max": 2,
+    "mc_max": 1
+  },
+  "prefix_max": 1
+}

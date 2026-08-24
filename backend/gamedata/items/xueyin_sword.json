@@ -1,0 +1,22 @@
+{
+  "id": "xueyin_sword",
+  "name": "血饮",
+  "kind": "weapon",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 27,
+  "need_taoism": 0,
+  "weight": 12,
+  "stackable": false,
+  "max_durability": 20000,
+  "sell_price": 20000,
+  "buy_price": 40000,
+  "stats": {
+    "ac_max": 5,
+    "dc_min": 6,
+    "dc_max": 16,
+    "mc_min": 3,
+    "mc_max": 5
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,19 @@
+{
+  "id": "moonwell_blade",
+  "name": "井中月",
+  "kind": "weapon",
+  "need_level": 28,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 58,
+  "stackable": false,
+  "max_durability": 30000,
+  "sell_price": 15000,
+  "buy_price": 30000,
+  "stats": {
+    "dc_min": 7,
+    "dc_max": 22
+  },
+  "prefix_max": 1
+}

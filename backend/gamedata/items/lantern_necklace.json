@@ -1,0 +1,19 @@
+{
+  "id": "lantern_necklace",
+  "name": "灯笼项链",
+  "kind": "necklace",
+  "need_level": 18,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 1500,
+  "buy_price": 3000,
+  "stats": {
+    "ac_max": 1,
+    "dc_min": 1
+  },
+  "prefix_max": 1
+}

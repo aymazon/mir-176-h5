@@ -1,0 +1,16 @@
+{
+  "id": "return_scroll",
+  "name": "回城卷",
+  "kind": "scroll",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 500,
+  "buy_price": 1000,
+  "stats": {},
+  "prefix_max": 0
+}

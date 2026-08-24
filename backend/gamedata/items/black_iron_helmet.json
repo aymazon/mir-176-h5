@@ -1,0 +1,21 @@
+{
+  "id": "black_iron_helmet",
+  "name": "黑铁头盔",
+  "kind": "helmet",
+  "need_level": 0,
+  "need_strength": 46,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 20,
+  "stackable": false,
+  "max_durability": 10000,
+  "sell_price": 20000,
+  "buy_price": 40000,
+  "stats": {
+    "ac_min": 4,
+    "ac_max": 5,
+    "mac_min": 2,
+    "mac_max": 3
+  },
+  "prefix_max": 1
+}

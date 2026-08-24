@@ -1,0 +1,19 @@
+{
+  "id": "fate_blade",
+  "name": "命运之刃",
+  "kind": "weapon",
+  "need_level": 35,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 48,
+  "stackable": false,
+  "max_durability": 20000,
+  "sell_price": 11500,
+  "buy_price": 23000,
+  "stats": {
+    "dc_min": 12,
+    "dc_max": 16
+  },
+  "prefix_max": 1
+}

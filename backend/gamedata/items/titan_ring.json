@@ -1,0 +1,19 @@
+{
+  "id": "titan_ring",
+  "name": "泰坦戒指",
+  "kind": "ring",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 24,
+  "weight": 2,
+  "stackable": false,
+  "max_durability": 5000,
+  "sell_price": 10000,
+  "buy_price": 20000,
+  "stats": {
+    "sc_min": 2,
+    "sc_max": 6
+  },
+  "prefix_max": 1
+}

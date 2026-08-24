@@ -1,12 +1,13 @@
-"""mir_sources.py — Mir2 服务端源数据解析（task 18）。
+"""mir_sources.py — Mir2 服务端源数据解析（task 18/19）。
 
 两个独立数值源：
 1. 主源 Crystal ``Server.MirDB``（Suprcode/Crystal.Database 仓库 cjlaaa/ 目录，
-   与 levels.json 主源 GeeM2 Exps.ini 同一发行版家族）——自定义二进制格式，
-   按 Crystal ``MonsterInfo(BinaryReader)``（LoadVersion∈[89,115) 分支）逐字段解析；
-   记录区定位用"连续记录链扫描"（≥3 条合法记录即认，索引连续性做旁证）。
+   与 levels.json 主源 GeeM2 Exps.ini 同一发行版家族）——自定义二进制，
+   怪物按 Crystal ``MonsterInfo(BinaryReader)``、物品按 ``ItemInfo(BinaryReader)``
+   （Shared/Data/ItemData.cs，LoadVersion>84 分支）逐字段解析；
+   记录区定位用“连续记录链扫描”（≥3 条合法记录即认，索引连续性做旁证）。
 2. 第二源 OpenMir2 ``sql/mir2_data.sql``（github.com/mirbeta/OpenMir2）——
-   标准 MySQL dump 的 ``monsters`` 表 INSERT 行。
+   标准 MySQL dump 的 ``monsters`` 表（task 18）与 ``stditems`` 表（task 19）INSERT 行。
 
 两源均不入库（backend/.gitignore：**/*.db 等）；本地查找顺序：
 /tmp/mir176-sources → backend/scripts/cache。缺失时返回空并给出获取指引。
@@ -34,6 +35,15 @@ _STAT_MIN_AC, _STAT_MAX_AC = 0, 1
 _STAT_MIN_MAC, _STAT_MAX_MAC = 2, 3
 _STAT_MIN_DC, _STAT_MAX_DC = 4, 5
 _STAT_ACCURACY, _STAT_AGILITY, _STAT_HP = 10, 11, 12
+# ItemInfo Stats 块额外键（Shared/Data/Stat.cs）：MinMC=6/MaxMC=7/MinSC=8/MaxSC=9/
+# MP=13/AttackSpeed=14/Luck=15/WearWeight=18/Holy=21/PoisonAttack=23/MagicResist=30
+# /HealthRecovery=32/SpellRecovery=33
+_STAT_MIN_MC, _STAT_MAX_MC = 6, 7
+_STAT_MIN_SC, _STAT_MAX_SC = 8, 9
+_STAT_MP, _STAT_ATTACK_SPEED, _STAT_LUCK = 13, 14, 15
+_STAT_WEAR_WEIGHT, _STAT_HOLY = 18, 21
+_STAT_POISON_ATTACK, _STAT_MAGIC_RESIST = 23, 30
+_STAT_HEALTH_RECOVERY, _STAT_SPELL_RECOVERY = 32, 33
 
 
 class CrystalMonster(TypedDict):
@@ -80,6 +90,11 @@ class _Reader:
 
     def u16(self) -> int:
         value = struct.unpack_from("<H", self.data, self.pos)[0]
+        self.pos += 2
+        return value
+
+    def i16(self) -> int:
+        value = struct.unpack_from("<h", self.data, self.pos)[0]
         self.pos += 2
         return value
 
@@ -311,3 +326,211 @@ def load_openmir2_rows() -> tuple[list[dict[str, str]], Path | None]:
     if path is None:
         return [], None
     return parse_openmir2_sql(path), path
+
+
+# ---------------------------------------------------------------------------
+# Crystal ItemInfo（task 19）：Shared/Data/ItemData.cs，LoadVersion>84 分支
+# ---------------------------------------------------------------------------
+
+
+class CrystalItem(TypedDict):
+    """Crystal ItemInfo 解析结果（字段名对齐 C# 属性，Stats 已展开为 int 键字典）。"""
+
+    index: int
+    name: str
+    type: int  # ItemType 枚举原值
+    required_type: int  # RequirementType：0=Level/3=MaxDC/4=MaxMC/5=MaxSC
+    required_class: int  # 位旗标：Warrior=1/Wizard=2/Taoist=4/None=31(全职业)
+    required_amount: int  # 门槛值（语义由 required_type 决定）
+    shape: int
+    weight: int
+    image: int
+    durability: int
+    stack_size: int
+    price: int
+    stats: dict[int, int]  # Stat 枚举键 → 值（仅非零项）
+
+
+_VALID_REQUIRED_CLASS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 28, 31}
+_VALID_REQUIRED_GENDER = {0, 1, 2, 3}
+_ITEM_TYPE_MAX = 42  # ItemType.SealedHero
+_REQUIRED_TYPE_MAX = 11  # RequiredType.MinSC
+
+
+def _parse_crystal_item(reader: _Reader) -> CrystalItem:
+    """Crystal ItemInfo(BinaryReader)，LoadVersion>84 分支（cjlaaa 为 v105）。"""
+    index = reader.i32()
+    name = reader.string()
+    if not name or len(name) > 40 or any(ord(c) < 32 for c in name):
+        raise ValueError("bad name")
+    item_type = reader.u8()
+    if item_type > _ITEM_TYPE_MAX:
+        raise ValueError("item type out of range")
+    reader.u8()  # Grade
+    required_type = reader.u8()
+    if required_type > _REQUIRED_TYPE_MAX:
+        raise ValueError("required type out of range")
+    required_class = reader.u8()
+    if required_class not in _VALID_REQUIRED_CLASS:
+        raise ValueError("required class out of range")
+    required_gender = reader.u8()
+    if required_gender not in _VALID_REQUIRED_GENDER:
+        raise ValueError("required gender out of range")
+    reader.u8()  # Set
+    shape = reader.i16()
+    weight = reader.u8()
+    reader.u8()  # Light
+    required_amount = reader.u8()
+    image = reader.u16()
+    durability = reader.u16()
+    stack_size = reader.u16()  # v>84: u16（≤84 为 u32 包一层 ushort，本库不涉及）
+    price = reader.u32()
+    if price > 100_000_000:
+        raise ValueError("price out of range")
+    reader.boolean()  # StartItem
+    reader.u8()  # Effect
+    reader.u8()  # bools(NeedIdentify/ClassBased/LevelBased/CanMine…位包)
+    reader.i16()  # Bind
+    reader.i16()  # Unique(SpecialItemMode)
+    reader.u8()  # RandomStatsId
+    reader.boolean()  # CanFastRun
+    reader.boolean()  # CanAwakening
+    reader.u8()  # Slots（v>83）
+    stats = reader.stats()  # v>84：int32 count + count×(byte key, int32 value)
+    has_tooltip = reader.boolean()
+    if has_tooltip:
+        tooltip = reader.string()
+        if len(tooltip) > 500:
+            raise ValueError("tooltip out of range")
+    return {
+        "index": index,
+        "name": name,
+        "type": item_type,
+        "required_type": required_type,
+        "required_class": required_class,
+        "required_amount": required_amount,
+        "shape": shape,
+        "weight": weight,
+        "image": image,
+        "durability": durability,
+        "stack_size": stack_size,
+        "price": price,
+        "stats": stats,
+    }
+
+
+def parse_crystal_mirdb_items(path: Path) -> list[CrystalItem]:
+    """扫描 Server.MirDB，收集全部可解析的 ItemInfo 连续记录链。
+
+    链长阈值取 10（物品表是文件中最大的连续区块之一；实测主链 1300+ 条，
+    前置 MapInfo 段的杂讯链 ≤3 条，阈值拉高即可零误报）。同名取首次出现。
+    """
+    data = path.read_bytes()
+    found: list[CrystalItem] = []
+    seen_names: set[str] = set()
+    size = len(data)
+    i = 0
+    while i < size - 30:
+        reader = _Reader(data, i)
+        chain = 0
+        while True:
+            save = reader.pos
+            try:
+                _parse_crystal_item(reader)
+            except (ValueError, UnicodeDecodeError, struct.error, IndexError):
+                reader.pos = save
+                break
+            chain += 1
+        if chain >= 10:
+            # 第二遍：逐条解析并收集（首遍只测链长，避免半条尾巴计入）
+            walk = _Reader(data, i)
+            for _ in range(chain):
+                record = _parse_crystal_item(walk)
+                if record["name"] not in seen_names:
+                    seen_names.add(record["name"])
+                    found.append(record)
+            i = walk.pos
+        else:
+            i += 1
+    return found
+
+
+class _CrystalItemCachePayload(TypedDict):
+    source_file: str
+    records: list[CrystalItem]
+
+
+def load_crystal_item_records() -> tuple[list[CrystalItem], Path | None]:
+    """Crystal ItemInfo 全量记录（带 scripts/cache/crystal_items.json 缓存）。"""
+    path, _ = resolve_source_paths()
+    if path is None:
+        return [], None
+    cache = _CACHE_DIR / "crystal_items.json"
+    if cache.is_file():
+        try:
+            raw: object = json.loads(cache.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                payload: _CrystalItemCachePayload = {
+                    "source_file": str(raw.get("source_file", "")),
+                    "records": raw.get("records", []),
+                }
+                if payload["source_file"] == str(path):
+                    records = payload["records"]
+                    # JSON 对象键恒为字符串：还原 Stat 枚举 int 键
+                    for record in records:
+                        record["stats"] = {
+                            int(key): value for key, value in record["stats"].items()
+                        }
+                    return records, path
+        except (json.JSONDecodeError, OSError, ValueError, TypeError):
+            pass
+    records = parse_crystal_mirdb_items(path)
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    payload_out: _CrystalItemCachePayload = {
+        "source_file": str(path),
+        "records": records,
+    }
+    cache.write_text(json.dumps(payload_out, ensure_ascii=False), encoding="utf-8")
+    return records, path
+
+
+# ---------------------------------------------------------------------------
+# OpenMir2 stditems 表（task 19 第二源）
+# ---------------------------------------------------------------------------
+
+_OPENMIR2_STDITEMS_COLS = (
+    "Id", "Name", "StdMode", "Shape", "Weight", "AniCount", "Source", "Reserved",
+    "ImgIndex", "DuraMax", "Ac", "AcMax", "Mac", "MacMax", "Dc", "DcMax",
+    "Mc", "McMax", "Sc", "ScMax", "Need", "NeedLevel", "Price", "Stock",
+    "Atkspd", "AgilIty", "Accurate", "Mgavoid", "Strong", "Undead",
+    "HpAdd", "MpAdd", "ExpAdd", "Efftype1", "Effrate1", "Effvalue1",
+    "Efftype2", "Effrate2", "Effvalue2", "SlowDown", "Tox", "ToxAvoid",
+    "UniqueItem", "OverlapItem", "LIGHT", "ItemType", "ItemSet", "Reference",
+)
+
+_INSERT_STDITEMS_RE = re.compile(
+    r"INSERT INTO `stditems` VALUES \((.*?)\);", re.DOTALL
+)
+
+
+def parse_openmir2_stditems(path: Path) -> list[dict[str, str]]:
+    """OpenMir2 mir2_data.sql 的 stditems 表全行（列值保持字符串原样）。
+
+    Need 列语义（经经典官方数值交叉验证：战神盔甲需攻46/恶魔长袍需魔28/
+    幽灵战衣需道27）：0=等级、1=攻击力(DC)、2=魔法力(MC)、3=道术(SC)。
+    """
+    sql = path.read_text(encoding="utf-8")
+    rows: list[dict[str, str]] = []
+    for match in _INSERT_STDITEMS_RE.finditer(sql):
+        values = _split_sql_values(match.group(1))
+        if len(values) != len(_OPENMIR2_STDITEMS_COLS):
+            continue
+        rows.append(dict(zip(_OPENMIR2_STDITEMS_COLS, values)))
+    return rows
+
+
+def load_openmir2_stditem_rows() -> tuple[list[dict[str, str]], Path | None]:
+    _, path = resolve_source_paths()
+    if path is None:
+        return [], None
+    return parse_openmir2_stditems(path), path

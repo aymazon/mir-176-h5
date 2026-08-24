@@ -8,9 +8,9 @@
   "need_taoism": 0,
   "weight": 7,
   "stackable": false,
-  "max_durability": 4,
-  "sell_price": 50,
-  "buy_price": 100,
+  "max_durability": 4000,
+  "sell_price": 25,
+  "buy_price": 50,
   "stats": {
     "dc_min": 2,
     "dc_max": 5

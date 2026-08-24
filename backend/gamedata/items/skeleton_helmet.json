@@ -1,0 +1,19 @@
+{
+  "id": "skeleton_helmet",
+  "name": "骷髅头盔",
+  "kind": "helmet",
+  "need_level": 0,
+  "need_strength": 30,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 5,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 4000,
+  "buy_price": 8000,
+  "stats": {
+    "ac_min": 2,
+    "ac_max": 3
+  },
+  "prefix_max": 1
+}

@@ -1,0 +1,21 @@
+{
+  "id": "dragonvein_sword",
+  "name": "龙纹剑",
+  "kind": "weapon",
+  "need_level": 35,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 40,
+  "stackable": false,
+  "max_durability": 22000,
+  "sell_price": 25000,
+  "buy_price": 50000,
+  "stats": {
+    "dc_min": 8,
+    "dc_max": 20,
+    "sc_min": 3,
+    "sc_max": 6
+  },
+  "prefix_max": 1
+}

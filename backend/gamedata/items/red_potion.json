@@ -1,0 +1,18 @@
+{
+  "id": "red_potion",
+  "name": "红色药水",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 2,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 150,
+  "buy_price": 300,
+  "stats": {
+    "hp_restore": 150
+  },
+  "prefix_max": 0
+}

@@ -1,0 +1,19 @@
+{
+  "id": "tianzhu_necklace",
+  "name": "天珠项链",
+  "kind": "necklace",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 22,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 7000,
+  "sell_price": 5000,
+  "buy_price": 10000,
+  "stats": {
+    "sc_min": 1,
+    "sc_max": 5
+  },
+  "prefix_max": 1
+}

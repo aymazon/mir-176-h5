@@ -1,0 +1,18 @@
+{
+  "id": "ghost_necklace",
+  "name": "幽灵项链",
+  "kind": "necklace",
+  "need_level": 24,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 8000,
+  "sell_price": 5000,
+  "buy_price": 10000,
+  "stats": {
+    "dc_max": 5
+  },
+  "prefix_max": 1
+}

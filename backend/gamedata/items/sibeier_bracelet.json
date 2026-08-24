@@ -1,0 +1,18 @@
+{
+  "id": "sibeier_bracelet",
+  "name": "思贝儿手镯",
+  "kind": "bracelet",
+  "need_level": 26,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 6000,
+  "sell_price": 5000,
+  "buy_price": 10000,
+  "stats": {
+    "mc_max": 2
+  },
+  "prefix_max": 1
+}

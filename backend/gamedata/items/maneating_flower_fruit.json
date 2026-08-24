@@ -1,0 +1,16 @@
+{
+  "id": "maneating_flower_fruit",
+  "name": "食人花果",
+  "kind": "material",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 300,
+  "buy_price": 600,
+  "stats": {},
+  "prefix_max": 0
+}

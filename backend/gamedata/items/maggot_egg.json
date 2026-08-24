@@ -1,0 +1,16 @@
+{
+  "id": "maggot_egg",
+  "name": "蛆卵",
+  "kind": "material",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 250,
+  "buy_price": 500,
+  "stats": {},
+  "prefix_max": 0
+}

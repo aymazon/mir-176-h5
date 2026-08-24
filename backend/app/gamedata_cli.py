@@ -11,8 +11,11 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import cast
 
+from .gamedata_lint import lint_newbie_equipment_thresholds
 from .gamedata_loader import DEFAULT_GAMEDATA_ROOT, GameDataError, load_all
+from .gamedata_schema.items import ItemDef
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,6 +41,18 @@ def main(argv: list[str] | None = None) -> int:
             data = load_all(root=args.root, strict=args.strict)
         except GameDataError as exc:
             print(str(exc), file=sys.stderr)
+            return 1
+        # 语义 lint（todo 19 起步：新手装门槛；todo 22 扩展等级带等规则并接 --strict 门控）
+        lint_problems = lint_newbie_equipment_thresholds(
+            cast("dict[str, ItemDef]", data["items"])
+        )
+        if lint_problems:
+            print(
+                f"gamedata lint failed with {len(lint_problems)} problem(s):",
+                file=sys.stderr,
+            )
+            for problem in lint_problems:
+                print(f"  - {problem}", file=sys.stderr)
             return 1
         counts = ", ".join(f"{cat}={len(entries)}" for cat, entries in data.items())
         print(f"OK: gamedata validation passed ({counts})")

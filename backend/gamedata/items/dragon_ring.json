@@ -1,0 +1,18 @@
+{
+  "id": "dragon_ring",
+  "name": "龙之戒指",
+  "kind": "ring",
+  "need_level": 0,
+  "need_strength": 37,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 5000,
+  "sell_price": 7500,
+  "buy_price": 15000,
+  "stats": {
+    "dc_max": 5
+  },
+  "prefix_max": 1
+}

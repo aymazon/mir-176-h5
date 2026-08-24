@@ -30,6 +30,18 @@
 | `GLOBAL_DROP_RATE` | 1.0 | 自创中性默认 | 高 |
 | `BIRTH_MAP_ID` | "yin-xing-cun" | app/core/config.py 重导出 | 高 |
 
+### 0.1 经验表双源比对（todo 17）
+
+- **主源**：GeeM2 Exps.ini（github.com/cjlaaa/Mir2-GeeM2，基于官方 2005 年泄露的
+  1.76 服务端；缓存 backend/scripts/cache/Exps.ini）→ 已录入 `gamedata/levels.json`
+  （1–40 级，40 级 exp_to_next=0 满级哨兵）。
+- **对照源**：经典官方 1–62 表（原计划页 xuexilei.com 已于 2026-08 验证下线改版，
+  常量为社区多源交叉印证转写，见 scripts/compare_exp_sources.py）。
+- **结果**：仅 1–3 级两源一致（置信度**高**）；**4–40 级共 37 级差异 >5%
+  ——置信度标：中**（主源为真实服务端配置但属私服发行版），全部列入 M5 校准清单；
+  逐级差异表见 docs/data-coverage.md §0。
+- **校准入口**：todo 37 挂机矩阵以实际升级节奏回验（新手区 1–7 级 ≤30min 外推）。
+
 ---
 
 ## 1. 命中公式
@@ -195,26 +207,30 @@ luck=9：硬规则 u' = 1 → adjusted 恒 = 8，方差 = 0（刀刀上限）
 
 ---
 
-## 5. 经验曲线（占位——待 todo 17 回填）
+## 5. 经验曲线（todo 17 双源比对已回填）
 
-- **出处**: docs/MVP/README.md §5.4（176 经典经验曲线，指数增长，1→40 级总量按
-  官方表录入 `gamedata/levels.json`）；第二独立源比对（OpenMir2 Exps.ini 等）
-  由 **todo 17 双源比对**产出差异报告后回填本节——**当前全部数值为占位示例，
-  置信度：待定（暂标低）**。
+- **出处（主源）**: GeeM2 Exps.ini（真实服务端配置，github.com/cjlaaa/Mir2-GeeM2，基于官方
+  2005 年泄露的 1.76 服务端）→ 全表已录入 `gamedata/levels.json`（1–40 级）；
+  schema = app/gamedata_schema/levels.py，加载与校验走 gamedata_loader/CLI。
+- **双源比对**: 对照经典官方 1–62 表（原计划对照页 xuexilei.com 已下线，常量转写自
+  社区多源交叉印证）→ 仅 1–3 级一致（置信度高）；4–40 级共 37 级差异 >5%
+  **置信度：中**，逐级清单落 docs/data-coverage.md §0 并列入 M5 校准清单
+  （todo 37 回验）。4–9 级 GeeM2 低于经典表 25–42%，10 级起反超持续放大
+  （40 级 ≈ 经典表的 6.4 倍）。
 
-**占位手算推导样例**（⚠️ 数值全部非最终，仅演示推导格式）：
+**手算推导样例**（数值已随主源落地：GeeM2 L1=100 exp，与下方假设一致）：
 
 ```
-假设（占位）：1→2 级需 100 exp；鸡 exp=5/只；鸡 HP=25
+假设：1→2 级需 100 exp（= levels.json L1）；鸡 exp=5/只；鸡 HP=25
 1 级战期望伤害 5.9（§2 推导）→ 击杀一只需 ceil(25/5.9) = 5 次出手
 命中 95%（§1）→ 期望出手次数 ≈ 5 / 0.95 ≈ 5.3 次
 攻速每 2 tick 出手（tick=1Hz）→ 单只耗时 ≈ 10.6s
 升到 2 级需 100/5 = 20 只 → ≈ 212s ≈ 3.5min
 ```
 
-**回填清单（todo 17）**：levels.json 全表双源 diff 报告链接、每级累计经验、
-新手区（BIRTH_MAP_ID = yin-xing-cun 周边怪物）1–7 级 ≤30min 的外推验证
-（对接 todo 37 校准矩阵）。
+**todo 17 回填状态**：双源 diff 报告 ✅（docs/data-coverage.md §0，37/40 级超阈）；
+每级累计经验表与新手区（BIRTH_MAP_ID = yin-xing-cun 周边怪物）1–7 级 ≤30min
+的外推验证 → 归 todo 37 校准矩阵消费。
 
 ---
 
@@ -234,3 +250,17 @@ luck=9：硬规则 u' = 1 → adjusted 恒 = 8，方差 = 0（刀刀上限）
 3. 不在 balance.py 写死具体怪物/物品数值（属 gamedata/，todo 20 录入）。
 4. 技能倍率定义处：gamedata/skills/\*.json（todo 11 测试 fixture 手抄
    docs/MVP/README.md §4 表；todo 20 全量录入）；balance.py 只留恒等占位。
+
+---
+
+## 6. 待定项清单：装备穿戴门槛（todo 19）
+
+### 无极棍（道士武器，§7.1 序列「无极棍(28? 校准)」锚点）
+
+- **录入值**：`need_level = 28`（gamedata/items/wuji_cudgel.json）。
+- **出处**：社区主流说法（多个 176 资料站/私服百科一致将无极棍列为 28 级可穿）；
+  双源比对结果不一致——主源 Crystal cjlaaa `Server.MirDB` 记 Lvl:30，
+  第二源 OpenMir2 `mir2_data.sql` 记道术门槛 SC:25。任务规格裁决取社区主流 28 级，
+  覆盖两源（裁决过程见 docs/data-coverage.md §2）。
+- **置信度：中**——两源均非官方公开数值且互不一致，社区主流亦无原始客户端截图级证据；
+  列入 M5 校准清单（与经验表 §5 同批回验）。

@@ -1,0 +1,18 @@
+{
+  "id": "deerskin_boots",
+  "name": "鹿皮靴",
+  "kind": "boots",
+  "need_level": 22,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 6000,
+  "sell_price": 1500,
+  "buy_price": 3000,
+  "stats": {
+    "ac_max": 2
+  },
+  "prefix_max": 1
+}

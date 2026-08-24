@@ -1,0 +1,18 @@
+{
+  "id": "potion_hp_super",
+  "name": "金创药（特量）",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 4,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 125,
+  "buy_price": 250,
+  "stats": {
+    "hp_restore": 150
+  },
+  "prefix_max": 0
+}

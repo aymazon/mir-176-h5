@@ -1,0 +1,20 @@
+{
+  "id": "soul_necklace",
+  "name": "灵魂项链",
+  "kind": "necklace",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 23,
+  "weight": 1,
+  "stackable": false,
+  "max_durability": 7000,
+  "sell_price": 9000,
+  "buy_price": 18000,
+  "stats": {
+    "ac_max": 2,
+    "sc_min": 1,
+    "sc_max": 6
+  },
+  "prefix_max": 1
+}

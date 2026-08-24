@@ -1,0 +1,22 @@
+{
+  "id": "magic_robe",
+  "name": "魔法长袍",
+  "kind": "armor",
+  "need_level": 22,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 12,
+  "stackable": false,
+  "max_durability": 20000,
+  "sell_price": 6000,
+  "buy_price": 12000,
+  "stats": {
+    "ac_min": 3,
+    "ac_max": 5,
+    "mac_min": 3,
+    "mac_max": 4,
+    "mc_max": 2
+  },
+  "prefix_max": 1
+}

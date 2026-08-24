@@ -1,0 +1,18 @@
+{
+  "id": "potion_hp_medium",
+  "name": "金创药（中量）",
+  "kind": "potion",
+  "need_level": 0,
+  "need_strength": 0,
+  "need_magic": 0,
+  "need_taoism": 0,
+  "weight": 2,
+  "stackable": true,
+  "max_durability": 0,
+  "sell_price": 55,
+  "buy_price": 110,
+  "stats": {
+    "hp_restore": 70
+  },
+  "prefix_max": 0
+}
