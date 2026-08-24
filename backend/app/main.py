@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from app.api.auth import router as auth_router
 from app.api.character import router as character_router
 from app.api.health import router as health_router
+from app.api.inventory import router as inventory_router
 from app.api.stream import router as stream_router
 from app.api.stream import shutdown_mock_sources
 from app.sim.tick_loop import shutdown_all_sessions
@@ -31,4 +32,5 @@ app = FastAPI(title="mir-176-h5", version="0.1.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(character_router)
 app.include_router(health_router)
+app.include_router(inventory_router)
 app.include_router(stream_router)
