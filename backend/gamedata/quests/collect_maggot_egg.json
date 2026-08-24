@@ -1,0 +1,18 @@
+{
+  "id": "collect_maggot_egg",
+  "name": "蛆卵收购",
+  "kind": "collect",
+  "level_req": 12,
+  "required_class": null,
+  "target_id": "maggot_egg",
+  "target_count": 5,
+  "reward_gold": 150,
+  "reward_exp": 400,
+  "reward_items": [],
+  "dialogue": {
+    "accept": "药店要 5 枚蛆卵入药，价格公道。",
+    "progress": "蛆卵收购还没完成，继续加油。",
+    "complete": "蛆卵完好，钱拿好。"
+  },
+  "boss_instance": null
+}

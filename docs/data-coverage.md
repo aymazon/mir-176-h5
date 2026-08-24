@@ -517,3 +517,102 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 | undead | True |
 | boss | True |
 | respawn_seconds | 3600 |
+
+
+
+## 5. 技能全量录入：双源出处与习得等级抽检（todo 20，2026-08-25）
+
+- **规范源**：`tests/fixtures/skills_32.json`（task 11 契约 fixture，战 6 / 法 14 / 道 12 = 32；数值=README §4 官方 176 经典设定）。`gamedata/skills/*.json` 由 `scripts/build_skills.py` 从 fixture 派生。
+- **主源**：Crystal `Server.MirDB` MagicInfo——cjlaaa 实证布局（i32 Index + 7bit 名字 + 36 字节定长块 + bool + 可选描述串），非 Crystal master 分支；已验证字节位：b3=职业位旗标(战1/法2/道4)、u16@b10=0 级习得等级。连续记录链扫描（阈值 4），共 64 条。
+- **第二源**：OpenMir2 `sql/mir2_data.sql` magics 表（108 行，Job 0/1/2=战/法/道，NeedL1/L2/L3=各级习得等级）。
+- mp_cost/cooldown/effect_params 两源均无对应字段（Crystal 该布局未含 BaseCost/Delay 明文），以 fixture 为准，M5 校准清单统一处理。
+
+### 习得等级三方比对（本方=fixture/README §4）
+
+| 技能 | 本方 | Crystal | OM2 NeedL1 |
+| --- | --- | --- | --- |
+| 基本剑术 | 7 | 7 | 7 |
+| 爆裂火焰 | 22 | 22 | 22 |
+| 火墙 | 24 | 24 | 24 |
+| 火球术 | 7 | 7 | 7 |
+| 幽灵盾 | 22 | 22 | 22 |
+| 大火球 ⚠ | 19 | 15 | 19 |
+| 半月弯刀 ⚠ | 28 | 26 | 28 |
+| 治愈术 | 7 | 7 | 7 |
+| 地狱火 | 16 | 16 | 16 |
+| 神圣战甲术 | 25 | 25 | 25 |
+| 圣言术 | 32 | 32 | 32 |
+| 冰咆哮 | 35 | 35 | 35 |
+| 隐身术 | 20 | 20 | 20 |
+| 烈火剑法 | 35 | 35 | 35 |
+| 疾光电影 | 26 | 26 | 26 |
+| 地狱雷光 | 30 | 30 | 30 |
+| 魔法盾 | 31 | 31 | 31 |
+| 群体治愈术 | 33 | — | — |
+| 集体隐身术 | 21 | 21 | 21 |
+| 施毒术 | 14 | 14 | 14 |
+| 抗拒火环 | 12 | 12 | 12 |
+| 灵魂火符 | 18 | 18 | 18 |
+| 野蛮冲撞 | 30 | 30 | 30 |
+| 精神力战法 | 9 | 9 | 9 |
+| 召唤神兽 | 35 | 35 | 35 |
+| 召唤骷髅 | 19 | 19 | 19 |
+| 攻杀剑术 ⚠ | 19 | 15 | 19 |
+| 瞬息移动 | 19 | 19 | 19 |
+| 诱惑之光 | 13 | 13 | 13 |
+| 刺杀剑术 ⚠ | 25 | 22 | 25 |
+| 雷电术 | 17 | 17 | 17 |
+| 困魔咒 | 28 | 28 | 28 |
+
+- 同名命中：Crystal 31/32、OM2 31/32（双源齐备 31 条）。
+- 与本方不一致 4 条（⚠ 标注）：cjlaaa 为单服魔改版（攻杀剑术 15/刺杀剑术 22/半月弯刀 26/大火球 15 等），OM2 与经典官方一致；**一律以 README §4 为准**，差异列入 M5 校准观察。
+- 主源缺名：群体治愈术（cjlaaa 技能表未收录该名）。
+
+
+## 6. NPC 与商店清单录入（todo 20，2026-08-25）
+
+- 共录入 11 个 NPC（vendor 6 / quest / teleport），结构自管（README §8 商店、§10 传送员）；坐标为静态区域图展示点（自创占位，M5 校准）。
+- **商品价格**：取 items/*.json 的 `buy_price`（task 19 双源录入产物）；shop_entries.price 与之逐条比对通过。
+- **§8 城市等级售卖规则**（城市等级自定，M5 校准）：银杏村=1、比奇=2、盟重=3、沙巴克=4（MVP 排除沙巴克，不录）。药品档位 min_city_level：小药=1 / 中药=2 / 大药+太阳水=3 / 超级药+强效太阳水=4——高级药只在高级城，脚本逐条断言通过。
+- **地图约束**：maps/ 现有 5 张（todo 21 落地其余区域），故盟重土城/沃玛城 NPC 待地图落地后补录（规划清单：土城守卫/盟重药店/盟重传送员/沃玛猎人/沃玛补给商）。
+- 技能书仅售 32 技能对应书目；分身术（书）/流星火雨（书）不入店（1.8+/非 MVP）。
+
+| NPC | 图 | 类型 | 城市等级 | 商品数 | 服务 |
+| --- | --- | --- | --- | --- | --- |
+| 比奇药店老板 (biqi_apothecary) | biqi-wild | vendor | 2 | 4 | dialog/shop/sell/buy |
+| 比奇武器店老板 (biqi_blacksmith) | biqi-wild | vendor | 2 | 11 | dialog/shop/sell/buy/repair |
+| 比奇书店老板 (biqi_bookstore) | biqi-wild | vendor | 2 | 16 | dialog/shop/sell/buy |
+| 比奇老兵 (biqi_veteran) | biqi-wild | quest | 2 | 0 | dialog |
+| 村庄医师 (healer_npc) | yin-xing-cun | vendor | 1 | 2 | dialog/shop/sell/buy |
+| 古墓向导 (shouren_guide) | shouren-gu-1 | teleport | — | 0 | dialog/teleport |
+| 银杏铁匠 (yinxing_blacksmith) | yin-xing-cun | vendor | 1 | 6 | dialog/shop/sell/buy/repair |
+| 屠夫 (yinxing_butcher) | yin-xing-cun | quest | 1 | 0 | dialog |
+| 村长 (yinxing_chief) | yin-xing-cun | quest | 1 | 0 | dialog |
+| 杂货店老板 (yinxing_grocer) | yin-xing-cun | vendor | 1 | 5 | dialog/shop/sell/buy |
+| 传送员 (yinxing_teleporter) | yin-xing-cun | teleport | 1 | 0 | dialog/teleport |
+
+
+## 7. 任务数据录入（todo 20，2026-08-25）
+
+- 共录入 13 个任务（≥8 达标）：按 README §9 构成——新手引导 4 / 各区悬赏 3 / 收集 3 / 35 级职业专属 3。
+- 奖励数值自定（任务为点缀、低收益，M5 校准）；素材与奖励物品均为 items/ 既有 id，loader 交叉引用校验通过。
+- **命运之刃**（warrior_fate_blade）：战士 35 级专属，kind=kill 目标白野猪；`boss_instance.zone_id="shimen-5"`（石墓五层分区，地图由 todo 21 落地）+ `boss_instance.weak_clone=true`（弱化分身，不掉本体掉落表）；奖励 fate_blade。
+- 法师/道士 35 级技能书引导走 kind=profession（target 指向 ice_thunder/summon_beast 技能 id），奖励对应技能书。
+- 红线遵守：无日常/链式字段（脚本断言 daily/repeat/pre 等键不存在）。
+
+| 任务 | 类型 | 等级 | 职业 | 目标 | 奖励 |
+| --- | --- | --- | --- | --- | --- |
+| 土城悬赏：钳虫 (bounty_clamp_worm_15) | kill | 20 | — | evil_clamp_worm×15 | 金币1200/经验6000 |
+| 讨伐半兽勇士 (bounty_orc_champion_10) | kill | 25 | — | orc_champion×10 | 金币2000/经验12000 |
+| 清剿骷髅洞 (bounty_skeleton_20) | kill | 10 | — | skeleton×20 | 金币500/经验1500 |
+| 食人花果 (collect_flower_fruit) | collect | 4 | — | maneating_flower_fruit×5 | 金币100/经验150 |
+| 蛆卵收购 (collect_maggot_egg) | collect | 12 | — | maggot_egg×5 | 金币150/经验400 |
+| 蜘蛛牙收购 (collect_spider_fang) | collect | 16 | — | spider_fang×5 | 金币200/经验700 |
+| 屠夫的肉 (newbie_butcher_meat) | collect | 2 | — | meat×10 | 金币80/经验60/potion_hp_small |
+| 除害新手村 (newbie_kill_5) | kill | 1 | — | chicken×5 | 金币100/经验50/wooden_sword |
+| 送信比奇 (newbie_letter_bookstore) | dialogue | 5 | — | biqi_bookstore×1 | 金币100/经验120 |
+| 拜会村长 (newbie_meet_chief) | dialogue | 1 | — | yinxing_chief×1 | 金币50/经验30 |
+| 神兽召唤引 (taoist_summon_beast_guide) | profession | 35 | taoist | summon_beast×1 | 金币500/经验10000/book_summon_beast |
+| 命运之刃 (warrior_fate_blade) | kill | 35 | warrior | wild_boar_white×1 +弱化分身@shimen-5 | 经验20000/fate_blade |
+| 冰咆哮书引 (wizard_ice_roar_guide) | profession | 35 | wizard | ice_thunder×1 | 金币500/经验10000/book_ice_roar |
+

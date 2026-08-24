@@ -1,0 +1,20 @@
+{
+  "id": "taoist_summon_beast_guide",
+  "name": "神兽召唤引",
+  "kind": "profession",
+  "level_req": 35,
+  "required_class": "taoist",
+  "target_id": "summon_beast",
+  "target_count": 1,
+  "reward_gold": 500,
+  "reward_exp": 10000,
+  "reward_items": [
+    "book_summon_beast"
+  ],
+  "dialogue": {
+    "accept": "沃玛教主手中有一册召唤神兽的书，取回它，让神兽听你号令。",
+    "progress": "神兽召唤引还没完成，继续加油。",
+    "complete": "从此神兽与你同行。"
+  },
+  "boss_instance": null
+}

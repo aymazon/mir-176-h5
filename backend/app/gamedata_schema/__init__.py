@@ -7,26 +7,32 @@
 from .common import GameDataModel, IdSlug
 from .drops import DropEntry, DropItem
 from .items import ItemDef, ItemKind
+from .levels import LevelEntry, LevelTable
 from .maps import MapDef
 from .monsters import MonsterDef
-from .npcs import NpcDef, NpcKind
-from .quests import QuestDef, QuestKind
+from .npcs import NpcDef, NpcKind, ShopEntry
+from .quests import BossInstanceSpec, QuestClass, QuestDef, QuestKind
 from .skills import SkillClass, SkillDef, SkillTarget
 from .spawns import SpawnEntry, SpawnLocation
 
 __all__ = [
+    "BossInstanceSpec",
     "DropEntry",
     "DropItem",
     "GameDataModel",
     "IdSlug",
     "ItemDef",
     "ItemKind",
+    "LevelEntry",
+    "LevelTable",
     "MapDef",
     "MonsterDef",
     "NpcDef",
     "NpcKind",
+    "QuestClass",
     "QuestDef",
     "QuestKind",
+    "ShopEntry",
     "SkillClass",
     "SkillDef",
     "SkillTarget",

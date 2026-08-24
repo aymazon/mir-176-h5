@@ -1,0 +1,20 @@
+{
+  "id": "yinxing_teleporter",
+  "name": "传送员",
+  "map_id": "yin-xing-cun",
+  "kind": "teleport",
+  "city_level": 1,
+  "coords": [
+    48,
+    48
+  ],
+  "services": [
+    "dialog",
+    "teleport"
+  ],
+  "shop_items": [],
+  "shop_entries": [],
+  "dialogue": [
+    "想去哪一层？只要金币够，我送你到洞窟深处。"
+  ]
+}

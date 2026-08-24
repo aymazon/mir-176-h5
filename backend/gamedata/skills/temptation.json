@@ -1,0 +1,20 @@
+{
+  "id": "temptation",
+  "name": "诱惑之光",
+  "class": "wizard",
+  "learn_level": 13,
+  "mp_cost": 15,
+  "cooldown_seconds": 3,
+  "max_level": 3,
+  "level_exp_required": [
+    170,
+    340,
+    510
+  ],
+  "target": "enemy",
+  "effect_params": {
+    "charm_rate_percent": 40,
+    "max_pets": 2,
+    "max_pet_level_gap": 2
+  }
+}

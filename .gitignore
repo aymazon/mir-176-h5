@@ -233,6 +233,7 @@ frontend/test-results/
 backend/.venv/
 backend/.env
 scripts/artifacts/
+backend/scripts/cache/
 frontend/e2e/artifacts/
 
 # generic node / test tooling

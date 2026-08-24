@@ -1,0 +1,18 @@
+{
+  "id": "spirit_sword",
+  "name": "精神力战法",
+  "class": "taoist",
+  "learn_level": 9,
+  "mp_cost": 0,
+  "cooldown_seconds": 0,
+  "max_level": 3,
+  "level_exp_required": [
+    140,
+    280,
+    420
+  ],
+  "target": "self",
+  "effect_params": {
+    "accuracy_bonus": 3
+  }
+}

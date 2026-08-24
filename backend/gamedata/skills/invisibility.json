@@ -1,0 +1,18 @@
+{
+  "id": "invisibility",
+  "name": "隐身术",
+  "class": "taoist",
+  "learn_level": 20,
+  "mp_cost": 15,
+  "cooldown_seconds": 3,
+  "max_level": 3,
+  "level_exp_required": [
+    250,
+    500,
+    750
+  ],
+  "target": "self",
+  "effect_params": {
+    "duration_ticks": 15
+  }
+}

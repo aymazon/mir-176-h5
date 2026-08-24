@@ -1,0 +1,19 @@
+{
+  "id": "yinxing_butcher",
+  "name": "屠夫",
+  "map_id": "yin-xing-cun",
+  "kind": "quest",
+  "city_level": 1,
+  "coords": [
+    52,
+    38
+  ],
+  "services": [
+    "dialog"
+  ],
+  "shop_items": [],
+  "shop_entries": [],
+  "dialogue": [
+    "新鲜的肉我全收，去给我弄点来。"
+  ]
+}

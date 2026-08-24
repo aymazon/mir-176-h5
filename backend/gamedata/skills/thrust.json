@@ -1,0 +1,19 @@
+{
+  "id": "thrust",
+  "name": "刺杀剑术",
+  "class": "warrior",
+  "learn_level": 25,
+  "mp_cost": 0,
+  "cooldown_seconds": 0,
+  "max_level": 3,
+  "level_exp_required": [
+    220,
+    440,
+    660
+  ],
+  "target": "enemy",
+  "effect_params": {
+    "damage_multiplier": 1.1,
+    "ignore_defense": 1
+  }
+}

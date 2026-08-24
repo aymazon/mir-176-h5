@@ -1,4 +1,4 @@
-"""Gamedata 启动加载器：扫描 backend/gamedata/ 8 类目录，校验失败拒绝启动（raise）。
+"""Gamedata 启动加载器：扫描 backend/gamedata/ 8 类目录 + 根目录 levels.json，校验失败拒绝启动（raise）。
 
 加载分两个阶段：
 1. 解析——逐文件 JSON 语法 + Pydantic 形状校验，构建各类 id 索引；
@@ -13,13 +13,14 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from pydantic import ValidationError
 
 from .gamedata_schema import (
     DropEntry,
     ItemDef,
+    LevelTable,
     MapDef,
     MonsterDef,
     NpcDef,
@@ -64,6 +65,49 @@ _CATEGORIES: list[tuple[str, type[GameDataModel], _KeyFn]] = [
     ("drops", DropEntry, _drop_key),
     ("spawns", SpawnEntry, _spawn_key),
 ]
+
+# levels.json：gamedata 根目录下的单文件类别（区别于上方的目录类别），
+# 键为 str(level)；无交叉引用，但要求等级从 1 连续递增。
+LEVELS_FILE = "levels.json"
+
+
+def _parse_levels(root: Path, errors: list[str]) -> dict[str, GameDataModel]:
+    """解析根目录单文件 levels.json，返回 str(level) -> LevelEntry。错误记入 errors。"""
+    rel = LEVELS_FILE
+    path = root / rel
+    index: dict[str, GameDataModel] = {}
+    if not path.is_file():
+        errors.append(f"{rel}: file missing")
+        return index
+    try:
+        raw = cast("object", json.loads(path.read_text(encoding="utf-8")))
+    except json.JSONDecodeError as exc:
+        errors.append(
+            f"{rel}: invalid JSON at line {exc.lineno} column {exc.colno}: {exc.msg}"
+        )
+        return index
+    try:
+        table = LevelTable.model_validate(raw)
+    except ValidationError as exc:
+        for err in exc.errors():
+            errors.append(f"{rel}: {_loc_str(err['loc'])}: {err['msg']}")
+        return index
+    prev_level = 0
+    for i, entry in enumerate(table.levels):
+        if entry.level != prev_level + 1:
+            expected = prev_level + 1
+            msg = (
+                f"{rel}: levels[{i}]: level {entry.level} out of order "
+                f"(expected {expected}; must start at 1 and increase by 1)"
+            )
+            errors.append(msg)
+        prev_level = entry.level
+        key = str(entry.level)
+        if key in index:
+            errors.append(f"{rel}: duplicate level '{key}'")
+            continue
+        index[key] = entry
+    return index
 
 # quests.target_id 按 kind 定向到被引用类别。
 _QUEST_TARGET: dict[QuestKind, tuple[str, str]] = {
@@ -166,6 +210,16 @@ def _check_cross_references(
         _check_ref(errors, rel("npcs", key), "map_id", n.map_id, "maps", maps)
         for i, ref in enumerate(n.shop_items):
             _check_ref(errors, rel("npcs", key), f"shop_items[{i}]", ref, "items", items)
+        for i, entry in enumerate(n.shop_entries):
+            # task 20：商店售卖规则明细，item_id 同样必须存在（与 shop_items 同集）
+            _check_ref(
+                errors,
+                rel("npcs", key),
+                f"shop_entries[{i}].item_id",
+                entry.item_id,
+                "items",
+                items,
+            )
 
     # drops: monster_id -> monsters，entries[*].item_id(非 null) -> items
     for key, d in data["drops"].items():
@@ -224,6 +278,8 @@ def load_all(
         index, key_origin = _parse_category(root_path, category, model, key_fn, errors)
         data[category] = index
         origins[category] = key_origin
+
+    data["levels"] = _parse_levels(root_path, errors)
 
     if not errors:
         _check_cross_references(data, origins, errors)

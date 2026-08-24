@@ -1,0 +1,18 @@
+{
+  "id": "thunder_bolt",
+  "name": "雷电术",
+  "class": "wizard",
+  "learn_level": 17,
+  "mp_cost": 14,
+  "cooldown_seconds": 1,
+  "max_level": 3,
+  "level_exp_required": [
+    210,
+    420,
+    630
+  ],
+  "target": "enemy",
+  "effect_params": {
+    "damage_multiplier": 1.75
+  }
+}

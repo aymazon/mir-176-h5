@@ -1,0 +1,19 @@
+{
+  "id": "magic_shield",
+  "name": "魔法盾",
+  "class": "wizard",
+  "learn_level": 31,
+  "mp_cost": 40,
+  "cooldown_seconds": 6,
+  "max_level": 3,
+  "level_exp_required": [
+    350,
+    700,
+    1050
+  ],
+  "target": "self",
+  "effect_params": {
+    "absorb_pool": 50,
+    "duration_ticks": 30
+  }
+}

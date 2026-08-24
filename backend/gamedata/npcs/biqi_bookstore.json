@@ -1,0 +1,120 @@
+{
+  "id": "biqi_bookstore",
+  "name": "比奇书店老板",
+  "map_id": "biqi-wild",
+  "kind": "vendor",
+  "city_level": 2,
+  "coords": [
+    130,
+    128
+  ],
+  "services": [
+    "dialog",
+    "shop",
+    "sell",
+    "buy"
+  ],
+  "shop_items": [
+    "book_basic_sword",
+    "book_fireball",
+    "book_healing",
+    "book_slaying_sword",
+    "book_assassination",
+    "book_lightning",
+    "book_half_moon",
+    "book_savage_charge",
+    "book_summon_skeleton",
+    "book_demon_binding",
+    "book_fire_sword",
+    "book_hell_lightning",
+    "book_magic_shield",
+    "book_holy_word",
+    "book_ice_roar",
+    "book_summon_beast"
+  ],
+  "shop_entries": [
+    {
+      "item_id": "book_basic_sword",
+      "price": 500,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_fireball",
+      "price": 500,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_healing",
+      "price": 500,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_slaying_sword",
+      "price": 5000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_assassination",
+      "price": 8000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_lightning",
+      "price": 8000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_half_moon",
+      "price": 15000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_savage_charge",
+      "price": 18000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_summon_skeleton",
+      "price": 9000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_demon_binding",
+      "price": 16000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_fire_sword",
+      "price": 20000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_hell_lightning",
+      "price": 20000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_magic_shield",
+      "price": 35000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_holy_word",
+      "price": 40000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_ice_roar",
+      "price": 20000,
+      "min_city_level": 1
+    },
+    {
+      "item_id": "book_summon_beast",
+      "price": 20000,
+      "min_city_level": 1
+    }
+  ],
+  "dialogue": [
+    "秘籍虽好，还得自己练。"
+  ]
+}

@@ -534,3 +534,169 @@ def load_openmir2_stditem_rows() -> tuple[list[dict[str, str]], Path | None]:
     if path is None:
         return [], None
     return parse_openmir2_stditems(path), path
+
+# ---------------------------------------------------------------------------
+# Crystal MagicInfo（task 20）：Server/MirDatabase/MagicInfo.cs BinaryReader 分支
+# ---------------------------------------------------------------------------
+
+
+class CrystalMagic(TypedDict):
+    """Crystal MagicInfo 解析结果（cjlaaa 实证布局，逆向自字节样本）。
+
+    该发行版的 MagicInfo 与 Crystal master 版（Name+Spell+BaseCost…）不同：
+    记录 = i32 Index + 7bit 名字 + 36 字节定长块 + bool HasDesc + 可选描述串。
+    定长块内已验证的字节位（10 条已知技能交叉验证，见 docs/data-coverage.md §5）：
+    - b3：职业位旗标 Warrior=1 / Wizard=2 / Taoist=4（可组合）
+    - u16@b6：Spell 效果 id
+    - u16@b10：技能 0 级习得等级（与 OpenMir2 NeedL1 同语义）
+    其余字节未解码（各技能恒定或无对应 schema 字段），不参与映射。
+    """
+
+    index: int
+    name: str
+    job_flag: int  # 位旗标：Warrior=1/Wizard=2/Taoist=4
+    spell_id: int
+    learn_level: int
+
+
+_MAGIC_JOB_FLAGS = {1, 2, 3, 4, 5, 6, 7}
+
+
+def _parse_crystal_magic(reader: _Reader) -> CrystalMagic:
+    """cjlaaa Server.MirDB MagicInfo 记录（实证布局，非 Crystal master 分支）。"""
+    index = reader.i32()
+    name = reader.string()
+    if not name or len(name) > 40 or any(ord(c) < 32 for c in name):
+        raise ValueError("bad name")
+    block = reader.data[reader.pos : reader.pos + 36]
+    if len(block) != 36:
+        raise ValueError("magic block out of range")
+    reader.pos += 36
+    # 定长块结构校验：b1/b2 恒 0、b4=3(max_level)、b5=0、b3 职业旗标、习得等级合理
+    if block[1] != 0 or block[2] != 0 or block[4] != 3 or block[5] != 0:
+        raise ValueError("magic block shape mismatch")
+    if block[3] not in _MAGIC_JOB_FLAGS:
+        raise ValueError("magic job flag out of range")
+    spell_id = struct.unpack_from("<H", block, 6)[0]
+    learn_level = struct.unpack_from("<H", block, 10)[0]
+    if spell_id > 500 or not (1 <= learn_level <= 100):
+        raise ValueError("magic field out of range")
+    has_desc = reader.boolean()
+    if has_desc:
+        desc = reader.string()
+        if len(desc) > 300:
+            raise ValueError("magic desc out of range")
+    return {
+        "index": index,
+        "name": name,
+        "job_flag": block[3],
+        "spell_id": spell_id,
+        "learn_level": learn_level,
+    }
+
+
+def parse_crystal_mirdb_magics(path: Path) -> list[CrystalMagic]:
+    """扫描 Server.MirDB，收集全部可解析的 MagicInfo 连续记录链。
+
+    链长阈值取 4（技能表百余条且定长块约束强；物品段的同名书名不满足
+    本布局，不会成链）。同名取首次出现。
+    """
+    data = path.read_bytes()
+    found: list[CrystalMagic] = []
+    seen_names: set[str] = set()
+    size = len(data)
+    i = 0
+    while i < size - 48:
+        reader = _Reader(data, i)
+        chain = 0
+        while True:
+            save = reader.pos
+            try:
+                _parse_crystal_magic(reader)
+            except (ValueError, UnicodeDecodeError, struct.error, IndexError):
+                reader.pos = save
+                break
+            chain += 1
+        if chain >= 4:
+            walk = _Reader(data, i)
+            for _ in range(chain):
+                record = _parse_crystal_magic(walk)
+                if record["name"] not in seen_names:
+                    seen_names.add(record["name"])
+                    found.append(record)
+            i = walk.pos
+        else:
+            i += 1
+    return found
+
+
+class _CrystalMagicCachePayload(TypedDict):
+    source_file: str
+    records: list[CrystalMagic]
+
+
+def load_crystal_magic_records() -> tuple[list[CrystalMagic], Path | None]:
+    """Crystal MagicInfo 全量记录（带 scripts/cache/crystal_magics.json 缓存）。"""
+    path, _ = resolve_source_paths()
+    if path is None:
+        return [], None
+    cache = _CACHE_DIR / "crystal_magics.json"
+    if cache.is_file():
+        try:
+            raw: object = json.loads(cache.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                payload: _CrystalMagicCachePayload = {
+                    "source_file": str(raw.get("source_file", "")),
+                    "records": raw.get("records", []),
+                }
+                if payload["source_file"] == str(path):
+                    return payload["records"], path
+        except (json.JSONDecodeError, OSError):
+            pass
+    records = parse_crystal_mirdb_magics(path)
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    payload_out: _CrystalMagicCachePayload = {
+        "source_file": str(path),
+        "records": records,
+    }
+    cache.write_text(json.dumps(payload_out, ensure_ascii=False), encoding="utf-8")
+    return records, path
+
+
+# OpenMir2 magics 表（task 20 第二源）
+# ---------------------------------------------------------------------------
+
+
+_OPENMIR2_MAGICS_COLS = (
+    "Idx", "MagID", "MagName", "EffectType", "Effect", "Spell", "Power",
+    "MaxPower", "DefSpell", "DefPower", "DefMaxPower", "Job", "NeedL1",
+    "L1Train", "NeedL2", "L2Train", "NeedL3", "L3Train", "Delay", "Descr",
+)
+
+_INSERT_MAGICS_RE = re.compile(
+    r"INSERT INTO `magics` VALUES \((.*?)\);", re.DOTALL
+)
+
+
+def parse_openmir2_magics(path: Path) -> list[dict[str, str]]:
+    """OpenMir2 mir2_data.sql 的 magics 表全行（列值保持字符串原样）。
+
+    列语义（经经典设定交叉验证）：Job 0=战士/1=法师/2=道士；
+    NeedL1/L2/L3 = 技能 0/1/2 级习得等级；Delay 单位为源自定义（非毫秒，
+    与 Crystal DelayBase 不同量纲，仅作参考不比对）。
+    """
+    sql = path.read_text(encoding="utf-8")
+    rows: list[dict[str, str]] = []
+    for match in _INSERT_MAGICS_RE.finditer(sql):
+        values = _split_sql_values(match.group(1))
+        if len(values) != len(_OPENMIR2_MAGICS_COLS):
+            continue
+        rows.append(dict(zip(_OPENMIR2_MAGICS_COLS, values)))
+    return rows
+
+
+def load_openmir2_magic_rows() -> tuple[list[dict[str, str]], Path | None]:
+    _, path = resolve_source_paths()
+    if path is None:
+        return [], None
+    return parse_openmir2_magics(path), path

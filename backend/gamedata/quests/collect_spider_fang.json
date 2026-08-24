@@ -1,0 +1,18 @@
+{
+  "id": "collect_spider_fang",
+  "name": "蜘蛛牙收购",
+  "kind": "collect",
+  "level_req": 16,
+  "required_class": null,
+  "target_id": "spider_fang",
+  "target_count": 5,
+  "reward_gold": 200,
+  "reward_exp": 700,
+  "reward_items": [],
+  "dialogue": {
+    "accept": "铁匠想拿 5 颗蜘蛛牙做毒刃。",
+    "progress": "蜘蛛牙收购还没完成，继续加油。",
+    "complete": "成色不错，下次再来。"
+  },
+  "boss_instance": null
+}

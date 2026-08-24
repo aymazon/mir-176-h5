@@ -1,0 +1,19 @@
+{
+  "id": "holy_word",
+  "name": "圣言术",
+  "class": "wizard",
+  "learn_level": 32,
+  "mp_cost": 32,
+  "cooldown_seconds": 5,
+  "max_level": 3,
+  "level_exp_required": [
+    360,
+    720,
+    1080
+  ],
+  "target": "enemy",
+  "effect_params": {
+    "undead_kill_rate_percent": 30,
+    "damage_multiplier": 1.5
+  }
+}

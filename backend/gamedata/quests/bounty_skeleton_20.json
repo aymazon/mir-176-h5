@@ -1,0 +1,18 @@
+{
+  "id": "bounty_skeleton_20",
+  "name": "清剿骷髅洞",
+  "kind": "kill",
+  "level_req": 10,
+  "required_class": null,
+  "target_id": "skeleton",
+  "target_count": 20,
+  "reward_gold": 500,
+  "reward_exp": 1500,
+  "reward_items": [],
+  "dialogue": {
+    "accept": "骷髅洞的骷髅越来越猖狂，去清剿 20 只。",
+    "progress": "清剿骷髅洞还没完成，继续加油。",
+    "complete": "干得好，比奇欠你一份人情。"
+  },
+  "boss_instance": null
+}

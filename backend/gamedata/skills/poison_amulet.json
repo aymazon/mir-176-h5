@@ -1,0 +1,20 @@
+{
+  "id": "poison_amulet",
+  "name": "施毒术",
+  "class": "taoist",
+  "learn_level": 14,
+  "mp_cost": 10,
+  "cooldown_seconds": 1,
+  "max_level": 3,
+  "level_exp_required": [
+    190,
+    380,
+    570
+  ],
+  "target": "enemy",
+  "effect_params": {
+    "dot_damage_per_tick": 3,
+    "dot_duration_ticks": 8,
+    "defense_down": 2
+  }
+}

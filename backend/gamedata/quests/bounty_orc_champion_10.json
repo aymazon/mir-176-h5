@@ -1,0 +1,18 @@
+{
+  "id": "bounty_orc_champion_10",
+  "name": "讨伐半兽勇士",
+  "kind": "kill",
+  "level_req": 25,
+  "required_class": null,
+  "target_id": "orc_champion",
+  "target_count": 10,
+  "reward_gold": 2000,
+  "reward_exp": 12000,
+  "reward_items": [],
+  "dialogue": {
+    "accept": "沃玛森林的半兽勇士威胁商路，讨伐 10 只。",
+    "progress": "讨伐半兽勇士还没完成，继续加油。",
+    "complete": "商路暂时安全了，这是你的报酬。"
+  },
+  "boss_instance": null
+}

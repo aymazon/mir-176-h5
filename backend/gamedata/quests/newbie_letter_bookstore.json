@@ -1,0 +1,18 @@
+{
+  "id": "newbie_letter_bookstore",
+  "name": "送信比奇",
+  "kind": "dialogue",
+  "level_req": 5,
+  "required_class": null,
+  "target_id": "biqi_bookstore",
+  "target_count": 1,
+  "reward_gold": 100,
+  "reward_exp": 120,
+  "reward_items": [],
+  "dialogue": {
+    "accept": "把这封信送到比奇书店老板手上。",
+    "progress": "送信比奇还没完成，继续加油。",
+    "complete": "信我收到了，替我谢谢村长。"
+  },
+  "boss_instance": null
+}

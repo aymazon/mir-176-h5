@@ -82,7 +82,8 @@ def test_skill_sample_ok():
 def test_npc_sample_ok():
     n = NpcDef.model_validate(_load_sample("npcs", "healer_npc"))
     assert n.map_id == "yin-xing-cun"
-    assert n.shop_items == ["wooden_sword"]
+    # todo 20 起药店售卖小瓶药（§8 城市等级规则：银杏村=L1 城）
+    assert n.shop_items == ["potion_hp_small", "potion_mp_small"]
 
 
 def test_quest_sample_ok():
@@ -284,3 +285,94 @@ def test_cli_validate_exit_1_on_newbie_overcap(broken_root: Path):
     assert result.returncode == 1
     assert "items/cloth_robe.json" in result.stderr
     assert "need_level" in result.stderr
+
+# ---------- todo 20：技能 32 + NPC/商店 + 任务 ----------
+
+
+def test_skills_count_is_32():
+    """task 20 验收：gamedata/skills 恰好 32 个。"""
+    count = len(list((GAMEDATA_ROOT / "skills").glob("*.json")))
+    assert count == 32, f"skills/ 共 {count} 个 != 32"
+
+
+def test_skill_learn_levels_match_readme():
+    """task 20 验收：三职业习得等级与 README §4 表逐项一致（脚本断言）。"""
+    from scripts.check_skill_learn_levels import check as check_learn_levels
+
+    problems = check_learn_levels(BACKEND_ROOT)
+    assert problems == [], f"习得等级断言失败: {problems}"
+
+
+def test_magic_shield_learn_level_31():
+    """QA 锚点：魔法盾 L31（README §4.2 表）。"""
+    s = SkillDef.model_validate(_load_sample("skills", "magic_shield"))
+    assert s.name == "魔法盾"
+    assert s.learn_level == 31
+
+
+def test_level35_trio():
+    """QA 锚点：烈火剑法/冰咆哮/召唤神兽 均 L35。"""
+    for stem, name in (
+        ("liehuo", "烈火剑法"),
+        ("ice_thunder", "冰咆哮"),
+        ("summon_beast", "召唤神兽"),
+    ):
+        s = SkillDef.model_validate(_load_sample("skills", stem))
+        assert s.learn_level == 35, f"{stem} learn_level={s.learn_level} != 35"
+        assert s.name == name
+
+
+def test_npcs_full_dataset_with_shops():
+    """task 20 验收：NPC ≥5，vendor 商店非空且含 §8 售卖明细。"""
+    paths = sorted((GAMEDATA_ROOT / "npcs").glob("*.json"))
+    assert len(paths) >= 5
+    vendor_count = 0
+    for path in paths:
+        npc = NpcDef.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        if npc.kind.value == "vendor":
+            vendor_count += 1
+            assert npc.shop_items, f"{path.name}: vendor 商店为空"
+            entry_ids = {e.item_id for e in npc.shop_entries}
+            assert entry_ids == set(npc.shop_items), f"{path.name}: entries/items 不同集"
+    assert vendor_count >= 4
+
+
+def test_quests_full_dataset_and_fate_blade():
+    """task 20 验收：任务 ≥8；命运之刃含弱化分身标记。"""
+    paths = sorted((GAMEDATA_ROOT / "quests").glob("*.json"))
+    assert len(paths) >= 8
+    quest = QuestDef.model_validate(_load_sample("quests", "warrior_fate_blade"))
+    assert quest.level_req == 35
+    assert quest.required_class is not None and quest.required_class.value == "warrior"
+    assert quest.target_id == "wild_boar_white"
+    assert quest.boss_instance is not None
+    assert quest.boss_instance.zone_id == "shimen-5"
+    assert quest.boss_instance.weak_clone is True
+    assert "fate_blade" in quest.reward_items
+
+
+def test_quests_no_daily_or_chain_fields():
+    """计划红线：任务不加日常/链式字段。"""
+    forbidden = {"daily", "repeat", "repeatable", "pre", "chain", "next_quest"}
+    for path in (GAMEDATA_ROOT / "quests").glob("*.json"):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        assert not (forbidden & set(raw)), f"{path.name}: 出现禁用字段"
+
+
+def test_check_skill_learn_levels_flags_drift(tmp_path: Path):
+    """QA failure 场景：魔法盾改 30 → 断言报出文件+两边数值。"""
+    import shutil
+
+    root = tmp_path / "backend"
+    (root / "gamedata").mkdir(parents=True)
+    shutil.copytree(GAMEDATA_ROOT / "skills", root / "gamedata" / "skills")
+    target = root / "gamedata" / "skills" / "magic_shield.json"
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["learn_level"] = 30
+    target.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    from scripts.check_skill_learn_levels import check as check_learn_levels
+
+    problems = check_learn_levels(root)
+    assert any(
+        "magic_shield.json" in p and "30" in p and "31" in p for p in problems
+    ), problems

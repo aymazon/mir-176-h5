@@ -1,0 +1,18 @@
+{
+  "id": "lightning",
+  "name": "疾光电影",
+  "class": "wizard",
+  "learn_level": 26,
+  "mp_cost": 30,
+  "cooldown_seconds": 3,
+  "max_level": 3,
+  "level_exp_required": [
+    310,
+    620,
+    930
+  ],
+  "target": "aoe",
+  "effect_params": {
+    "damage_multiplier": 2.4
+  }
+}

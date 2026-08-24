@@ -1,0 +1,18 @@
+{
+  "id": "hell_fire",
+  "name": "地狱火",
+  "class": "wizard",
+  "learn_level": 16,
+  "mp_cost": 12,
+  "cooldown_seconds": 2,
+  "max_level": 3,
+  "level_exp_required": [
+    200,
+    400,
+    600
+  ],
+  "target": "aoe",
+  "effect_params": {
+    "damage_multiplier": 1.3
+  }
+}
