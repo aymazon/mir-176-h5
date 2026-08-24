@@ -43,7 +43,12 @@ from app.models.character import Character
 from app.models.equipment_slot import EquipmentSlot, EquipmentSlotType
 from app.models.item_instance import ItemInstance
 from app.sim.session import PlayerSession, get_or_create_player_session
-from app.sim.tick_loop import EV_STAT, reload_equip_cache
+from app.sim.tick_loop import (
+    EV_STAT,
+    find_ground_drop,
+    pop_ground_drop,
+    reload_equip_cache,
+)
 
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
@@ -493,4 +498,194 @@ async def repair(
         gold_after=gold_after,
         repaired=repaired,
         panel=new_panel,
+    )
+
+
+# --- 背包 / 拾取（todo 25）---------------------------------------------------------
+
+# 拾取 SSE 事件名（前端按需监听刷新背包视图；与 stat/repair 并行推送）
+EV_BAG: Final[str] = "bag_update"
+
+
+class PickIn(BaseModel):
+    """拾取请求体：二选一——地面掉落条目 id 或地面实例行 id。
+
+    - item_drop_id：tick 掉落池条目（kill 后未自动拾取的散落物，见 EV_DROP.loot[].drop_id）；
+    - item_instance_id：地面实例行 id（预留 todo 26 回城卷 / todo 30 传送员流程）。
+    """
+
+    item_drop_id: str | None = None
+    item_instance_id: int | None = None
+
+
+class PickOut(BaseModel):
+    item_drop_id: str
+    # 入包后的实例行 id（堆叠合并即既有行 id；新行则 flush 后新分配 id）
+    item_instance_id: int
+    item_id: str
+    name: str
+    quantity: int  # 入包后该行数量（装备恒 1，不可堆叠）
+    gold: int
+
+
+class BagItem(BaseModel):
+    item_instance_id: int
+    item_id: str
+    name: str
+    kind: str
+    quantity: int
+    durability: int | None = None
+    extra_json: dict[str, object] | None = None
+
+
+class BagOut(BaseModel):
+    items: list[BagItem]
+    gold: int
+    capacity: int
+    used: int
+
+
+@router.get("/bag")
+async def bag(db: DbSession, player_id: CurrentPlayerId) -> BagOut:
+    """背包全量读（todo 25）：items + 金币 + 容量与已用格数。只读不加锁。"""
+    character = await _character_of(db, player_id)
+    rows = (
+        (
+            await db.execute(
+                select(ItemInstance).where(ItemInstance.character_id == character.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    items = _items()
+    entries = [
+        BagItem(
+            item_instance_id=row.id,
+            item_id=row.item_id,
+            name=items[row.item_id].name if row.item_id in items else row.item_id,
+            kind=(items[row.item_id].kind.value if row.item_id in items else "unknown"),
+            quantity=row.quantity,
+            durability=row.durability,
+            extra_json=row.extra_json,
+        )
+        for row in rows
+    ]
+    return BagOut(
+        items=entries,
+        gold=character.gold,
+        capacity=character.bag_capacity,
+        used=len(rows),
+    )
+
+
+@router.post("/pick")
+async def pick(
+    payload: PickIn, db: DbSession, player_id: CurrentPlayerId
+) -> PickOut:
+    """手动拾取（todo 25）：把地面掉落搬入背包（堆叠合并或新行）。
+
+    校验链（锁内）：二选一必填(422) → 地面池存在该条目(404) → 物品定义存在(422)
+    → 背包有空间(422；stackable 合并既有行不占新格，豁免容量)。成功：合并/新建行
+    → 出池 → commit → 锁内 flush_snapshot；SSE bag_update 恒在锁外。
+    """
+    if payload.item_drop_id is None and payload.item_instance_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="item_drop_id 与 item_instance_id 至少提供一个",
+        )
+    character = await _character_of(db, player_id)
+    session = await get_or_create_player_session(db, character.id)
+    items = _items()
+
+    async with session.lock:
+        char_row = await db.get(Character, character.id)
+        if char_row is None:  # 建号后被删的极端竞态
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="角色不存在"
+            )
+        await db.refresh(char_row)
+
+        ground = find_ground_drop(
+            character.id,
+            drop_id=payload.item_drop_id,
+            instance_id=payload.item_instance_id,
+        )
+        if ground is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="地面没有该掉落物"
+            )
+        item_def = items.get(ground.item_id)
+        if item_def is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"未知物品定义: {ground.item_id}",
+            )
+
+        rows = (
+            (
+                await db.execute(
+                    select(ItemInstance).where(
+                        ItemInstance.character_id == character.id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        target: ItemInstance | None = None
+        if item_def.stackable:
+            target = next((r for r in rows if r.item_id == ground.item_id), None)
+        if target is None:
+            # 新行占一格；stackable 合并既有行不占格（豁免容量校验，todo 25 规则）
+            if len(rows) >= char_row.bag_capacity:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"背包已满（{char_row.bag_capacity} 格），无法拾取",
+                )
+            # 装备永远 quantity=1（不可堆叠红线）；可堆叠物带落地数量
+            target = ItemInstance(
+                character_id=character.id,
+                item_id=ground.item_id,
+                quantity=ground.qty if item_def.stackable else 1,
+                extra_json=ground.extra_json,
+            )
+            db.add(target)
+            await db.flush()  # 取实例 id 供出参/SSE
+        else:
+            target.quantity += ground.qty
+        popped = pop_ground_drop(
+            character.id,
+            drop_id=payload.item_drop_id,
+            instance_id=payload.item_instance_id,
+        )
+        if popped is None:  # 防御性兑底：同锁内 find/pop 之间池被改（正常不可能）
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="地面没有该掉落物"
+            )
+        await db.commit()
+        await session.flush_snapshot()
+
+    # SSE 推送在锁外（todo 15 横切约束）
+    session.sse_state.publish(
+        EV_BAG,
+        json.dumps(
+            {
+                "reason": "pick",
+                "item_instance_id": target.id,
+                "item_id": target.item_id,
+                "quantity": target.quantity,
+                "gold": session.char_snapshot.gold,
+            },
+            ensure_ascii=False,
+        ),
+    )
+    return PickOut(
+        item_drop_id=popped.drop_id,
+        item_instance_id=target.id,
+        item_id=target.item_id,
+        name=item_def.name,
+        quantity=target.quantity,
+        gold=session.char_snapshot.gold,
     )

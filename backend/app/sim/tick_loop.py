@@ -33,8 +33,10 @@ import json
 import logging
 import time
 from contextlib import suppress
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING, Final, cast
+from uuid import uuid4
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,6 +77,10 @@ EV_LOG: Final[str] = "log"
 EV_STAT: Final[str] = "stat"
 EV_DROP: Final[str] = "drop"
 EV_EXP: Final[str] = "exp"
+EV_ZONE_CHANGE: Final[str] = "zone_change"
+# 内部回城标记（todo 25）：simulate_tick 产出、tick_loop 拦截后调 trigger_return_city，
+# 不对外发布（下划线前缀 = 非公开事件名，前端 sse.ts 监听清单不含）。
+EV_RECALL: Final[str] = "_recall"
 
 # 装备槽缓存：character_id → {slot.value: item_instance_id | None}（todo 24）。
 # simulate_tick 是纯内存计算（无 DB），磨损需要知道哪件实例穿在武器/衣服槽——
@@ -82,6 +88,86 @@ EV_EXP: Final[str] = "exp"
 # inventory equip/unequip 提交后（reload_equip_cache）刷新；测试可直接写本表
 # 驱动纯内存用例。注销路径（shutdown/宽限超时）弹出防陈旧增长。
 _EQUIP_CACHE: Final[dict[int, dict[str, int | None]]] = {}
+
+@dataclass(frozen=True)
+class GroundDrop:
+    """地面掉落实例（todo 25）：未被拾取的掉落保留在地面池，供手动拾取 API 领取。
+
+    instance_id 预留 todo 26/30：接通扣卷/传送员流程后，地面实例可能对应已持久化
+    的 item_instance 行 id；当前 tick 掉落均为纯内存条目（恒 None）。
+    """
+
+    drop_id: str
+    item_id: str
+    qty: int
+    tier: str = "normal"
+    extra_json: dict[str, int] | None = None
+    instance_id: int | None = None
+
+
+# 地面掉落池：character_id → 未拾取掉落（进程内存；会话注销/宽限超时清空）。
+# 同步增删在单事件循环内天然原子；REST 拾取在 session.lock 内 find→事务→pop 防双拾。
+_GROUND_DROPS: Final[dict[int, list[GroundDrop]]] = {}
+
+
+def retain_ground_drop(
+    character_id: int,
+    item_id: str,
+    qty: int,
+    *,
+    tier: str = "normal",
+    extra_json: dict[str, int] | None = None,
+    instance_id: int | None = None,
+) -> GroundDrop:
+    """掉落落地：生成唯一 drop_id 入池并返回（tick 结算与测试共用入口）。"""
+    drop = GroundDrop(
+        drop_id=f"g{uuid4().hex[:12]}",
+        item_id=item_id,
+        qty=qty,
+        tier=tier,
+        extra_json=extra_json,
+        instance_id=instance_id,
+    )
+    _GROUND_DROPS.setdefault(character_id, []).append(drop)
+    return drop
+
+
+def ground_drops(character_id: int) -> tuple[GroundDrop, ...]:
+    """只读视图：该角色地面全部未拾取掉落。"""
+    return tuple(_GROUND_DROPS.get(character_id, ()))
+
+
+def find_ground_drop(
+    character_id: int,
+    *,
+    drop_id: str | None = None,
+    instance_id: int | None = None,
+) -> GroundDrop | None:
+    """按 drop_id 或 instance_id 定位一条地面掉落；都不匹配返回 None。"""
+    for drop in _GROUND_DROPS.get(character_id, ()):
+        if drop_id is not None and drop.drop_id == drop_id:
+            return drop
+        if instance_id is not None and drop.instance_id == instance_id:
+            return drop
+    return None
+
+
+def pop_ground_drop(
+    character_id: int,
+    *,
+    drop_id: str | None = None,
+    instance_id: int | None = None,
+) -> GroundDrop | None:
+    """拾取成功后出池；不存在返回 None（REST 路径在锁内 find→事务→pop）。"""
+    drops = _GROUND_DROPS.get(character_id)
+    if drops is None:
+        return None
+    for idx, drop in enumerate(drops):
+        if drop_id is not None and drop.drop_id == drop_id:
+            return drops.pop(idx)
+        if instance_id is not None and drop.instance_id == instance_id:
+            return drops.pop(idx)
+    return None
 
 
 async def _refresh_equip_cache(db: AsyncSession, character_id: int) -> None:
@@ -183,6 +269,7 @@ async def shutdown_session(character_id: int) -> bool:
             await leave_map(zone.map_id, character_id)
         session.zone = None
     _EQUIP_CACHE.pop(character_id, None)  # 磨损记账缓存随会话注销清理（todo 24）
+    _GROUND_DROPS.pop(character_id, None)  # 地面掉落池随会话注销清理（todo 25）
     async with SessionLocal() as db:
         await db.execute(
             update(Character)
@@ -212,6 +299,7 @@ async def shutdown_all_sessions() -> None:
                 await leave_map(zone.map_id, character_id)
             session.zone = None
         _EQUIP_CACHE.pop(character_id, None)
+        _GROUND_DROPS.pop(character_id, None)  # 地面掉落池随会话注销清理（todo 25）
     reset_sessions()
 
 
@@ -227,6 +315,7 @@ async def _teardown_on_grace_timeout(session: PlayerSession) -> None:
         session.zone = None
     release_session(session.character_id)
     _EQUIP_CACHE.pop(session.character_id, None)
+    _GROUND_DROPS.pop(session.character_id, None)
     session.tick_task = None
     LOG.info("grace period expired; tick loop stopped for %s", session.character_id)
 
@@ -258,6 +347,17 @@ async def tick_loop(
             n += 1
             # 锁外战斗纯计算 + 内存变更（防慢客户端堵 REST 的镜像面：不堵 tick）
             events = simulate_tick(session, n)
+            # 自动回城触发器（todo 25）：拦截内部 recall 标记 → 调回城动作
+            # （占位实现直读 bind_city 切 zone_id；TODO(todo-26) 扣卷 / TODO(todo-30)
+            # 传送员就绪后在 trigger_return_city 接通）。标记事件不对外发布。
+            if any(name == EV_RECALL for name, _ in events):
+                events = [(nm, d) for nm, d in events if nm != EV_RECALL]
+                try:
+                    await trigger_return_city(session)
+                except Exception:
+                    LOG.exception(
+                        "auto recall failed for character %s", session.character_id
+                    )
             if n % PERSIST_EVERY_TICKS == 0:
                 try:
                     async with session.lock:
@@ -329,6 +429,51 @@ async def persist_session_state(session: PlayerSession) -> None:
         await _refresh_equip_cache(db, session.character_id)
         await db.commit()
     await session.flush_snapshot()
+
+
+async def trigger_return_city(session: PlayerSession) -> str:
+    """自动回城动作（todo 25 占位实现）：直读 bind_city 切 zone_id。
+
+    锁内单行 UPDATE character.map_id + 换图（离旧图 → 懒进绑定城）→ flush_snapshot；
+    SSE zone_change 在锁外发布。已在绑定城时幂等跳过换图。
+
+    TODO(todo-26 回城卷): 回城卷道具就绪后在此接通扣卷流程——消耗 return_scroll
+    一张才允许触发（当前占位不消耗任何道具）。
+    TODO(todo-30 传送员): 传送员 NPC 就绪后接通「记录出发地 → 付费传送/返回」流程，
+    届时本函数降级为共享底层动作。
+    """
+    from app.sim.zone import enter_map, leave_map
+
+    target = session.char_snapshot.bind_city
+    async with session.lock:
+        async with SessionLocal() as db:
+            await db.execute(
+                update(Character)
+                .where(Character.id == session.character_id)
+                .values(map_id=target)
+            )
+            await db.commit()
+        old_zone = session.zone
+        if old_zone is not None and old_zone.map_id != target:
+            with suppress(KeyError):
+                await leave_map(old_zone.map_id, session.character_id)
+            session.zone = None
+        if session.zone is None:
+            try:
+                session.zone = await enter_map(target, session.character_id)
+            except KeyError:
+                # 绑定城不在 gamedata（测试假城市名）→ 无图模式继续跑
+                LOG.warning(
+                    "bind city %s not in gamedata; recall headless (%s)",
+                    target,
+                    session.character_id,
+                )
+        await session.flush_snapshot()
+    session.sse_state.publish(
+        EV_ZONE_CHANGE,
+        json.dumps({"map_id": target, "reason": "recall"}, ensure_ascii=False),
+    )
+    return target
 
 
 # --- 单 tick 战斗结算（纯内存变更，无锁无 DB）-------------------------------------
@@ -552,15 +697,48 @@ def _kill_monster(
 def _apply_drop(
     session: PlayerSession, drop: DropResult, events: list[tuple[str, str]]
 ) -> None:
-    """掉落入账：金币直加；物品按 auto_pickup 决定拾取或散落。"""
+    """掉落入账：金币直加（自动入袋）；物品按 auto_pickup 决定拾取或落地保留。
+
+    拾取失败（背包满 / 自动拾取关闭）→ 掉落保留进地面池（retain_ground_drop），
+    供 POST /api/inventory/pick 手动拾取；背包满额外日志提示（todo 25）。
+    """
     picked: list[dict[str, object]] = []
     if drop.gold > 0:
         session.char_snapshot.gold += drop.gold
         picked.append({"gold": drop.gold})
+    items = cast("dict[str, ItemDef]", _gamedata()["items"])
     for item in drop.items:
         ok = _pickup_item(session, item) if session.auto_pickup else False
+        if ok:
+            picked.append({"item_id": item.item_id, "qty": item.qty, "picked": True})
+            continue
+        ground = retain_ground_drop(
+            session.character_id,
+            item.item_id,
+            item.qty,
+            tier=item.tier,
+            extra_json=item.extra_json,
+        )
+        if session.auto_pickup:
+            # 开着自动拾取仍失败 = 背包满（_pickup_item 唯一失败原因）→ 日志提示
+            name = (
+                items[item.item_id].name
+                if item.item_id in items
+                else item.item_id
+            )
+            events.append(
+                _log_event(
+                    "bag_full",
+                    f"背包已满，{name} 留在地面，请手动拾取或清理背包",
+                )
+            )
         picked.append(
-            {"item_id": item.item_id, "qty": item.qty, "picked": ok}
+            {
+                "item_id": item.item_id,
+                "qty": item.qty,
+                "picked": False,
+                "drop_id": ground.drop_id,
+            }
         )
     events.append(
         (
@@ -573,12 +751,14 @@ def _apply_drop(
 
 
 def _pickup_item(session: PlayerSession, dropped: DroppedItem) -> bool:
-    """拾取入包：可堆叠合并既有行，否则新行；背包满则拾取失败。"""
-    if len(session.inventory) >= session.char_snapshot.bag_capacity:
-        return False
+    """拾取入包：可堆叠优先合并既有行（合并不占新格，背包满也可并入）。
+
+    新行（首个可堆叠物 / 装备）需有空格；装备永远 quantity=1 单独成行
+    （不可堆叠红线，todo 25）。背包满返回 False，由调用方落地保留+日志。
+    """
     items = cast("dict[str, ItemDef]", _gamedata()["items"])
     item_def = items.get(dropped.item_id)
-    stackable = getattr(item_def, "stackable", False)
+    stackable = bool(getattr(item_def, "stackable", False))
     if stackable:
         row = next(
             (r for r in session.inventory if r.item_id == dropped.item_id), None
@@ -588,10 +768,12 @@ def _pickup_item(session: PlayerSession, dropped: DroppedItem) -> bool:
             if row.id is not None:
                 session.dirty_quantities.add(row.id)
             return True
+    if len(session.inventory) >= session.char_snapshot.bag_capacity:
+        return False
     new_row = ItemInstance(
         character_id=session.character_id,
         item_id=dropped.item_id,
-        quantity=dropped.qty,
+        quantity=dropped.qty if stackable else 1,
     )
     session.inventory.append(new_row)
     session.pending_items.append(new_row)
@@ -653,14 +835,19 @@ def _auto_potion(
         catalog=_potion_catalog(),
         now_tick=tick_index,
         cooldowns=session.potion_cooldowns,
-        free_slots=None,  # 挂机回城未开启（R6 显式关闭信号）
+        # 空格 < BAG_FREE_SLOTS_RECALL 时 plan 追加 recall 动作（todo 25 自动回城）；
+        # policy 仍可显式传 free_slots=None 关闭（R6：实参非 None 时优先于 policy）。
+        free_slots=max(0, snap.bag_capacity - len(session.inventory)),
         policy=session.potion_policy,
     )
     session.potion_cooldowns = dict(plan.cooldowns_after)
     catalog = _potion_catalog()
     for action in plan.actions:
+        if action.kind == "recall":
+            _request_recall(session, events)  # todo 25：内部标记，tick_loop 拦截执行
+            continue
         if action.kind != "drink" or action.item_id is None:
-            continue  # recall 动作归 todo 25 回城流程
+            continue
         spec = catalog.get(action.item_id)
         row = _take_potion_row(session, action.item_id)
         if row is None:
@@ -676,6 +863,26 @@ def _auto_potion(
                 f"（HP+{hp_restore} MP+{mp_restore} → {snap.hp}/{snap.max_hp}）",
             )
         )
+
+
+def _request_recall(session: PlayerSession, events: list[tuple[str, str]]) -> None:
+    """空格不足的自动回城请求（todo 25）：日志 + 内部标记事件。
+
+    标记事件（EV_RECALL）由 tick_loop 拦截后调 trigger_return_city，不对外发布；
+    已在绑定城时不重复触发（防每 tick 刷屏）。
+    """
+    snap = session.char_snapshot
+    if snap.map_id == snap.bind_city:
+        return
+    events.append(
+        _log_event(
+            "recall",
+            f"背包空格不足 {balance.BAG_FREE_SLOTS_RECALL} 格，自动回城",
+        )
+    )
+    events.append(
+        (EV_RECALL, json.dumps({"target": snap.bind_city}, ensure_ascii=False))
+    )
 
 
 def _bag_counts(session: PlayerSession) -> dict[str, int]:
