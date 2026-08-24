@@ -1,0 +1,17 @@
+{
+  "id": "zuma_guardian_elite",
+  "name": "极品祖玛卫士",
+  "level": 50,
+  "hp": 1400,
+  "attack": 60,
+  "defense": 15,
+  "magic_defense": 15,
+  "accuracy": 18,
+  "agility": 25,
+  "exp": 2000,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 3600
+}

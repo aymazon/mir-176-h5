@@ -1,0 +1,17 @@
+{
+  "id": "flaming_wooma",
+  "name": "火焰沃玛",
+  "level": 31,
+  "hp": 240,
+  "attack": 26,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 20,
+  "agility": 20,
+  "exp": 350,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

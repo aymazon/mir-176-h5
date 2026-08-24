@@ -1,0 +1,17 @@
+{
+  "id": "wedge_moth",
+  "name": "楔蛾",
+  "level": 32,
+  "hp": 220,
+  "attack": 18,
+  "defense": 2,
+  "magic_defense": 7,
+  "accuracy": 15,
+  "agility": 15,
+  "exp": 540,
+  "attack_speed": 3,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 150
+}

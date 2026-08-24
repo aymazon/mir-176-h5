@@ -1,0 +1,17 @@
+{
+  "id": "toad",
+  "name": "蛤蟆",
+  "level": 12,
+  "hp": 20,
+  "attack": 5,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 6,
+  "agility": 13,
+  "exp": 20,
+  "attack_speed": 3,
+  "move_speed": 3,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 90
+}

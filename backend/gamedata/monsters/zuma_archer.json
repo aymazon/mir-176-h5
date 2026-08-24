@@ -1,0 +1,17 @@
+{
+  "id": "zuma_archer",
+  "name": "祖玛弓箭手",
+  "level": 39,
+  "hp": 900,
+  "attack": 30,
+  "defense": 6,
+  "magic_defense": 6,
+  "accuracy": 17,
+  "agility": 15,
+  "exp": 1900,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

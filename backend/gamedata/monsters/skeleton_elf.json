@@ -1,0 +1,17 @@
+{
+  "id": "skeleton_elf",
+  "name": "骷髅精灵",
+  "level": 50,
+  "hp": 500,
+  "attack": 24,
+  "defense": 5,
+  "magic_defense": 4,
+  "accuracy": 14,
+  "agility": 15,
+  "exp": 960,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": true,
+  "respawn_seconds": 3600
+}

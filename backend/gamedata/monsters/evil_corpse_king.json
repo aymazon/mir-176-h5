@@ -1,0 +1,17 @@
+{
+  "id": "evil_corpse_king",
+  "name": "恶灵尸王",
+  "level": 33,
+  "hp": 350,
+  "attack": 26,
+  "defense": 6,
+  "magic_defense": 15,
+  "accuracy": 13,
+  "agility": 15,
+  "exp": 940,
+  "attack_speed": 2,
+  "move_speed": 2,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

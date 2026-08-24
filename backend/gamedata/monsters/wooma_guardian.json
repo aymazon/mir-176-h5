@@ -1,0 +1,17 @@
+{
+  "id": "wooma_guardian",
+  "name": "沃玛卫士",
+  "level": 50,
+  "hp": 1000,
+  "attack": 42,
+  "defense": 8,
+  "magic_defense": 8,
+  "accuracy": 17,
+  "agility": 20,
+  "exp": 2400,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 150
+}

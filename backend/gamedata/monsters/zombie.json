@@ -1,0 +1,17 @@
+{
+  "id": "zombie",
+  "name": "僵尸",
+  "level": 25,
+  "hp": 155,
+  "attack": 16,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 11,
+  "agility": 13,
+  "exp": 160,
+  "attack_speed": 3,
+  "move_speed": 2,
+  "undead": true,
+  "boss": false,
+  "respawn_seconds": 120
+}

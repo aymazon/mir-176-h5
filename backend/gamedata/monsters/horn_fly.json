@@ -1,0 +1,17 @@
+{
+  "id": "horn_fly",
+  "name": "角蝇",
+  "level": 30,
+  "hp": 200,
+  "attack": 20,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 18,
+  "agility": 15,
+  "exp": 480,
+  "attack_speed": 3,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

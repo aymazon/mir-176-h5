@@ -1,0 +1,17 @@
+{
+  "id": "wild_boar_white",
+  "name": "白野猪",
+  "level": 50,
+  "hp": 2000,
+  "attack": 55,
+  "defense": 15,
+  "magic_defense": 25,
+  "accuracy": 17,
+  "agility": 22,
+  "exp": 3600,
+  "attack_speed": 2,
+  "move_speed": 1,
+  "undead": true,
+  "boss": true,
+  "respawn_seconds": 3600
+}

@@ -1,0 +1,17 @@
+{
+  "id": "corpse_overlord",
+  "name": "尸霸",
+  "level": 55,
+  "hp": 1000,
+  "attack": 48,
+  "defense": 5,
+  "magic_defense": 5,
+  "accuracy": 18,
+  "agility": 15,
+  "exp": 2400,
+  "attack_speed": 3,
+  "move_speed": 2,
+  "undead": false,
+  "boss": true,
+  "respawn_seconds": 3600
+}

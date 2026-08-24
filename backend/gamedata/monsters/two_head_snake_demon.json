@@ -1,0 +1,17 @@
+{
+  "id": "two_head_snake_demon",
+  "name": "双头蛇魔",
+  "level": 30,
+  "hp": 300,
+  "attack": 28,
+  "defense": 3,
+  "magic_defense": 6,
+  "accuracy": 18,
+  "agility": 16,
+  "exp": 450,
+  "attack_speed": 3,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

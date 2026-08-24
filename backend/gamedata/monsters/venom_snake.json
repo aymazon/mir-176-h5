@@ -1,0 +1,17 @@
+{
+  "id": "venom_snake",
+  "name": "毒蛇",
+  "level": 17,
+  "hp": 60,
+  "attack": 14,
+  "defense": 0,
+  "magic_defense": 4,
+  "accuracy": 11,
+  "agility": 15,
+  "exp": 90,
+  "attack_speed": 3,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

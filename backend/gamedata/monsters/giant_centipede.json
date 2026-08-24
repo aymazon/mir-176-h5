@@ -1,0 +1,17 @@
+{
+  "id": "giant_centipede",
+  "name": "巨型蜈蚣",
+  "level": 30,
+  "hp": 380,
+  "attack": 23,
+  "defense": 2,
+  "magic_defense": 7,
+  "accuracy": 15,
+  "agility": 15,
+  "exp": 500,
+  "attack_speed": 2,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

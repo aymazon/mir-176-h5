@@ -1,0 +1,17 @@
+{
+  "id": "bat",
+  "name": "蝙蝠",
+  "level": 5,
+  "hp": 3,
+  "attack": 22,
+  "defense": 0,
+  "magic_defense": 0,
+  "accuracy": 18,
+  "agility": 5,
+  "exp": 5,
+  "attack_speed": 3,
+  "move_speed": 1,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 90
+}

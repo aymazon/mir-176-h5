@@ -1,0 +1,17 @@
+{
+  "id": "centipede",
+  "name": "蜈蚣",
+  "level": 26,
+  "hp": 210,
+  "attack": 18,
+  "defense": 0,
+  "magic_defense": 5,
+  "accuracy": 13,
+  "agility": 15,
+  "exp": 310,
+  "attack_speed": 2,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}

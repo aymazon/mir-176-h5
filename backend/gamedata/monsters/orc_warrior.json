@@ -1,0 +1,17 @@
+{
+  "id": "orc_warrior",
+  "name": "半兽战士",
+  "level": 22,
+  "hp": 100,
+  "attack": 12,
+  "defense": 3,
+  "magic_defense": 1,
+  "accuracy": 10,
+  "agility": 15,
+  "exp": 130,
+  "attack_speed": 2,
+  "move_speed": 2,
+  "undead": false,
+  "boss": false,
+  "respawn_seconds": 120
+}
