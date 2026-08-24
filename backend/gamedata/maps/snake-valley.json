@@ -1,0 +1,12 @@
+{
+  "id": "snake-valley",
+  "name": "毒蛇山谷",
+  "level_min": 15,
+  "level_max": 22,
+  "region": "snake_valley",
+  "adjacent": [
+    "biqi-wild",
+    "mengzhong"
+  ],
+  "boss_spawns": []
+}

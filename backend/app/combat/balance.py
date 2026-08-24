@@ -47,6 +47,8 @@ __all__ = [
     "SKILL_MULTIPLIER_BASE",
     "SKULL_BASE_HP",
     "SKULL_GROWTH_PER_LEVEL",
+    "TRAVEL_SECONDS_MAX",
+    "TRAVEL_SECONDS_MIN",
 ]
 
 # --- 命中 -------------------------------------------------------------------
@@ -163,3 +165,13 @@ DOG_BASE_HP: Final[int] = 60
 # 召唤神兽每级技能等级的 HP 成长。
 # 出处: 自创占位（社区只记概念无具体数值）; 置信度: low
 DOG_GROWTH_PER_LEVEL: Final[int] = 15
+
+# --- 跨地图行进（todo 30 传送/跑图消费）---------------------------------------
+
+# 地图间"行进中"倒计时下限（秒）：最近邻地图的跑图时间。
+# 出处: docs/MVP/README.md §10 给出 5–20s 区间；区间端点取文档值，区间内按
+#       地图距离的具体分配为本项目自创; 置信度: medium
+TRAVEL_SECONDS_MIN: Final[int] = 5
+# 地图间"行进中"倒计时上限（秒）：跨半张世界图的跑图时间。
+# 出处: docs/MVP/README.md §10 同上（5–20s 区间端点）；距离→时长的映射自创; 置信度: medium
+TRAVEL_SECONDS_MAX: Final[int] = 20

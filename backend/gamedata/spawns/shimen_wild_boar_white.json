@@ -1,0 +1,13 @@
+{
+  "map_id": "shimen",
+  "monster_id": "wild_boar_white",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 185,
+      "y": 170
+    }
+  ]
+}

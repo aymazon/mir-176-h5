@@ -1,0 +1,14 @@
+{
+  "id": "wooma-temple",
+  "name": "沃玛寺庙",
+  "level_min": 28,
+  "level_max": 36,
+  "region": "wooma_temple",
+  "adjacent": [
+    "wooma-forest",
+    "zuma-caves"
+  ],
+  "boss_spawns": [
+    "wooma_taurus"
+  ]
+}

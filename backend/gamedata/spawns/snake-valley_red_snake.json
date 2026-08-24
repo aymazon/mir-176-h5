@@ -1,0 +1,25 @@
+{
+  "map_id": "snake-valley",
+  "monster_id": "red_snake",
+  "density": 5,
+  "respawn_seconds": 120,
+  "count": 10,
+  "locations": [
+    {
+      "x": 80,
+      "y": 70
+    },
+    {
+      "x": 102,
+      "y": 54
+    },
+    {
+      "x": 62,
+      "y": 94
+    },
+    {
+      "x": 106,
+      "y": 90
+    }
+  ]
+}

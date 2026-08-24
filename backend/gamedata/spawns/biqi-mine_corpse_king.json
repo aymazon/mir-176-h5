@@ -1,0 +1,13 @@
+{
+  "map_id": "biqi-mine",
+  "monster_id": "corpse_king",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 185,
+      "y": 165
+    }
+  ]
+}

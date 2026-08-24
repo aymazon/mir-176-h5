@@ -1,0 +1,15 @@
+{
+  "id": "centipede-cave",
+  "name": "蜈蚣洞（死亡山谷）",
+  "level_min": 20,
+  "level_max": 30,
+  "region": "death_valley",
+  "adjacent": [
+    "mengzhong",
+    "shimen"
+  ],
+  "boss_spawns": [
+    "evil_clamp_worm",
+    "touch_dragon_god"
+  ]
+}

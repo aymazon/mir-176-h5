@@ -1,0 +1,25 @@
+{
+  "map_id": "wooma-temple",
+  "monster_id": "flaming_wooma",
+  "density": 3,
+  "respawn_seconds": 150,
+  "count": 6,
+  "locations": [
+    {
+      "x": 145,
+      "y": 95
+    },
+    {
+      "x": 167,
+      "y": 79
+    },
+    {
+      "x": 127,
+      "y": 119
+    },
+    {
+      "x": 171,
+      "y": 115
+    }
+  ]
+}

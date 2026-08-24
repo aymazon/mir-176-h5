@@ -1,0 +1,25 @@
+{
+  "map_id": "zuma-caves",
+  "monster_id": "zuma_statue",
+  "density": 4,
+  "respawn_seconds": 150,
+  "count": 8,
+  "locations": [
+    {
+      "x": 80,
+      "y": 70
+    },
+    {
+      "x": 102,
+      "y": 54
+    },
+    {
+      "x": 62,
+      "y": 94
+    },
+    {
+      "x": 106,
+      "y": 90
+    }
+  ]
+}

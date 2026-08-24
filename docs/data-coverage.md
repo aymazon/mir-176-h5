@@ -63,6 +63,8 @@
 
 
 
+
+
 ## 1. 怪物全量录入：双源出处与字段映射（todo 18，2026-08-25）
 
 - **主源**：Crystal `Server.MirDB`（Suprcode/Crystal.Database 仓库 cjlaaa/ 目录，GeeM2 同源发行版；自定义二进制，按 Crystal MonsterInfo(BinaryReader) LoadVersion∈[89,115) 分支解析，连续记录链扫描定位，共 449 只）。
@@ -93,6 +95,7 @@
 - **同族派生 11 只（TODO，M5 校准清单）**：蛤蟆斗士、毒蛇斗士、巨蛇、双头蛇、双头蛇魔、巨型蝎子、巨型蜈蚣、黑色蜈蚣、僵尸斗士、尸霸、闪电僵尸——两源均无同名，按同族锚点升档派生（公式见 scripts/build_monsters.py ROSTER 注释）。
 - 文档在列但两源皆缺：黑暗战士（沃玛寺庙行）未录入，待补源。
 - 合计 60 只（≥45 达标）。
+
 ## 2. 物品全量录入：双源出处、字段裁决与映射样本（todo 19，2026-08-25）
 
 - **主源**：Crystal `Server.MirDB` ItemInfo（Suprcode/Crystal.Database 仓库 cjlaaa/ 目录；按 Crystal `Shared/Data/ItemData.cs` ItemInfo(BinaryReader) LoadVersion>84 分支解析，连续记录链扫描（链长≥10）定位，共 1344 条）。
@@ -337,7 +340,6 @@ map         : kind←StdMode need_level←Need/NeedLevel(0) dc_min/max←Dc/DcMa
 | stats | {'dc_min': 8, 'dc_max': 16, 'sc_min': 3, 'sc_max': 5} |
 | prefix_max | 1 |
 
-
 ## 3. OpenMir2 第二源抽检差异报告（HP/经验/攻上限/物防）
 
 两源为独立发行版，数值差异属预期；主源取数后差异 >30% 的字段列入 M5 校准观察。
@@ -518,8 +520,6 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 | boss | True |
 | respawn_seconds | 3600 |
 
-
-
 ## 5. 技能全量录入：双源出处与习得等级抽检（todo 20，2026-08-25）
 
 - **规范源**：`tests/fixtures/skills_32.json`（task 11 契约 fixture，战 6 / 法 14 / 道 12 = 32；数值=README §4 官方 176 经典设定）。`gamedata/skills/*.json` 由 `scripts/build_skills.py` 从 fixture 派生。
@@ -568,7 +568,6 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 - 与本方不一致 4 条（⚠ 标注）：cjlaaa 为单服魔改版（攻杀剑术 15/刺杀剑术 22/半月弯刀 26/大火球 15 等），OM2 与经典官方一致；**一律以 README §4 为准**，差异列入 M5 校准观察。
 - 主源缺名：群体治愈术（cjlaaa 技能表未收录该名）。
 
-
 ## 6. NPC 与商店清单录入（todo 20，2026-08-25）
 
 - 共录入 11 个 NPC（vendor 6 / quest / teleport），结构自管（README §8 商店、§10 传送员）；坐标为静态区域图展示点（自创占位，M5 校准）。
@@ -590,7 +589,6 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 | 村长 (yinxing_chief) | yin-xing-cun | quest | 1 | 0 | dialog |
 | 杂货店老板 (yinxing_grocer) | yin-xing-cun | vendor | 1 | 5 | dialog/shop/sell/buy |
 | 传送员 (yinxing_teleporter) | yin-xing-cun | teleport | 1 | 0 | dialog/teleport |
-
 
 ## 7. 任务数据录入（todo 20，2026-08-25）
 
@@ -616,3 +614,68 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 | 命运之刃 (warrior_fate_blade) | kill | 35 | warrior | wild_boar_white×1 +弱化分身@shimen-5 | 经验20000/fate_blade |
 | 冰咆哮书引 (wizard_ice_roar_guide) | profession | 35 | wizard | ice_thunder×1 | 金币500/经验10000/book_ice_roar |
 
+## 8. 掉落表全量录入（todo 21，2026-08-25）
+
+- 共 60 张表（≥30 达标），覆盖全部 60 只怪；一怪一表，loader 以 monster_id 索引。
+- **权重为项目自定**（MUST NOT 照搬私服单源）：两源均无可解析的掉落权重表——GeeM2 家族掉落走 Envir/Drops 文本文件（两源仓库均未随附），Server.MirDB 无 DropInfo 权重链；按 README §6 BOSS 掉落定位自定——金币行恒在且权重占优（验收断言），药品中权、装备低权、书籍极低权；物品池按 items/ 的 need_level 分层过滤。
+- 金币区间随档位递增：新手 3–25 → 比奇 10–50 → 中阶 20–90 → 蜈蚣洞 40–140 → 石墓系 50–200；BOSS 500–8000。
+- **BOSS 点名落位**（脚本断言 BOSS_REQUIRED 矩阵）：白野猪→裁决之杖/骨玉权杖/龙纹剑+烈火剑法/冰咆哮/召唤神兽书；沃玛教主→沃玛号角（出现率 8.3%）；祖玛教主→祖玛装备（骨玉/龙纹/嗜魂/泰坦/三眼/骑士）+35 书；尸王→16 种技能书专精。
+- **屠龙/嗜魂彩蛋**：weight=1、表总权重 ≥1000 ⇒ 出现率 ≤0.001——touch_dragon_god.dragonslayer_blade(w=1/1628=0.0614%)、touch_dragon_god.soul_eater_staff(w=1/1628=0.0614%)、wild_boar_white.dragonslayer_blade(w=1/5662=0.0177%)、wild_boar_white.soul_eater_staff(w=1/5662=0.0177%)、zuma_guardian_elite.dragonslayer_blade(w=1/2566=0.0390%)、zuma_taurus.dragonslayer_blade(w=1/6691=0.0149%)。
+- 模拟验收见 `scripts/simulate_drops.py`（1000 次白野猪击杀分布报告）。
+
+| 怪物 | 总权重 | 金币区间 | 行数 | 点名物品出现率示例 |
+| --- | --- | --- | --- | --- |
+| corpse_king | 2055 | 500–1500 | 26 | book_assassination 2.43% |
+| wild_boar_white | 5662 | 800–2000 | 33 | bone_jade_staff 1.94% |
+| wooma_taurus | 6052 | 2000–5000 | 39 | bone_jade_staff 2.15% |
+| zuma_taurus | 6691 | 3000–8000 | 35 | bone_jade_staff 2.39% |
+
+## 9. 刷怪表全量录入（todo 21，2026-08-25）
+
+- 共 69 个刷怪点（≥30 达标），覆盖全部 13 张地图（每图 ≥1 点）；键 `<map_id>:<monster_id>`。
+- respawn_seconds 从 gamedata/monsters/ 回读（单一来源）：BOSS=3600s、精英=1800s、普通 90–150s；density=同屏存活上限（zone.fill_initial 消费），count≈2×density 为在册人口，点位轮转 round-robin。
+- **密度/点位的出处**：Server.MirDB 的 RespawnInfo 含嵌套 Region 列表，版本分支多、本任务内无法可靠定布局，故密度/点位按 §6 怪物构成列自定；重生间隔沿用 task 18 怪物表（BOSS 3600s 社区一致）。
+- **等级带错位说明**：怪物 Crystal 等级系统性高于 README §6 玩家动线带（私服源膨胀，如尸王 L50 对矿区带 12–20），按 §6 怪物构成列主题归属放置；todo 22 等级带 lint 需按「玩家带 vs 怪物源等级」分轨处理，错位清单列 M5 观察。
+
+| 地图 | 刷怪点数 | 怪物（density） |
+| --- | --- | --- |
+| biqi-mine | 7 | bat(4)、cave_maggot(5)、corpse_king(1)★、jumping_bee(4)、lightning_zombie(2)、zombie(6)、zombie_fighter(3) |
+| biqi-wild | 8 | deer(6)、hook_cat(4)、man_eating_flower(3)、orc(4)、rake_cat(4)、scarecrow(5)、toad(4)、toad_fighter(3) |
+| centipede-cave | 6 | black_centipede(3)、centipede(5)、evil_clamp_worm(1)★、giant_centipede(3)、jumping_bee(4)、touch_dragon_god(1)★ |
+| mengzhong | 4 | desert_giant_worm(3)、giant_scorpion(3)、horn_fly(4)、scorpion(4) |
+| shimen | 8 | corpse_overlord(1)★、evil_corpse_king(2)、horn_fly(3)、scorpion_snake(4)、wedge_moth(3)、wild_boar_black(4)、wild_boar_red(5)、wild_boar_white(1)★ |
+| shouren-gu-1 | 3 | cave_bat(4)、cave_maggot(4)、skeleton(5) |
+| shouren-gu-2 | 4 | axe_skeleton(4)、cave_bat(3)、skeleton(4)、skeleton_warrior(3) |
+| shouren-gu-3 | 4 | axe_skeleton(3)、orc(3)、orc_champion(1)★、skeleton_elf(1)★ |
+| snake-valley | 7 | giant_snake(3)、red_snake(5)、tiger_snake(4)、two_head_snake(3)、two_head_snake_demon(2)、venom_snake(4)、venom_snake_fighter(3) |
+| wooma-forest | 4 | ancient_wooma_warrior(1)、forest_yeti(4)、poison_spider(4)、wooma_soldier(4) |
+| wooma-temple | 6 | flaming_wooma(3)、wooma_guardian(2)、wooma_soldier(5)、wooma_tactician(3)、wooma_taurus(1)★、wooma_warrior(4) |
+| yin-xing-cun | 1 | chicken(5) |
+| zuma-caves | 7 | horn_fly(3)、wedge_moth(3)、zuma_archer(3)、zuma_guardian(3)、zuma_guardian_elite(1)、zuma_statue(4)、zuma_taurus(1)★ |
+
+注：★=BOSS 点（density=1、respawn=3600s）。
+
+## 10. 全量地图数据手录（todo 21，2026-08-25）
+
+- 共 13 张地图（≥10 达标），覆盖 README §6 全部 10 个区域行。字段为手录：等级带/邻接取自文档，源 DB 无可直接消费的结构化地图表。
+- **源地理交叉验证**：Server.MirDB 确含 MapInfo 区段——锚点法提取 248 条 (index, file_name, title)，index 严格递增（结构信号）；文档点名地图 兽人古墓三层、尸王殿、废矿入口、沃玛教主大殿、石墓七层、祖玛寺庙一层 全部在源标题集中命中（脚本断言）。完整布局含嵌套 SafeZone/Movement 列表，超出本任务消费面，不作逐字段解析。
+- **等级带**：按 §6 表逐区域直录（置信度高）；现有 5 张（task 13）原值锁定。
+- **连通邻接**：按 §10 传送/跑图结构与 §6 练级动线（新手村→比奇→骷髅洞/僵尸洞→毒蛇山谷→盟重→蜈蚣洞→石墓→沃玛寺庙→祖玛寺庙）手录，双向边（脚本断言对称）；动线顺序之外的取舍为本项目自创（置信度中）。
+- **boss_spawns**：按 §6 BOSS 列落位，每只 BOSS 在本图有对应刷怪点（脚本断言）；沃玛森林精英=远古沃玛勇士、蛇谷顶格=双头蛇魔（非 boss 旗标，走 spawns 不进 boss_spawns）。
+- 行进中时长参数 TRAVEL_SECONDS_MIN=5 / MAX=20 进 app/combat/balance.py（§10 给出区间端点，距离→时长映射自创）。
+
+| 地图 | 名称 | region | 等级带 | adjacent | boss_spawns |
+| --- | --- | --- | --- | --- | --- |
+| biqi-mine | 比奇矿区（僵尸洞） | biqi_mine | 12–20 | biqi-wild | corpse_king |
+| biqi-wild | 比奇野外 | bichi | 5–15 | yin-xing-cun、shouren-gu-1、biqi-mine、snake-valley | — |
+| centipede-cave | 蜈蚣洞（死亡山谷） | death_valley | 20–30 | mengzhong、shimen | evil_clamp_worm、touch_dragon_god |
+| mengzhong | 盟重土城周边 | mengzhong | 18–26 | snake-valley、centipede-cave、wooma-forest、zuma-caves | — |
+| shimen | 石墓（猪洞） | shimen | 24–34 | centipede-cave | wild_boar_white、corpse_overlord |
+| shouren-gu-1 | 兽人古墓一层 | orc_tomb | 12–20 | biqi-wild、shouren-gu-2 | — |
+| shouren-gu-2 | 兽人古墓二层 | orc_tomb | 16–24 | shouren-gu-1、shouren-gu-3 | — |
+| shouren-gu-3 | 兽人古墓三层 | orc_tomb | 20–28 | shouren-gu-2 | orc_champion、skeleton_elf |
+| snake-valley | 毒蛇山谷 | snake_valley | 15–22 | biqi-wild、mengzhong | — |
+| wooma-forest | 沃玛森林 | wooma_forest | 25–30 | mengzhong、wooma-temple | — |
+| wooma-temple | 沃玛寺庙 | wooma_temple | 28–36 | wooma-forest、zuma-caves | wooma_taurus |
+| yin-xing-cun | 银杏村 | newbie | 0–7 | biqi-wild | — |
+| zuma-caves | 祖玛寺庙 | zuma_temple | 32–40 | mengzhong、wooma-temple | zuma_taurus |

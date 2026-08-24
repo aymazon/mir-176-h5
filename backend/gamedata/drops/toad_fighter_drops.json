@@ -1,0 +1,213 @@
+{
+  "monster_id": "toad_fighter",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 55,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 10,
+      "gold_max": 50
+    },
+    {
+      "item_id": "potion_hp_small",
+      "weight": 8,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_small",
+      "weight": 6,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_hp_medium",
+      "weight": 8,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_medium",
+      "weight": 6,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "sun_water",
+      "weight": 4,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "red_potion",
+      "weight": 3,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "gray_powder",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "yellow_powder",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "iron_sword",
+      "weight": 3,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "light_armor",
+      "weight": 3,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "medium_armor",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "bronze_helmet",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "magic_helmet",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "silver_bracelet",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "black_crystal_necklace",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "blue_crystal_ring",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "amber_necklace",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "lantern_necklace",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "bahua_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "seasoul_staff",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_basic_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_fireball",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_healing",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_slaying_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_lightning",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

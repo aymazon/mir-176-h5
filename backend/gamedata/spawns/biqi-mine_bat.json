@@ -1,0 +1,25 @@
+{
+  "map_id": "biqi-mine",
+  "monster_id": "bat",
+  "density": 4,
+  "respawn_seconds": 90,
+  "count": 8,
+  "locations": [
+    {
+      "x": 60,
+      "y": 55
+    },
+    {
+      "x": 82,
+      "y": 39
+    },
+    {
+      "x": 42,
+      "y": 79
+    },
+    {
+      "x": 86,
+      "y": 75
+    }
+  ]
+}

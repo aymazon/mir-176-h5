@@ -1,0 +1,25 @@
+{
+  "map_id": "centipede-cave",
+  "monster_id": "centipede",
+  "density": 5,
+  "respawn_seconds": 120,
+  "count": 10,
+  "locations": [
+    {
+      "x": 85,
+      "y": 75
+    },
+    {
+      "x": 107,
+      "y": 59
+    },
+    {
+      "x": 67,
+      "y": 99
+    },
+    {
+      "x": 111,
+      "y": 95
+    }
+  ]
+}

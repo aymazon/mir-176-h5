@@ -1,0 +1,13 @@
+{
+  "id": "biqi-mine",
+  "name": "比奇矿区（僵尸洞）",
+  "level_min": 12,
+  "level_max": 20,
+  "region": "biqi_mine",
+  "adjacent": [
+    "biqi-wild"
+  ],
+  "boss_spawns": [
+    "corpse_king"
+  ]
+}

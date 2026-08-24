@@ -1,0 +1,21 @@
+{
+  "map_id": "snake-valley",
+  "monster_id": "two_head_snake_demon",
+  "density": 2,
+  "respawn_seconds": 120,
+  "count": 4,
+  "locations": [
+    {
+      "x": 190,
+      "y": 150
+    },
+    {
+      "x": 212,
+      "y": 134
+    },
+    {
+      "x": 172,
+      "y": 174
+    }
+  ]
+}

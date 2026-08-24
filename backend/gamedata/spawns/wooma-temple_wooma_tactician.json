@@ -1,0 +1,25 @@
+{
+  "map_id": "wooma-temple",
+  "monster_id": "wooma_tactician",
+  "density": 3,
+  "respawn_seconds": 120,
+  "count": 6,
+  "locations": [
+    {
+      "x": 95,
+      "y": 115
+    },
+    {
+      "x": 117,
+      "y": 99
+    },
+    {
+      "x": 77,
+      "y": 139
+    },
+    {
+      "x": 121,
+      "y": 135
+    }
+  ]
+}

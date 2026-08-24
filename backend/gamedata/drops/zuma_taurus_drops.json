@@ -1,0 +1,285 @@
+{
+  "monster_id": "zuma_taurus",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 3000,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 3000,
+      "gold_max": 8000
+    },
+    {
+      "item_id": "strong_sun_water",
+      "weight": 350,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_hp_super",
+      "weight": 350,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_super",
+      "weight": 300,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "sun_water",
+      "weight": 250,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "blessing_oil",
+      "weight": 80,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "bone_jade_staff",
+      "weight": 160,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "dragonvein_sword",
+      "weight": 160,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "soul_eater_staff",
+      "weight": 120,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "xueyin_sword",
+      "weight": 60,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "sky_demon_armor",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "archmage_cloak",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "heavenly_taoist_robe",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "titan_ring",
+      "weight": 120,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "three_eye_bracelet",
+      "weight": 110,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "knight_bracelet",
+      "weight": 110,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "dragon_ring",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "dragonhand_bracelet",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "tianzhu_necklace",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "life_necklace",
+      "weight": 90,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "soul_necklace",
+      "weight": 90,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "demon_bell",
+      "weight": 90,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "purple_conch_ring",
+      "weight": 80,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "power_ring",
+      "weight": 80,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "white_tiger_tooth_necklace",
+      "weight": 80,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "protection_ring",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "resurrection_ring",
+      "weight": 30,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_fire_sword",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_ice_roar",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_summon_beast",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_magic_shield",
+      "weight": 60,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_holy_word",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_hell_lightning",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_savage_charge",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "dragonslayer_blade",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

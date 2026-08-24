@@ -1,0 +1,13 @@
+{
+  "map_id": "centipede-cave",
+  "monster_id": "evil_clamp_worm",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 160,
+      "y": 160
+    }
+  ]
+}

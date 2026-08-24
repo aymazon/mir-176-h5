@@ -376,3 +376,151 @@ def test_check_skill_learn_levels_flags_drift(tmp_path: Path):
     assert any(
         "magic_shield.json" in p and "30" in p and "31" in p for p in problems
     ), problems
+
+
+# ---------- todo 21：掉落表 + 刷怪表 + 全量地图 ----------
+
+
+_BOSS_REQUIRED: dict[str, set[str]] = {
+    "wild_boar_white": {
+        "verdict_staff", "bone_jade_staff", "dragonvein_sword",
+        "book_fire_sword", "book_ice_roar", "book_summon_beast",
+    },
+    "wooma_taurus": {"wooma_horn", "verdict_staff", "bone_jade_staff"},
+    "zuma_taurus": {
+        "bone_jade_staff", "dragonvein_sword", "soul_eater_staff",
+        "book_fire_sword", "book_ice_roar", "book_summon_beast",
+    },
+    "corpse_king": {
+        "book_fire_sword", "book_ice_roar", "book_summon_beast",
+    },
+}
+_EGG_ROWS = {
+    ("wild_boar_white", "dragonslayer_blade"),
+    ("wild_boar_white", "soul_eater_staff"),
+    ("touch_dragon_god", "dragonslayer_blade"),
+    ("touch_dragon_god", "soul_eater_staff"),
+    ("zuma_taurus", "dragonslayer_blade"),
+    ("zuma_guardian_elite", "dragonslayer_blade"),
+}
+_EXPECTED_BANDS: dict[str, tuple[int, int]] = {
+    "yin-xing-cun": (0, 7),
+    "biqi-wild": (5, 15),
+    "shouren-gu-1": (12, 20),
+    "shouren-gu-2": (16, 24),
+    "shouren-gu-3": (20, 28),
+    "biqi-mine": (12, 20),
+    "snake-valley": (15, 22),
+    "mengzhong": (18, 26),
+    "centipede-cave": (20, 30),
+    "shimen": (24, 34),
+    "wooma-forest": (25, 30),
+    "wooma-temple": (28, 36),
+    "zuma-caves": (32, 40),
+}
+
+
+def _raw(category: str) -> list[dict[str, Any]]:
+    return [
+        json.loads(p.read_text(encoding="utf-8"))
+        for p in sorted((GAMEDATA_ROOT / category).glob("*.json"))
+    ]
+
+
+def test_drops_full_dataset_count():
+    """task 21 验收：掉落表 ≥30（实际全量 60，一怪一表）。"""
+    count = len(list((GAMEDATA_ROOT / "drops").glob("*.json")))
+    assert count >= 30, f"drops/ 仅 {count} 表 < 30"
+    monsters = {m["id"] for m in _raw("monsters")}
+    covered = {d["monster_id"] for d in _raw("drops")}
+    assert monsters <= covered, f"缺掉落表: {sorted(monsters - covered)}"
+
+
+def test_every_drop_table_has_gold_row():
+    """验收：每只怪至少有金币掉落行（item_id=null 且 gold_max>0）。"""
+    no_gold = [
+        d["monster_id"]
+        for d in _raw("drops")
+        if not any(
+            e["item_id"] is None and e["gold_max"] > 0 for e in d["entries"]
+        )
+    ]
+    assert no_gold == [], f"无金币行的掉落表: {no_gold}"
+
+
+def test_boss_named_drops_present():
+    """验收：BOSS 掉落表含文档点名物品。"""
+    tables = {d["monster_id"]: d for d in _raw("drops")}
+    for mid, required in _BOSS_REQUIRED.items():
+        have = {e["item_id"] for e in tables[mid]["entries"] if e["item_id"]}
+        lack = required - have
+        assert not lack, f"{mid} 缺点名物品: {sorted(lack)}"
+
+
+def test_egg_items_extremely_rare():
+    """验收：屠龙/嗜魂彩蛋 weight=1 且出现率 ≤0.001。"""
+    tables = {d["monster_id"]: d for d in _raw("drops")}
+    found = 0
+    for mid, table in tables.items():
+        total = sum(e["weight"] for e in table["entries"])
+        for e in table["entries"]:
+            if e["item_id"] is None:
+                continue
+            if (mid, e["item_id"]) in _EGG_ROWS:
+                found += 1
+                assert e["weight"] == 1, f"{mid}.{e['item_id']} weight != 1"
+                assert e["weight"] / total <= 0.001, (
+                    f"{mid}.{e['item_id']} 出现率 > 0.001"
+                )
+    assert found >= len(_EGG_ROWS), f"彩蛋行缺失: {found}/{len(_EGG_ROWS)}"
+
+
+def test_spawns_full_dataset_coverage():
+    """验收：刷怪点 ≥30、每图 ≥1 点、respawn 与 monsters 单一来源一致。"""
+    spawns = _raw("spawns")
+    assert len(spawns) >= 30, f"spawns/ 仅 {len(spawns)} 点 < 30"
+    respawn = {m["id"]: m["respawn_seconds"] for m in _raw("monsters")}
+    maps_with_spawns = {s["map_id"] for s in spawns}
+    all_maps = {m["id"] for m in _raw("maps")}
+    assert all_maps <= maps_with_spawns, f"无刷怪点的地图: {all_maps - maps_with_spawns}"
+    for s in spawns:
+        assert s["respawn_seconds"] == respawn[s["monster_id"]], s
+        pairs = [(loc["x"], loc["y"]) for loc in s["locations"]]
+        assert len(pairs) == len(set(pairs)), f"{s} 点位重复"
+
+
+def test_maps_full_dataset_with_fields():
+    """验收：maps ≥10；等级带基线 + 邻接双向对称 + BOSS 落位有刷怪点。"""
+    maps = {m["id"]: m for m in _raw("maps")}
+    assert len(maps) >= 10, f"maps/ 仅 {len(maps)} 张 < 10"
+    for mid, m in maps.items():
+        assert m["name"] and m["region"], mid
+        expected = _EXPECTED_BANDS.get(mid)
+        assert expected is not None, f"{mid} 不在等级带基线表内"
+        assert (m["level_min"], m["level_max"]) == expected, mid
+        for other in m["adjacent"]:
+            assert other != mid, f"{mid} 自环"
+            assert mid in maps[other]["adjacent"], f"{mid}->{other} 单向邻接"
+    spawn_keys = {f"{s['map_id']}:{s['monster_id']}" for s in _raw("spawns")}
+    for mid, m in maps.items():
+        for boss_id in m["boss_spawns"]:
+            assert f"{mid}:{boss_id}" in spawn_keys, f"{mid} 缺 BOSS 刷怪点 {boss_id}"
+
+
+def test_travel_seconds_constants():
+    """balance 新增行进中时长参数：5–20s（README §10 区间端点）。"""
+    from app.combat import balance
+
+    assert balance.TRAVEL_SECONDS_MIN == 5
+    assert balance.TRAVEL_SECONDS_MAX == 20
+    assert balance.TRAVEL_SECONDS_MIN < balance.TRAVEL_SECONDS_MAX
+
+
+def test_simulate_drops_distribution_in_tolerance(capsys: Any):
+    """验收 happy path：1000 次白野猪击杀分布报告在容差内（exit 0）。"""
+    from scripts.simulate_drops import main as simulate_main
+
+    assert simulate_main([]) == 0
+    out = capsys.readouterr().out
+    assert "沃玛装备出现率" in out
+    assert "容差断言全部通过" in out

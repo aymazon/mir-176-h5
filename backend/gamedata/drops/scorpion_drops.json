@@ -1,0 +1,285 @@
+{
+  "monster_id": "scorpion",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 50,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 20,
+      "gold_max": 90
+    },
+    {
+      "item_id": "potion_hp_medium",
+      "weight": 10,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_medium",
+      "weight": 8,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_hp_large",
+      "weight": 6,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_large",
+      "weight": 5,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "sun_water",
+      "weight": 5,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "strong_sun_water",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "random_scroll",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "return_scroll",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "gray_powder",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "yellow_powder",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "heavy_armor",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "magic_robe",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "soul_armor",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "iron_belt",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "hide_belt",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "deerskin_boots",
+      "weight": 2,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "xiangmo_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "yanyue_blade",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "zhanma_blade",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "xiuluo_blade",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "taoist_helmet",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "ghost_necklace",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "ghost_gloves",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "sibeier_bracelet",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "ningshuang_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "magic_staff",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "silver_snake_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "lianyu_blade",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_slaying_sword",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_lightning",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_summon_skeleton",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_assassination",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_half_moon",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_demon_binding",
+      "weight": 1,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

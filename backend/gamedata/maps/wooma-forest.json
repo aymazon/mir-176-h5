@@ -1,0 +1,12 @@
+{
+  "id": "wooma-forest",
+  "name": "沃玛森林",
+  "level_min": 25,
+  "level_max": 30,
+  "region": "wooma_forest",
+  "adjacent": [
+    "mengzhong",
+    "wooma-temple"
+  ],
+  "boss_spawns": []
+}

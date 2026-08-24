@@ -1,0 +1,13 @@
+{
+  "map_id": "zuma-caves",
+  "monster_id": "zuma_taurus",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 195,
+      "y": 172
+    }
+  ]
+}

@@ -8,6 +8,7 @@
     "shouren-gu-2"
   ],
   "boss_spawns": [
-    "orc_champion"
+    "orc_champion",
+    "skeleton_elf"
   ]
 }

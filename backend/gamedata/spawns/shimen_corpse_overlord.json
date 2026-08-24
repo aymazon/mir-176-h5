@@ -1,0 +1,13 @@
+{
+  "map_id": "shimen",
+  "monster_id": "corpse_overlord",
+  "density": 1,
+  "respawn_seconds": 3600,
+  "count": 1,
+  "locations": [
+    {
+      "x": 200,
+      "y": 140
+    }
+  ]
+}

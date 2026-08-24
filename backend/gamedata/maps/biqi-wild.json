@@ -6,7 +6,9 @@
   "region": "bichi",
   "adjacent": [
     "yin-xing-cun",
-    "shouren-gu-1"
+    "shouren-gu-1",
+    "biqi-mine",
+    "snake-valley"
   ],
   "boss_spawns": []
 }

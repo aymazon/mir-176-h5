@@ -1,0 +1,14 @@
+{
+  "id": "shimen",
+  "name": "石墓（猪洞）",
+  "level_min": 24,
+  "level_max": 34,
+  "region": "shimen",
+  "adjacent": [
+    "centipede-cave"
+  ],
+  "boss_spawns": [
+    "wild_boar_white",
+    "corpse_overlord"
+  ]
+}

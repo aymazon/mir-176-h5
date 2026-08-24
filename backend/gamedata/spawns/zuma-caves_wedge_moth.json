@@ -1,0 +1,25 @@
+{
+  "map_id": "zuma-caves",
+  "monster_id": "wedge_moth",
+  "density": 3,
+  "respawn_seconds": 150,
+  "count": 6,
+  "locations": [
+    {
+      "x": 142,
+      "y": 92
+    },
+    {
+      "x": 164,
+      "y": 76
+    },
+    {
+      "x": 124,
+      "y": 116
+    },
+    {
+      "x": 168,
+      "y": 112
+    }
+  ]
+}

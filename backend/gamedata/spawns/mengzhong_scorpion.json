@@ -1,0 +1,25 @@
+{
+  "map_id": "mengzhong",
+  "monster_id": "scorpion",
+  "density": 4,
+  "respawn_seconds": 120,
+  "count": 8,
+  "locations": [
+    {
+      "x": 90,
+      "y": 80
+    },
+    {
+      "x": 112,
+      "y": 64
+    },
+    {
+      "x": 72,
+      "y": 104
+    },
+    {
+      "x": 116,
+      "y": 100
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "monster_id": "corpse_king",
+  "entries": [
+    {
+      "item_id": null,
+      "weight": 800,
+      "min_qty": 0,
+      "max_qty": 0,
+      "gold_min": 500,
+      "gold_max": 1500
+    },
+    {
+      "item_id": "potion_hp_large",
+      "weight": 150,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "potion_mp_large",
+      "weight": 120,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "strong_sun_water",
+      "weight": 100,
+      "min_qty": 1,
+      "max_qty": 2,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "hide_belt",
+      "weight": 20,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "iron_belt",
+      "weight": 20,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "deerskin_boots",
+      "weight": 20,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "xiangmo_sword",
+      "weight": 15,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "yanyue_blade",
+      "weight": 15,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "zhanma_blade",
+      "weight": 15,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_fire_sword",
+      "weight": 70,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_ice_roar",
+      "weight": 70,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_summon_beast",
+      "weight": 70,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_magic_shield",
+      "weight": 60,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_holy_word",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_hell_lightning",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_savage_charge",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_demon_binding",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_half_moon",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_assassination",
+      "weight": 50,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_summon_skeleton",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_slaying_sword",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_lightning",
+      "weight": 40,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_fireball",
+      "weight": 30,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_basic_sword",
+      "weight": 30,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    },
+    {
+      "item_id": "book_healing",
+      "weight": 30,
+      "min_qty": 1,
+      "max_qty": 1,
+      "gold_min": 0,
+      "gold_max": 0
+    }
+  ]
+}

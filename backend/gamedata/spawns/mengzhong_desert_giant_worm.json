@@ -1,0 +1,25 @@
+{
+  "map_id": "mengzhong",
+  "monster_id": "desert_giant_worm",
+  "density": 3,
+  "respawn_seconds": 120,
+  "count": 6,
+  "locations": [
+    {
+      "x": 155,
+      "y": 115
+    },
+    {
+      "x": 177,
+      "y": 99
+    },
+    {
+      "x": 137,
+      "y": 139
+    },
+    {
+      "x": 181,
+      "y": 135
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "map_id": "snake-valley",
+  "monster_id": "venom_snake",
+  "density": 4,
+  "respawn_seconds": 120,
+  "count": 8,
+  "locations": [
+    {
+      "x": 60,
+      "y": 110
+    },
+    {
+      "x": 82,
+      "y": 94
+    },
+    {
+      "x": 42,
+      "y": 134
+    },
+    {
+      "x": 86,
+      "y": 130
+    }
+  ]
+}
