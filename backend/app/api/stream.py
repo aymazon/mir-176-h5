@@ -21,6 +21,8 @@ from sse_starlette import EventSourceResponse
 from app.api.deps import CurrentPlayerId, DbSession
 from app.core.config import settings
 from app.models.character import Character
+from app.sim.session import get_or_create_player_session, on_disconnect
+from app.sim.tick_loop import start_tick_loop
 from app.sse.buffer import parse_last_event_id, plan_replay
 from app.sse.session_state import SessionState, get_or_create_session
 
@@ -85,12 +87,17 @@ async def stream(
     _ensure_mock_task(character_id, state)
     state.mark_connected()
 
+    # todo 15：确保 PlayerSession 单例并启动/抢占 tick task（新连接接管旧 task）
+    player_session = await get_or_create_player_session(db, character_id)
+    await start_tick_loop(player_session)
+
     raw_last_event_id = request.headers.get("last-event-id")
     plan = plan_replay(state, raw_last_event_id)
 
     async def on_client_close(_message: object) -> None:
-        # hook（todo 15 接管）：只标记断线并启动宽限期计时，不取消 tick task。
+        # hook：标记断线 + 宽限期起表（tick_loop 消费）；不取消 tick task。
         state.mark_disconnected()
+        on_disconnect(character_id)
 
     async def event_stream() -> AsyncIterator[dict[str, str]]:
         # 游标 = 本连接已发出的最大 seq；gap 重置 epoch 后归零，新事件从 1 取。
@@ -128,6 +135,7 @@ async def stream(
         finally:
             # 与 client_close_handler_callable 同一语义：标记断线 + 宽限期起表。
             state.mark_disconnected()
+            on_disconnect(character_id)
 
     return EventSourceResponse(
         event_stream(),

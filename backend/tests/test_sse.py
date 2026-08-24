@@ -23,6 +23,8 @@ from app.api.stream import _dev_mock_enabled, _mock_log_tasks, shutdown_mock_sou
 from app.core.config import settings
 from app.core.db import engine
 from app.main import app
+from app.sim.tick_loop import shutdown_all_sessions
+from app.sim.zone import shutdown_all
 from app.sse.session_state import reset_sessions
 
 type ReceivedEvent = tuple[str, str]  # (event 名, id 字符串)
@@ -58,6 +60,10 @@ async def server() -> AsyncIterator[str]:
 async def client(server: str) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(base_url=server) as c:
         yield c
+    # todo 15 起 /api/stream 会拉起 tick/spawner 后台 task：dispose 前必须先取消，
+    # 否则僵尸 task 会在已关闭的旧 loop 上续用连接池，污染下一用例（跨 loop Future）。
+    await shutdown_all_sessions()
+    await shutdown_all()
     await engine.dispose()
 
 async def _register_login_create(client: AsyncClient) -> None:

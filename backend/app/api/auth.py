@@ -15,11 +15,14 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import (
     SESSION_COOKIE_NAME,
+    CurrentPlayerId,
     DbSession,
     create_auth_session,
     delete_auth_session,
 )
+from app.models.character import Character
 from app.models.player import Player
+from app.sim.tick_loop import shutdown_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -92,6 +95,14 @@ async def login(payload: CredentialsIn, db: DbSession, response: Response) -> Pl
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(request: Request, response: Response) -> None:
+async def logout(
+    request: Request, response: Response, db: DbSession, player_id: CurrentPlayerId
+) -> None:
+    # todo 15：显式登出 = 取消 tick task + 离图 + 心跳刷新 + 注销会话（宽限期不适用）
+    character_id = (
+        await db.execute(select(Character.id).where(Character.player_id == player_id))
+    ).scalar_one_or_none()
+    if character_id is not None:
+        await shutdown_session(character_id)
     delete_auth_session(request.cookies.get(SESSION_COOKIE_NAME))
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")

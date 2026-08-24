@@ -13,13 +13,17 @@ from app.api.character import router as character_router
 from app.api.health import router as health_router
 from app.api.stream import router as stream_router
 from app.api.stream import shutdown_mock_sources
+from app.sim.tick_loop import shutdown_all_sessions
+from app.sim.zone import shutdown_all
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """关停时取消 dev 模拟日志源（启动为懒创建：首个 SSE 连接触发）。"""
+    """关停时取消 dev 模拟源 + 全部 tick task + 地图实例（启动均为懒创建）。"""
     yield
     await shutdown_mock_sources()
+    await shutdown_all_sessions()
+    await shutdown_all()
 
 
 app = FastAPI(title="mir-176-h5", version="0.1.0", lifespan=lifespan)
