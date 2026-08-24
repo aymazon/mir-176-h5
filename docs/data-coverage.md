@@ -8,6 +8,34 @@
 
 
 
+<!-- coverage_report:begin:summary -->
+## 覆盖率摘要（todo 22 自动生成）
+
+> 本区块由 `cd backend && uv run python scripts/coverage_report.py` 生成（幂等可重跑），
+> 手工编辑会被下次生成覆盖；双源出处与抽检结论见 §0–§10。
+
+| 类别 | 数量 |
+| --- | --- |
+| maps | 13 |
+| monsters | 60 |
+| items | 127 |
+| skills | 32 |
+| npcs | 11 |
+| quests | 13 |
+| drops | 60 |
+| spawns | 69 |
+| levels | 40 |
+
+**strict 校验门禁**（`uv run python -m app.gamedata_cli validate --strict`）：
+
+- ✅ lint_cross_refs_integrity 通过
+- ✅ lint_birth_map_exists 通过
+- ✅ lint_monster_level_in_band 通过
+- ✅ lint_weapon_level_sequence 通过
+- ✅ lint_id_only_references 通过
+- ✅ lint_newbie_equipment_thresholds 通过
+
+<!-- coverage_report:end:summary -->
 ## 0. 经验表双源比对差异清单（todo 17，2026-08-25）
 
 - 主源：/home/aymazon/WorkSpace/mir-176-h5/backend/scripts/cache/Exps.ini
@@ -679,3 +707,171 @@ map         : level←level hp←hp attack←MaxDC defense←MaxAC magic_defense
 | wooma-temple | 沃玛寺庙 | wooma_temple | 28–36 | wooma-forest、zuma-caves | wooma_taurus |
 | yin-xing-cun | 银杏村 | newbie | 0–7 | biqi-wild | — |
 | zuma-caves | 祖玛寺庙 | zuma_temple | 32–40 | mengzhong、wooma-temple | zuma_taurus |
+
+<!-- coverage_report:begin:detail -->
+## 11. 全量覆盖率明细（todo 22 自动生成）
+
+### 11.1 每图覆盖（怪物/刷怪点/掉落表计数 + 等级带 + 邻接）
+
+| 地图 | 名称 | 等级带 | 邻接图 | 怪物种数 | 刷怪点 | 掉落表 |
+| --- | --- | --- | --- | --- | --- | --- |
+| biqi-mine | 比奇矿区（僵尸洞） | 12-20 | biqi-wild | 7 | 7 | 7 |
+| biqi-wild | 比奇野外 | 5-15 | yin-xing-cun, shouren-gu-1, biqi-mine, snake-valley | 8 | 8 | 8 |
+| centipede-cave | 蜈蚣洞（死亡山谷） | 20-30 | mengzhong, shimen | 6 | 6 | 6 |
+| mengzhong | 盟重土城周边 | 18-26 | snake-valley, centipede-cave, wooma-forest, zuma-caves | 4 | 4 | 4 |
+| shimen | 石墓（猪洞） | 24-34 | centipede-cave | 8 | 8 | 8 |
+| shouren-gu-1 | 兽人古墓一层 | 12-20 | biqi-wild, shouren-gu-2 | 3 | 3 | 3 |
+| shouren-gu-2 | 兽人古墓二层 | 16-24 | shouren-gu-1, shouren-gu-3 | 4 | 4 | 4 |
+| shouren-gu-3 | 兽人古墓三层 | 20-28 | shouren-gu-2 | 4 | 4 | 4 |
+| snake-valley | 毒蛇山谷 | 15-22 | biqi-wild, mengzhong | 7 | 7 | 7 |
+| wooma-forest | 沃玛森林 | 25-30 | mengzhong, wooma-temple | 4 | 4 | 4 |
+| wooma-temple | 沃玛寺庙 | 28-36 | wooma-forest, zuma-caves | 6 | 6 | 6 |
+| yin-xing-cun | 银杏村 | 0-7 | biqi-wild | 1 | 1 | 1 |
+| zuma-caves | 祖玛寺庙 | 32-40 | mengzhong, wooma-temple | 7 | 7 | 7 |
+
+### 11.2 每怪覆盖（掉落表存在性 + 金币行 + 所在图）
+
+| 怪物 | 名称 | Lv | BOSS | 所在图 | 掉落表 | 金币行 |
+| --- | --- | --- | --- | --- | --- | --- |
+| ancient_wooma_warrior | 远古沃玛勇士 | 53 | 否 | wooma-forest | ✅ | ✅ |
+| axe_skeleton | 掷斧骷髅 | 18 | 否 | shouren-gu-2, shouren-gu-3 | ✅ | ✅ |
+| bat | 蝙蝠 | 5 | 否 | biqi-mine | ✅ | ✅ |
+| black_centipede | 黑色蜈蚣 | 33 | 否 | centipede-cave | ✅ | ✅ |
+| cave_bat | 山洞蝙蝠 | 16 | 否 | shouren-gu-1, shouren-gu-2 | ✅ | ✅ |
+| cave_maggot | 洞蛆 | 21 | 否 | biqi-mine, shouren-gu-1 | ✅ | ✅ |
+| centipede | 蜈蚣 | 26 | 否 | centipede-cave | ✅ | ✅ |
+| chicken | 鸡 | 5 | 否 | yin-xing-cun | ✅ | ✅ |
+| corpse_king | 尸王👑 | 50 | 是 | biqi-mine | ✅ | ✅ |
+| corpse_overlord | 尸霸👑 | 55 | 是 | shimen | ✅ | ✅ |
+| deer | 鹿 | 12 | 否 | biqi-wild | ✅ | ✅ |
+| desert_giant_worm | 沙漠巨型蠕虫 | 26 | 否 | mengzhong | ✅ | ✅ |
+| evil_clamp_worm | 邪恶钳虫👑 | 60 | 是 | centipede-cave | ✅ | ✅ |
+| evil_corpse_king | 恶灵尸王 | 33 | 否 | shimen | ✅ | ✅ |
+| flaming_wooma | 火焰沃玛 | 31 | 否 | wooma-temple | ✅ | ✅ |
+| forest_yeti | 森林雪人 | 16 | 否 | wooma-forest | ✅ | ✅ |
+| giant_centipede | 巨型蜈蚣 | 30 | 否 | centipede-cave | ✅ | ✅ |
+| giant_scorpion | 巨型蝎子 | 24 | 否 | mengzhong | ✅ | ✅ |
+| giant_snake | 巨蛇 | 22 | 否 | snake-valley | ✅ | ✅ |
+| hook_cat | 多钩猫 | 13 | 否 | biqi-wild | ✅ | ✅ |
+| horn_fly | 角蝇 | 30 | 否 | mengzhong, shimen, zuma-caves | ✅ | ✅ |
+| jumping_bee | 跳跳蜂 | 26 | 否 | biqi-mine, centipede-cave | ✅ | ✅ |
+| lightning_zombie | 闪电僵尸 | 34 | 否 | biqi-mine | ✅ | ✅ |
+| man_eating_flower | 食人花 | 20 | 否 | biqi-wild | ✅ | ✅ |
+| orc | 半兽人 | 15 | 否 | biqi-wild, shouren-gu-3 | ✅ | ✅ |
+| orc_champion | 半兽勇士👑 | 28 | 是 | shouren-gu-3 | ✅ | ✅ |
+| orc_warrior | 半兽战士 | 22 | 否 | ⚠️ 无刷怪点 | ✅ | ✅ |
+| poison_spider | 毒蜘蛛 | 16 | 否 | wooma-forest | ✅ | ✅ |
+| rake_cat | 钉耙猫 | 13 | 否 | biqi-wild | ✅ | ✅ |
+| red_snake | 红蛇 | 17 | 否 | snake-valley | ✅ | ✅ |
+| scarecrow | 稻草人 | 10 | 否 | biqi-wild | ✅ | ✅ |
+| scorpion | 蝎子 | 18 | 否 | mengzhong | ✅ | ✅ |
+| scorpion_snake | 蝎蛇 | 35 | 否 | shimen | ✅ | ✅ |
+| skeleton | 骷髅 | 18 | 否 | shouren-gu-1, shouren-gu-2 | ✅ | ✅ |
+| skeleton_elf | 骷髅精灵👑 | 50 | 是 | shouren-gu-3 | ✅ | ✅ |
+| skeleton_warrior | 骷髅战士 | 19 | 否 | shouren-gu-2 | ✅ | ✅ |
+| tiger_snake | 虎蛇 | 18 | 否 | snake-valley | ✅ | ✅ |
+| toad | 蛤蟆 | 12 | 否 | biqi-wild | ✅ | ✅ |
+| toad_fighter | 蛤蟆斗士 | 15 | 否 | biqi-wild | ✅ | ✅ |
+| touch_dragon_god | 触龙神👑 | 99 | 是 | centipede-cave | ✅ | ✅ |
+| two_head_snake | 双头蛇 | 26 | 否 | snake-valley | ✅ | ✅ |
+| two_head_snake_demon | 双头蛇魔 | 30 | 否 | snake-valley | ✅ | ✅ |
+| venom_snake | 毒蛇 | 17 | 否 | snake-valley | ✅ | ✅ |
+| venom_snake_fighter | 毒蛇斗士 | 20 | 否 | snake-valley | ✅ | ✅ |
+| wedge_moth | 楔蛾 | 32 | 否 | shimen, zuma-caves | ✅ | ✅ |
+| wild_boar_black | 黑野猪 | 35 | 否 | shimen | ✅ | ✅ |
+| wild_boar_red | 红野猪 | 32 | 否 | shimen | ✅ | ✅ |
+| wild_boar_white | 白野猪👑 | 50 | 是 | shimen | ✅ | ✅ |
+| wooma_guardian | 沃玛卫士 | 50 | 否 | wooma-temple | ✅ | ✅ |
+| wooma_soldier | 沃玛战士 | 30 | 否 | wooma-forest, wooma-temple | ✅ | ✅ |
+| wooma_tactician | 沃玛战将 | 30 | 否 | wooma-temple | ✅ | ✅ |
+| wooma_taurus | 沃玛教主👑 | 60 | 是 | wooma-temple | ✅ | ✅ |
+| wooma_warrior | 沃玛勇士 | 30 | 否 | wooma-temple | ✅ | ✅ |
+| zombie | 僵尸 | 25 | 否 | biqi-mine | ✅ | ✅ |
+| zombie_fighter | 僵尸斗士 | 28 | 否 | biqi-mine | ✅ | ✅ |
+| zuma_archer | 祖玛弓箭手 | 39 | 否 | zuma-caves | ✅ | ✅ |
+| zuma_guardian | 祖玛卫士 | 50 | 否 | zuma-caves | ✅ | ✅ |
+| zuma_guardian_elite | 极品祖玛卫士 | 50 | 否 | zuma-caves | ✅ | ✅ |
+| zuma_statue | 祖玛雕像 | 50 | 否 | zuma-caves | ✅ | ✅ |
+| zuma_taurus | 祖玛教主👑 | 60 | 是 | zuma-caves | ✅ | ✅ |
+
+### 11.3 每技能学习入口（商店售书 / 任务奖励 / 职业任务）
+
+| 技能 | 职业 | 习得等级 | 对应书 | 学习入口 |
+| --- | --- | --- | --- | --- |
+| basic_sword（基本剑术） | warrior | 7 | book_basic_sword | 商店 biqi_bookstore 售 book_basic_sword |
+| blast_fire（爆裂火焰） | wizard | 22 | — | 缺书（M5 待办） |
+| fire_wall（火墙） | wizard | 24 | — | 缺书（M5 待办） |
+| fireball（火球术） | wizard | 7 | book_fireball | 商店 biqi_bookstore 售 book_fireball |
+| ghost_shield（幽灵盾） | taoist | 22 | — | 缺书（M5 待办） |
+| great_fireball（大火球） | wizard | 19 | — | 缺书（M5 待办） |
+| half_moon（半月弯刀） | warrior | 28 | book_half_moon | 商店 biqi_bookstore 售 book_half_moon |
+| healing（治愈术） | taoist | 7 | book_healing | 商店 biqi_bookstore 售 book_healing |
+| hell_fire（地狱火） | wizard | 16 | — | 缺书（M5 待办） |
+| holy_armor（神圣战甲术） | taoist | 25 | — | 缺书（M5 待办） |
+| holy_word（圣言术） | wizard | 32 | book_holy_word | 商店 biqi_bookstore 售 book_holy_word |
+| ice_thunder（冰咆哮） | wizard | 35 | book_ice_roar | 职业任务 wizard_ice_roar_guide |
+| invisibility（隐身术） | taoist | 20 | — | 缺书（M5 待办） |
+| liehuo（烈火剑法） | warrior | 35 | book_fire_sword | 商店 biqi_bookstore 售 book_fire_sword |
+| lightning（疾光电影） | wizard | 26 | — | 缺书（M5 待办） |
+| lightning_exorcism（地狱雷光） | wizard | 30 | book_hell_lightning | 商店 biqi_bookstore 售 book_hell_lightning |
+| magic_shield（魔法盾） | wizard | 31 | book_magic_shield | 商店 biqi_bookstore 售 book_magic_shield |
+| mass_heal（群体治愈术） | taoist | 33 | — | 缺书（M5 待办） |
+| mass_invisibility（集体隐身术） | taoist | 21 | — | 缺书（M5 待办） |
+| poison_amulet（施毒术） | taoist | 14 | — | 缺书（M5 待办） |
+| repulsion（抗拒火环） | wizard | 12 | — | 缺书（M5 待办） |
+| soul_fire（灵魂火符） | taoist | 18 | — | 缺书（M5 待办） |
+| soul_shoulder（野蛮冲撞） | warrior | 30 | book_savage_charge | 商店 biqi_bookstore 售 book_savage_charge |
+| spirit_sword（精神力战法） | taoist | 9 | — | 缺书（M5 待办） |
+| summon_beast（召唤神兽） | taoist | 35 | book_summon_beast | 职业任务 taoist_summon_beast_guide |
+| summon_skeleton（召唤骷髅） | taoist | 19 | book_summon_skeleton | 商店 biqi_bookstore 售 book_summon_skeleton |
+| tae_kwon_do（攻杀剑术） | warrior | 19 | book_slaying_sword | 商店 biqi_bookstore 售 book_slaying_sword |
+| teleport（瞬息移动） | wizard | 19 | — | 缺书（M5 待办） |
+| temptation（诱惑之光） | wizard | 13 | — | 缺书（M5 待办） |
+| thrust（刺杀剑术） | warrior | 25 | book_assassination | 商店 biqi_bookstore 售 book_assassination |
+| thunder_bolt（雷电术） | wizard | 17 | book_lightning | 商店 biqi_bookstore 售 book_lightning |
+| trap_curse（困魔咒） | taoist | 28 | book_demon_binding | 商店 biqi_bookstore 售 book_demon_binding |
+
+### 11.4 等级带例外登记（lint_monster_level_in_band 放行项）
+
+规则基线：怪物 level ∈ 地图等级带 ±3；BOSS（boss=true）一律豁免（经典 176 设计——低级图藏高级 BOSS）。以下非 BOSS 越带怪经人工复核放行，与 app/gamedata_lint.py `LEVEL_BAND_EXCEPTIONS` 登记表一一对应；新增越带怪不在表内即 strict 硬错。
+
+| 刷怪点 | 等级 | 放行理由 |
+| --- | --- | --- |
+| biqi-mine:bat | 5 | 矿区入口过渡怪（L5，经典矿区外围低级怪） |
+| biqi-mine:jumping_bee | 26 | 矿区深层怪（L26，玩家入矿后深层遭遇） |
+| biqi-mine:lightning_zombie | 34 | 僵尸洞深层怪（L34，矿区即僵尸洞入口） |
+| biqi-mine:zombie | 25 | 僵尸洞主怪（L25，经典僵尸洞位于矿区深层） |
+| biqi-mine:zombie_fighter | 28 | 僵尸洞深层怪（L28） |
+| biqi-wild:man_eating_flower | 20 | 比奇野外边缘杂怪（L20，野外南缘高级草怪） |
+| mengzhong:horn_fly | 30 | 盟重过渡怪（L30，盟重外围低级飞怪） |
+| shouren-gu-3:orc | 15 | 半兽人贯穿三层（L15 为同族低层怪延续到三层入口） |
+| snake-valley:two_head_snake | 26 | 蛇谷深层怪（L26，谷底深洞遭遇） |
+| snake-valley:two_head_snake_demon | 30 | 蛇谷深处蛇魔（L30，mini-boss 布怪） |
+| wooma-forest:ancient_wooma_warrior | 53 | 远古沃玛勇士为森林守卫级精英（L53） |
+| wooma-forest:forest_yeti | 16 | 森林边缘过渡怪（L16，沃玛森林外围低级怪） |
+| wooma-forest:poison_spider | 16 | 森林边缘过渡怪（L16，沃玛森林外围低级怪） |
+| wooma-temple:wooma_guardian | 50 | 沃玛卫士为寺庙守卫级怪（L50，教主前厅护卫） |
+| zuma-caves:zuma_guardian | 50 | 祖玛卫士为寺庙守卫级怪（L50，教主前厅护卫） |
+| zuma-caves:zuma_guardian_elite | 50 | 极品祖玛卫士（L50，寺庙精英护卫） |
+| zuma-caves:zuma_statue | 50 | 祖玛雕像（L50，寺庙机关怪） |
+
+### 11.5 数据缺漏清单（M5 待办）
+
+- [ ] 怪物 orc_warrior 无 spawns 刷怪点（普通怪）
+- [ ] 技能 blast_fire（爆裂火焰）：缺书（M5 待办）
+- [ ] 技能 fire_wall（火墙）：缺书（M5 待办）
+- [ ] 技能 ghost_shield（幽灵盾）：缺书（M5 待办）
+- [ ] 技能 great_fireball（大火球）：缺书（M5 待办）
+- [ ] 技能 hell_fire（地狱火）：缺书（M5 待办）
+- [ ] 技能 holy_armor（神圣战甲术）：缺书（M5 待办）
+- [ ] 技能 invisibility（隐身术）：缺书（M5 待办）
+- [ ] 技能 lightning（疾光电影）：缺书（M5 待办）
+- [ ] 技能 mass_heal（群体治愈术）：缺书（M5 待办）
+- [ ] 技能 mass_invisibility（集体隐身术）：缺书（M5 待办）
+- [ ] 技能 poison_amulet（施毒术）：缺书（M5 待办）
+- [ ] 技能 repulsion（抗拒火环）：缺书（M5 待办）
+- [ ] 技能 soul_fire（灵魂火符）：缺书（M5 待办）
+- [ ] 技能 spirit_sword（精神力战法）：缺书（M5 待办）
+- [ ] 技能 teleport（瞬息移动）：缺书（M5 待办）
+- [ ] 技能 temptation（诱惑之光）：缺书（M5 待办）
+<!-- coverage_report:end:detail -->

@@ -15,7 +15,15 @@ from typing import Any, cast
 
 import pytest
 
-from app.gamedata_lint import lint_newbie_equipment_thresholds
+from app.gamedata_lint import (
+    lint_birth_map_exists,
+    lint_cross_refs_integrity,
+    lint_id_only_references,
+    lint_monster_level_in_band,
+    lint_newbie_equipment_thresholds,
+    lint_weapon_level_sequence,
+    weapon_level_sequence_report,
+)
 from app.gamedata_loader import GameDataError, load_all
 from app.gamedata_schema import (
     DropEntry,
@@ -276,12 +284,12 @@ def test_lint_newbie_equipment_thresholds_flags_overcap():
 
 
 def test_cli_validate_exit_1_on_newbie_overcap(broken_root: Path):
-    """CLI 集成：改坏布衣门槛后 validate --root 报错退出 1。"""
+    """CLI 集成：改坏布衣门槛后 validate --strict 报错退出 1（todo 22 起 lint 归 strict 门控）。"""
     target = broken_root / "items" / "cloth_robe.json"
     raw = json.loads(target.read_text(encoding="utf-8"))
     raw["need_level"] = 99
     target.write_text(json.dumps(raw, indent=2), encoding="utf-8")
-    result = _run_cli("validate", "--root", str(broken_root))
+    result = _run_cli("validate", "--strict", "--root", str(broken_root))
     assert result.returncode == 1
     assert "items/cloth_robe.json" in result.stderr
     assert "need_level" in result.stderr
@@ -524,3 +532,190 @@ def test_simulate_drops_distribution_in_tolerance(capsys: Any):
     out = capsys.readouterr().out
     assert "沃玛装备出现率" in out
     assert "容差断言全部通过" in out
+
+
+# ---------- todo 22：全量校验门禁（strict lint 规则） ----------
+
+
+def _loaded() -> dict[str, dict[str, Any]]:
+    """加载真实 gamedata 索引（cast 放宽 GameDataModel 边界，便于合成污染）。"""
+    return cast("dict[str, dict[str, Any]]", load_all(GAMEDATA_ROOT))
+
+
+def test_lint_cross_refs_integrity_passes_on_real_data():
+    """规则 1 happy path：真实数据零悬空引用。"""
+    problems = lint_cross_refs_integrity(_loaded())
+    assert problems == [], problems
+
+
+def test_lint_cross_refs_integrity_flags_dangling_drop_item():
+    """规则 1 failure：drops 引用不存在的 item → 报文件+字段+期望类别。"""
+    data = _loaded()
+    raw = _load_sample("drops", "chicken_drops")
+    raw["entries"][1]["item_id"] = "nonexistent_item"
+    bad = DropEntry.model_validate(raw)
+    tainted = {**data, "drops": {**data["drops"], "ghost_table": bad}}
+    problems = lint_cross_refs_integrity(tainted)
+    assert len(problems) == 1, problems
+    assert "entries[1].item_id" in problems[0]
+    assert "'nonexistent_item' not found in items" in problems[0]
+
+
+def test_lint_birth_map_exists_passes_on_real_data():
+    """规则 2 happy path：BIRTH_MAP_ID='yin-xing-cun' 在 maps。"""
+    maps = cast("dict[str, MapDef]", _loaded()["maps"])
+    assert lint_birth_map_exists(maps) == []
+
+
+def test_lint_birth_map_exists_flags_missing():
+    """规则 2 failure：删掉出生图 → 报 BIRTH_MAP_ID 未找到。"""
+    maps = cast("dict[str, MapDef]", _loaded()["maps"])
+    problems = lint_birth_map_exists({k: v for k, v in maps.items() if k != "yin-xing-cun"})
+    assert len(problems) == 1
+    assert "BIRTH_MAP_ID 'yin-xing-cun' not found in maps" in problems[0]
+
+
+def test_lint_monster_level_in_band_passes_on_real_data():
+    """规则 3 happy path：BOSS 豁免 + 登记例外覆盖后，真实数据全过。"""
+    data = _loaded()
+    problems = lint_monster_level_in_band(
+        cast("dict[str, SpawnEntry]", data["spawns"]),
+        cast("dict[str, MonsterDef]", data["monsters"]),
+        cast("dict[str, MapDef]", data["maps"]),
+    )
+    assert problems == [], problems
+
+
+def test_lint_monster_level_in_band_flags_misplaced_nonboss():
+    """规则 3 failure：未登记的越带普通怪 → 报怪/图/实际等级/期望范围。"""
+    data = _loaded()
+    monsters = cast("dict[str, MonsterDef]", dict(data["monsters"]))
+    misplaced = MonsterDef.model_validate(
+        {**_load_sample("monsters", "chicken"), "id": "misplaced_ogre", "level": 99}
+    )
+    monsters["misplaced_ogre"] = misplaced
+    spawns = cast("dict[str, SpawnEntry]", dict(data["spawns"]))
+    spawn = SpawnEntry.model_validate(
+        {**_load_sample("spawns", "yin-xing-cun_chicken"), "monster_id": "misplaced_ogre"}
+    )
+    spawns["yin-xing-cun:misplaced_ogre"] = spawn
+    problems = lint_monster_level_in_band(
+        spawns,
+        monsters,
+        cast("dict[str, MapDef]", data["maps"]),
+    )
+    assert len(problems) == 1, problems
+    assert "misplaced_ogre" in problems[0]
+    assert "yin-xing-cun" in problems[0]
+    assert "level 99" in problems[0]
+    assert "[-3, 10]" in problems[0]  # 银杏村带 0-7 ±3
+
+
+def test_lint_monster_level_in_band_exempts_boss():
+    """规则 3 豁免：boss=True 越带不报（经典低级图藏高级 BOSS）。"""
+    data = _loaded()
+    monsters = cast("dict[str, MonsterDef]", dict(data["monsters"]))
+    boss = MonsterDef.model_validate(
+        {**_load_sample("monsters", "chicken"), "id": "hidden_boss", "level": 99, "boss": True}
+    )
+    monsters["hidden_boss"] = boss
+    spawns = cast("dict[str, SpawnEntry]", dict(data["spawns"]))
+    spawn = SpawnEntry.model_validate(
+        {**_load_sample("spawns", "yin-xing-cun_chicken"), "monster_id": "hidden_boss"}
+    )
+    spawns["yin-xing-cun:hidden_boss"] = spawn
+    problems = lint_monster_level_in_band(
+        spawns,
+        monsters,
+        cast("dict[str, MapDef]", data["maps"]),
+    )
+    assert problems == [], problems
+
+
+def test_lint_weapon_level_sequence_passes_on_real_data():
+    """规则 4 happy path：11 个 §7 基线锚点全部对齐。"""
+    items = cast("dict[str, ItemDef]", _loaded()["items"])
+    problems = lint_weapon_level_sequence(items)
+    assert problems == [], problems
+
+
+def test_lint_weapon_level_sequence_flags_drift():
+    """规则 4 failure：裁决之杖 need_level 漂移 → 报实际值 vs 基线值。"""
+    bad = ItemDef.model_validate(
+        {**_load_sample("items", "verdict_staff"), "need_level": 31}
+    )
+    problems = lint_weapon_level_sequence({bad.id: bad})
+    assert len(problems) == 1
+    assert "items/verdict_staff.json" in problems[0]
+    assert "31" in problems[0] and "30" in problems[0]
+
+
+def test_lint_weapon_level_sequence_tolerates_extra_and_missing():
+    """规则 4 边界：基线外新武器与缺失锚点都不硬错——diff 报告而非严格匹配。"""
+    extra = ItemDef.model_validate(_load_sample("items", "dragonslayer_blade"))
+    assert lint_weapon_level_sequence({extra.id: extra}) == []
+    report = weapon_level_sequence_report({extra.id: extra})
+    assert any("[EXTRA]" in line for line in report)
+    assert any("[MISSING]" in line for line in report)
+
+
+def test_lint_id_only_references_passes_on_real_data():
+    """规则 5 happy path：真实 gamedata 除自由文本字段外无中文。"""
+    assert lint_id_only_references(GAMEDATA_ROOT) == []
+
+
+def test_lint_id_only_references_flags_cjk_reference(broken_root: Path):
+    """规则 5 failure：spawn 用中文名引用地图 → 报文件+字段路径。"""
+    target = broken_root / "spawns" / "yin-xing-cun_chicken.json"
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["map_id"] = "银杏村"
+    target.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    problems = lint_id_only_references(broken_root)
+    assert problems, "中文引用未被拦截"
+    assert any(
+        "yin-xing-cun_chicken.json" in p and "map_id" in p and "银杏村" in p
+        for p in problems
+    ), problems
+
+
+def test_cli_validate_strict_exit_0():
+    """验收：validate --strict 全绿 exit 0。"""
+    result = _run_cli("validate", "--strict")
+    assert result.returncode == 0, result.stderr
+    assert "(strict)" in result.stdout
+
+
+def test_cli_validate_no_strict_skips_semantic_lint(broken_root: Path):
+    """门控边界：非 strict 只跑结构校验，语义 lint 不拦截。"""
+    target = broken_root / "items" / "cloth_robe.json"
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["need_level"] = 99
+    target.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+    result = _run_cli("validate", "--no-strict", "--root", str(broken_root))
+    assert result.returncode == 0, result.stderr
+
+
+def test_cli_validate_strict_exit_1_on_dangling_drop_item(broken_root: Path):
+    """验收 failure：故意制造悬空引用 → strict exit 1 + 报错路径。"""
+    target = broken_root / "drops" / "chicken_drops.json"
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["entries"][1]["item_id"] = "nonexistent_item"
+    target.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+    result = _run_cli("validate", "--strict", "--root", str(broken_root))
+    assert result.returncode == 1
+    assert "nonexistent_item" in result.stderr
+    assert "drops/chicken_drops.json" in result.stderr
+
+
+def test_cli_validate_strict_catches_drift_structural_misses(broken_root: Path):
+    """门控价值实证：need_level 漂移通过结构校验、仅 strict lint 拦截。"""
+    target = broken_root / "items" / "verdict_staff.json"
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["need_level"] = 31
+    target.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+    structural = _run_cli("validate", "--no-strict", "--root", str(broken_root))
+    assert structural.returncode == 0, structural.stderr
+    strict = _run_cli("validate", "--strict", "--root", str(broken_root))
+    assert strict.returncode == 1
+    assert "warrior baseline drift" in strict.stderr
+    assert "items/verdict_staff.json" in strict.stderr
