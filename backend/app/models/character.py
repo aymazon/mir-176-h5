@@ -40,6 +40,11 @@ class Character(Base):
     bag_capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=40, server_default="40")
     # 回城绑定城（gamedata map id），建号时默认 = config.BIRTH_MAP_ID（todo 3）；todo 30 传送前置。
     bind_city: Mapped[str] = mapped_column(String(64), nullable=False)
+    # 行进中截止时刻（todo 30）：跨图跑动倒计时（UTC 绝对时刻）；NULL = 未在行进中。
+    # 活跃会话的事实源是进程内注册表（sim/travel.py），本列为同事务镜像落库。
+    traveling_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # 心跳列：tick 落库/断线/登出时刷新（todo 15），供 seed 工具进程外判活（todo 7）。
     last_active_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

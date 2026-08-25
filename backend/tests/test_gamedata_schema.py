@@ -132,7 +132,7 @@ def test_load_all_ok():
     data = load_all(GAMEDATA_ROOT)
     assert set(data) == {
         "maps", "monsters", "items", "skills", "npcs", "quests", "drops", "spawns",
-        "levels",
+        "levels", "teleport",
     }
     assert "yin-xing-cun" in data["maps"]
     assert "chicken" in data["drops"]

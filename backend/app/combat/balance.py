@@ -58,6 +58,7 @@ __all__ = [
     "SKILL_MULTIPLIER_BASE",
     "SKULL_BASE_HP",
     "SKULL_GROWTH_PER_LEVEL",
+    "TELEPORT_RATE_BASE",
     "TRAVEL_SECONDS_MAX",
     "TRAVEL_SECONDS_MIN",
 ]
@@ -230,3 +231,7 @@ TRAVEL_SECONDS_MIN: Final[int] = 5
 # 地图间"行进中"倒计时上限（秒）：跨半张世界图的跑图时间。
 # 出处: docs/MVP/README.md §10 同上（5–20s 区间端点）；距离→时长的映射自创; 置信度: medium
 TRAVEL_SECONDS_MAX: Final[int] = 20
+# 传送费率基础系数（金币/费率单位）：实际扣费 = round(费率系数 × 本值)。
+# 费率系数表在 gamedata/teleport.json（todo 30）；未录价的邻接边按系数 1.0。
+# 出处: 自创（176 社区无公开传送员价目表，量级按挂机金币产出定）; 置信度: low
+TELEPORT_RATE_BASE: Final[int] = 100

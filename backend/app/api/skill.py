@@ -50,6 +50,7 @@ from app.models.skill_state import SkillState as SkillStateRow
 from app.sim.pet import summon_pet
 from app.sim.session import PlayerSession, get_or_create_player_session
 from app.sim.tick_loop import BOOK_REQUIRED_LEVEL
+from app.sim.travel import has_travel
 
 router = APIRouter(prefix="/api/skill", tags=["skill"])
 
@@ -374,6 +375,11 @@ async def use_skill(
     """
     character = await _character_of(db, player_id)
     session = await get_or_create_player_session(db, character.id)
+    if has_travel(character.id):  # todo 30：行进中发起战斗 → 拒绝
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="行进中无法施放技能（跑图倒计时进行中）",
+        )
     registry = _skills()
     skill = _get_skill(registry, payload.skill_id)
 

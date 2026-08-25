@@ -267,6 +267,22 @@ async def use_consumable(
             dist = balance.PORTAL_RANDOM_MIN_DIST + int(session.rng.random() * span)
             result = "teleported"
             message = f"随机传送到地图另一处（距离约 {dist} 步）"
+            # todo 30 接入：同图重进模拟随机位移（离图→懒进同图，怪位重置）；
+            # MVP 无坐标网格，不出图、不换 map_id。
+            old_zone = session.zone
+            if old_zone is not None:
+                from app.sim.zone import leave_map
+
+                with suppress(KeyError):
+                    await leave_map(old_zone.map_id, character.id)
+                session.zone = None
+            if session.zone is None:
+                from app.sim.zone import enter_map
+
+                try:
+                    session.zone = await enter_map(snap.map_id, character.id)
+                except KeyError:
+                    pass  # 测试假图 headless 模式继续
             map_after = snap.map_id
         elif used_item_id == "dungeon_escape_scroll":
             target = _escape_target(snap.map_id) or snap.bind_city
@@ -320,7 +336,8 @@ async def use_consumable(
         EV_LOG, json.dumps({"kind": "use", "text": message}, ensure_ascii=False)
     )
     _publish_stat(session, reason="use", panel=panel)
-    if result == "escaped" and map_after is not None:
+    if result in ("escaped", "teleported") and map_after is not None:
+        # todo 30：地牢逃脱/随机卷真实切区后推 zone_change（reason=escaped/teleported）
         session.sse_state.publish(
             EV_ZONE_CHANGE,
             json.dumps({"map_id": map_after, "reason": result}, ensure_ascii=False),

@@ -14,9 +14,11 @@ from .npcs import NpcDef, NpcKind, ShopEntry
 from .quests import BossInstanceSpec, QuestClass, QuestDef, QuestKind
 from .skills import SkillClass, SkillDef, SkillTarget
 from .spawns import SpawnEntry, SpawnLocation
+from .teleport import CaveLayer, TeleportRoute, TeleportTable
 
 __all__ = [
     "BossInstanceSpec",
+    "CaveLayer",
     "DropEntry",
     "DropItem",
     "GameDataModel",
@@ -38,4 +40,6 @@ __all__ = [
     "SkillTarget",
     "SpawnEntry",
     "SpawnLocation",
+    "TeleportRoute",
+    "TeleportTable",
 ]

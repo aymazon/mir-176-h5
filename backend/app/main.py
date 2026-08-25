@@ -18,6 +18,7 @@ from app.api.shop import router as shop_router
 from app.api.skill import router as skill_router
 from app.api.stream import router as stream_router
 from app.api.stream import shutdown_mock_sources
+from app.api.teleport import router as teleport_router
 from app.sim.tick_loop import shutdown_all_sessions
 from app.sim.zone import shutdown_all
 
@@ -42,3 +43,4 @@ app.include_router(quest_router)
 app.include_router(shop_router)
 app.include_router(skill_router)
 app.include_router(stream_router)
+app.include_router(teleport_router)

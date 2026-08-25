@@ -28,6 +28,7 @@ from .gamedata_schema import (
     QuestKind,
     SkillDef,
     SpawnEntry,
+    TeleportTable,
 )
 from .gamedata_schema.common import GameDataModel
 
@@ -108,6 +109,39 @@ def _parse_levels(root: Path, errors: list[str]) -> dict[str, GameDataModel]:
             continue
         index[key] = entry
     return index
+
+
+# teleport.json：gamedata 根目录下的单文件类别（todo 30，与 levels 同模式），
+# 全库仅一份传送表，loader 以 "table" 单键索引；交叉引用（routes/cave_layers/
+# bind_cities 的地图 id）在 _check_cross_references 统一校验。
+TELEPORT_FILE = "teleport.json"
+
+
+def _parse_teleport(
+    root: Path, errors: list[str]
+) -> tuple[dict[str, GameDataModel], dict[str, str]]:
+    """解析根目录单文件 teleport.json，返回 ({"table": 表}, 键→来源文件)。错误记入 errors。"""
+    rel = TELEPORT_FILE
+    path = root / rel
+    index: dict[str, GameDataModel] = {}
+    if not path.is_file():
+        errors.append(f"{rel}: file missing")
+        return index, {}
+    try:
+        raw = cast("object", json.loads(path.read_text(encoding="utf-8")))
+    except json.JSONDecodeError as exc:
+        errors.append(
+            f"{rel}: invalid JSON at line {exc.lineno} column {exc.colno}: {exc.msg}"
+        )
+        return index, {}
+    try:
+        table = TeleportTable.model_validate(raw)
+    except ValidationError as exc:
+        for err in exc.errors():
+            errors.append(f"{rel}: {_loc_str(err['loc'])}: {err['msg']}")
+        return index, {}
+    index["table"] = table
+    return index, {"table": rel}
 
 # quests.target_id 按 kind 定向到被引用类别。
 _QUEST_TARGET: dict[QuestKind, tuple[str, str]] = {
@@ -258,6 +292,32 @@ def _check_cross_references(
         for i, ref in enumerate(q.reward_items):
             _check_ref(errors, rel("quests", key), f"reward_items[{i}]", ref, "items", items)
 
+    # teleport: routes/cave_layers/bind_cities 的地图 id -> maps（todo 30）
+    for key, table in data["teleport"].items():
+        assert isinstance(table, TeleportTable)
+        origin = origins["teleport"][key]
+        for i, r in enumerate(table.routes):
+            _check_ref(
+                errors, origin, f"routes[{i}].from_map_id", r.from_map_id, "maps", maps
+            )
+            _check_ref(
+                errors, origin, f"routes[{i}].to_map_id", r.to_map_id, "maps", maps
+            )
+        for i, c in enumerate(table.cave_layers):
+            _check_ref(
+                errors, origin, f"cave_layers[{i}].map_id", c.map_id, "maps", maps
+            )
+            _check_ref(
+                errors,
+                origin,
+                f"cave_layers[{i}].parent_map_id",
+                c.parent_map_id,
+                "maps",
+                maps,
+            )
+        for i, city in enumerate(table.bind_cities):
+            _check_ref(errors, origin, f"bind_cities[{i}]", city, "maps", maps)
+
 
 def load_all(
     root: Path | str | None = None,
@@ -280,6 +340,9 @@ def load_all(
         origins[category] = key_origin
 
     data["levels"] = _parse_levels(root_path, errors)
+    tp_index, tp_origins = _parse_teleport(root_path, errors)
+    data["teleport"] = tp_index
+    origins["teleport"] = tp_origins
 
     if not errors:
         _check_cross_references(data, origins, errors)

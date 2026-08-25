@@ -73,6 +73,12 @@ from app.sim.session import (
     build_potion_catalog,
     release_session,
 )
+from app.sim.travel import (
+    TravelState,
+    clear_travel,
+    has_travel,
+    pop_due_travel,
+)
 
 if TYPE_CHECKING:
     from app.combat.drops import DropResult
@@ -211,6 +217,22 @@ async def reload_equip_cache(character_id: int) -> None:
 def _gamedata() -> dict[str, object]:
     """进程内缓存一份已校验 gamedata（zone._load_gamedata_cached 同款）。"""
     return cast("dict[str, object]", load_all())
+
+
+@lru_cache(maxsize=1)
+def _bind_cities() -> frozenset[str]:
+    """主城 id 集（todo 30 回城绑定）：来自 teleport.json bind_cities。
+
+    数据缺失（测试假 gamedata）时回退出生城，保证绑定语义永不悬空。
+    """
+    try:
+        table = cast("dict[str, object]", _gamedata()["teleport"])["table"]
+        cities = getattr(table, "bind_cities", None)
+        if isinstance(cities, (list, tuple)) and cities:
+            return frozenset(str(c) for c in cities)
+    except KeyError:
+        pass
+    return frozenset({balance.BIRTH_MAP_ID})
 
 
 @lru_cache(maxsize=1)
@@ -398,6 +420,7 @@ async def shutdown_session(character_id: int) -> bool:
         session.zone = None
     _EQUIP_CACHE.pop(character_id, None)  # 磨损记账缓存随会话注销清理（todo 24）
     _GROUND_DROPS.pop(character_id, None)  # 地面掉落池随会话注销清理（todo 25）
+    clear_travel(character_id)  # 行进态随会话注销取消（todo 30）
     async with SessionLocal() as db:
         await db.execute(
             update(Character)
@@ -428,7 +451,7 @@ async def shutdown_all_sessions() -> None:
                 await leave_map(zone.map_id, character_id)
             session.zone = None
         _EQUIP_CACHE.pop(character_id, None)
-        _GROUND_DROPS.pop(character_id, None)  # 地面掉落池随会话注销清理（todo 25）
+        clear_travel(character_id)  # 行进态随会话注销取消（todo 30）
     reset_sessions()
 
 
@@ -445,6 +468,7 @@ async def _teardown_on_grace_timeout(session: PlayerSession) -> None:
     release_session(session.character_id)
     _EQUIP_CACHE.pop(session.character_id, None)
     _GROUND_DROPS.pop(session.character_id, None)
+    clear_travel(session.character_id)  # 行进态随宽限超时取消（todo 30）
     session.tick_task = None
     LOG.info("grace period expired; tick loop stopped for %s", session.character_id)
 
@@ -473,7 +497,20 @@ async def tick_loop(session: PlayerSession, *, interval: float | None = None) ->
                 return
             n += 1
             # 锁外战斗纯计算 + 内存变更（防慢客户端堵 REST 的镜像面：不堵 tick）
+            # 锁外战斗纯计算 + 内存变更（防慢客户端堵 REST 的镜像面：不堵 tick）；
+            # 行进中（todo 30）simulate_tick 内部跳过战斗/技能/吃药，仅 stat 心跳。
             events = simulate_tick(session, n)
+            # 行进到点（todo 30）：切 zone_id + 清 traveling_until + 主城绑定更新；
+            # 失败不阻断主循环（下 tick 重试——注册表未消费仍会命中）。
+            arrival = pop_due_travel(session.character_id)
+            if arrival is not None:
+                try:
+                    await complete_travel(session, arrival)
+                except Exception:
+                    LOG.exception(
+                        "travel arrival failed for character %s",
+                        session.character_id,
+                    )
             # 自动回城触发器（todo 25）：拦截内部 recall 标记 → 调回城动作
             # （占位实现直读 bind_city 切 zone_id；TODO(todo-26) 扣卷 / TODO(todo-30)
             # 传送员就绪后在 trigger_return_city 接通）。标记事件不对外发布。
@@ -623,6 +660,48 @@ async def trigger_return_city(session: PlayerSession) -> str:
     return target
 
 
+async def complete_travel(session: PlayerSession, state: TravelState) -> str:
+    """行进到点（todo 30）：锁内切 zone_id + 清 traveling_until + 主城绑定更新。
+
+    与 trigger_return_city 同构：单事务 UPDATE character（map_id/traveling_until/
+    bind_city）→ 离旧图 → 懒进目标图 → flush_snapshot；SSE zone_change 锁外。
+    目标为主城时自动 bind_city=target（最近访问主城绑定，回城卷语义）。
+    """
+    from app.sim.zone import enter_map, leave_map
+
+    target = state.target_map_id
+    async with session.lock:
+        async with SessionLocal() as db:
+            row = await db.get(Character, session.character_id)
+            if row is not None:
+                row.map_id = target
+                row.traveling_until = None
+                if target in _bind_cities():
+                    row.bind_city = target  # 最近访问主城自动绑定
+            await db.commit()
+        old_zone = session.zone
+        if old_zone is not None and old_zone.map_id != target:
+            with suppress(KeyError):
+                await leave_map(old_zone.map_id, session.character_id)
+            session.zone = None
+        if session.zone is None:
+            try:
+                session.zone = await enter_map(target, session.character_id)
+            except KeyError:
+                # 目标图不在 gamedata（测试假图）→ 无图模式继续跑
+                LOG.warning(
+                    "travel target %s not in gamedata; headless (%s)",
+                    target,
+                    session.character_id,
+                )
+        await session.flush_snapshot()
+    session.sse_state.publish(
+        EV_ZONE_CHANGE,
+        json.dumps({"map_id": target, "reason": "travel"}, ensure_ascii=False),
+    )
+    return target
+
+
 # --- 单 tick 战斗结算（纯内存变更，无锁无 DB）-------------------------------------
 
 
@@ -632,9 +711,13 @@ def simulate_tick(session: PlayerSession, tick_index: int) -> list[tuple[str, st
     只做内存变更；落库与推送由 tick_loop 编排。公开给测试直接驱动。
     """
     snap = session.char_snapshot
-    panel = compute_panel(char_class=ClassKey(snap.class_), level=snap.level)
     events: list[tuple[str, str]] = []
-
+    if has_travel(session.character_id):
+        # 行进中（todo 30）：倒计时期间无战斗/技能/吃药结算，仅 stat 心跳；
+        # 到点切图由 tick_loop 编排（pop_due_travel → complete_travel）。
+        events.append(_stat_event(session, tick_index))
+        return events
+    panel = compute_panel(char_class=ClassKey(snap.class_), level=snap.level)
     dot_damage = _tick_buffs(session, events)
     _player_attack(session, panel, tick_index, events)
     monster_damage = _monster_ai(session, panel, tick_index, events)
@@ -653,24 +736,28 @@ def simulate_tick(session: PlayerSession, tick_index: int) -> list[tuple[str, st
         snap.mp = min(snap.max_mp, snap.mp + 1)
 
     _auto_potion(session, tick_index, events)
-    events.append(
-        (
-            EV_STAT,
-            json.dumps(
-                {
-                    "tick": tick_index,
-                    "hp": snap.hp,
-                    "max_hp": snap.max_hp,
-                    "mp": snap.mp,
-                    "max_mp": snap.max_mp,
-                    "exp": snap.exp,
-                    "gold": snap.gold,
-                },
-                ensure_ascii=False,
-            ),
-        )
-    )
+    events.append(_stat_event(session, tick_index))
     return events
+
+
+def _stat_event(session: PlayerSession, tick_index: int) -> tuple[str, str]:
+    """stat 心跳事件（正常 tick 与行进中分支共用同一形状）。"""
+    snap = session.char_snapshot
+    return (
+        EV_STAT,
+        json.dumps(
+            {
+                "tick": tick_index,
+                "hp": snap.hp,
+                "max_hp": snap.max_hp,
+                "mp": snap.mp,
+                "max_mp": snap.max_mp,
+                "exp": snap.exp,
+                "gold": snap.gold,
+            },
+            ensure_ascii=False,
+        ),
+    )
 
 
 def _log_event(kind: str, text: str) -> tuple[str, str]:
