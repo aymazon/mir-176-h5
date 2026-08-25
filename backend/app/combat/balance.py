@@ -53,6 +53,8 @@ __all__ = [
     "POTION_REGEN_TICKS",
     "POTION_URGENT_HP_PCT",
     "REPAIR_PRICE_PER_DURABILITY",
+    "SHOP_BUY_MULTIPLIER",
+    "SHOP_SELL_MULTIPLIER",
     "SKILL_MULTIPLIER_BASE",
     "SKULL_BASE_HP",
     "SKULL_GROWTH_PER_LEVEL",
@@ -207,6 +209,17 @@ DURABILITY_LOSS_PER_HIT: Final[int] = 1
 # × 本值（只修不降上限——特修不在 MVP 范围）。
 # 出处: 自创占位（社区无普修价目表，按挂机金币产出量级定）; 置信度: low
 REPAIR_PRICE_PER_DURABILITY: Final[int] = 100
+
+# --- 商店（todo 27 NPC 商店买卖）-------------------------------------------------
+
+# 商店买入价系数：实际买入单价 = 商店条目价（缺省回退物品 buy_price）× 本值
+# （1.0 = 原价，无加成）。消费方：api/shop.py buy（todo 27）。
+# 出处: 自创占位（176 社区无统一商店加价率记载，MVP 按原价出售）; 置信度: low
+SHOP_BUY_MULTIPLIER: Final[float] = 1.0
+# 商店回收价系数：卖出所得单价 = 买入单价 × 本值（四舍五入取整；回收折扣 < 1
+# 防买卖套利刷金币）。消费方：api/shop.py sell（todo 27）。
+# 出处: 自创占位（docs/MVP/README.md §8 只记"商店可回收"，无统一回收折扣，0.4 为自创）; 置信度: low
+SHOP_SELL_MULTIPLIER: Final[float] = 0.4
 
 # --- 跨地图行进（todo 30 传送/跑图消费）---------------------------------------
 
