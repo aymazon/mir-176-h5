@@ -59,6 +59,15 @@ from app.models.equipment_slot import EquipmentSlot
 from app.models.item_instance import ItemInstance
 from app.models.skill_state import SkillState as SkillStateRow
 from app.sim.pet import disperse_all, tick_pets
+from app.sim.quest import (
+    flush_dirty as _flush_quest_rows,
+)
+from app.sim.quest import (
+    hydrate as _hydrate_quests,
+)
+from app.sim.quest import (
+    on_monster_killed as _quest_on_kill,
+)
 from app.sim.session import (
     PlayerSession,
     build_potion_catalog,
@@ -348,6 +357,10 @@ async def start_tick_loop(
         await hydrate_buffs(session)
     except Exception:
         LOG.exception("buff hydrate failed for character %s", session.character_id)
+    try:  # 任务进度恢复（todo 29）：DB→内存账本；失败不阻断挂机启动
+        await _hydrate_quests(session.character_id)
+    except Exception:
+        LOG.exception("quest hydrate failed for character %s", session.character_id)
     session.mark_connected()
     task = asyncio.create_task(
         tick_loop(session, interval=interval),
@@ -559,6 +572,8 @@ async def persist_session_state(session: PlayerSession) -> None:
                 )
             )
             await db.execute(stmt)
+        # 任务进度落库（todo 29）：tick 杀怪的内存账本脏行随本批次 upsert
+        await _flush_quest_rows(db, session.character_id)
         await db.commit()
     await session.flush_snapshot()
 
@@ -855,6 +870,8 @@ def _kill_monster(
     events.append(
         _log_event("kill", f"你击杀了{killed.monster_def.name}，获得 {exp_gain} 经验")
     )
+    # 任务进度挂钩（todo 29）：击杀悬赏/分身挑战在此同步推进 quest_state（锁外内存）
+    _quest_on_kill(session, killed)
     table = cast("dict[str, DropEntry]", _gamedata()["drops"]).get(killed.monster_id)
     if table is None:
         return

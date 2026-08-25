@@ -14,7 +14,10 @@ from .base import Base
 class QuestStatus(str, enum.Enum):
     not_started = "not_started"
     in_progress = "in_progress"
+    # 达标待交付（complete 端点校验此状态后发奖）
     completed = "completed"
+    # 已交付（终态；todo 29 四态状态机终点，重复交付 409）
+    delivered = "delivered"
 
 
 class QuestState(Base):

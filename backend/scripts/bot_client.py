@@ -32,7 +32,7 @@ import httpx
 from httpx_sse import connect_sse
 
 DEFAULT_BASE_URL: Final[str] = "http://127.0.0.1:8000"
-SCENARIOS: Final[tuple[str, ...]] = ("smoke", "idle_farm", "taoist_dog")
+SCENARIOS: Final[tuple[str, ...]] = ("smoke", "idle_farm", "taoist_dog", "quest_kill")
 # SSE_MOCK_INTERVAL=1s/条：10 条约 11s；read 超时兜底防流挂起时永久阻塞。
 HTTP_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(
     connect=5.0, read=30.0, write=5.0, pool=5.0
@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--scenario",
         choices=SCENARIOS,
         default="smoke",
-        help="冒烟场景：smoke=基础冒烟（本任务）；idle_farm=挂机（todo 15）；taoist_dog=技能（todo 28）",
+        help="冒烟场景：smoke=基础冒烟（本任务）；idle_farm=挂机（todo 15）；taoist_dog=技能（todo 28）；quest_kill=击杀悬赏（todo 29）",
     )
     parser.add_argument(
         "--count",
@@ -586,6 +586,188 @@ def _iter_sse_frames(client: httpx.Client, headers: dict[str, str] | None = None
             yield event_name, event_id, "\n".join(data_buf)
 
 
+def _seed_quest_character(username: str, char_name: str) -> int:
+    """直接写库种 15 级战士 @ 骷髅洞二层（bounty_skeleton_20 需 L10+）。
+
+    心跳置 120s 前绕过 seed 心跳门禁（idle_farm 同款混合路径）；带小量药防早夭。
+    """
+    import asyncio
+
+    os.chdir(_BACKEND_ROOT)  # .env 相对 cwd 解析（与 seed_character 同约定）
+    from sqlalchemy import text
+
+    from app.core.db import SessionLocal
+
+    async def _run() -> int:
+        async with SessionLocal() as db:
+            row = await db.execute(
+                text(
+                    "INSERT INTO character "
+                    "(player_id, name, class, level, hp, mp, gold, map_id, bind_city, last_active_at) "
+                    "SELECT p.id, :n, 'warrior', 15, 140, 90, 0, 'shouren-gu-2', 'yin-xing-cun', "
+                    "now() - make_interval(secs => 120) "
+                    "FROM player p WHERE p.username = :u RETURNING id"
+                ),
+                {"n": char_name, "u": username},
+            )
+            character_id = int(row.scalar_one())
+            await db.execute(
+                text(
+                    "INSERT INTO item_instance (character_id, item_id, quantity) "
+                    "VALUES (:cid, 'potion_hp_small', 30)"
+                ),
+                {"cid": character_id},
+            )
+            await db.commit()
+            return character_id
+
+    return asyncio.run(_run())
+
+
+def run_quest_kill(base_url: str, seconds: int = 60) -> int:
+    """击杀悬赏场景（todo 29）：接悬赏→真实挂机证明 tick 击杀钩子推进进度→
+
+    REST progress 补满→交付领奖（金币/经验入账）→重复交付被拒（409）。
+    seconds 仅用于事件收集 deadline 缩放；骷髅洞混生多种怪，真实击杀不保证
+    全是目标怪，故用 REST progress(action=kill) 补满剩余计数（同一内存账本）。
+    """
+    username = f"bot_{uuid.uuid4().hex[:12]}"
+    password = f"pw_{uuid.uuid4().hex[:16]}"
+    char_name = f"bot{uuid.uuid4().hex[:10]}"
+    quest_id = "bounty_skeleton_20"
+
+    with httpx.Client(base_url=base_url, timeout=HTTP_TIMEOUT) as client:
+        try:
+            resp = client.get("/api/health")
+        except httpx.ConnectError as exc:
+            return _fail(
+                f"Cannot connect to {base_url} —— 后端未启动？({exc})", EXIT_CONNECT
+            )
+        if resp.status_code != 200:
+            return _fail(f"/api/health 返回 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        print(f"[bot] health ok: {resp.json()}")
+
+        creds = {"username": username, "password": password}
+        resp = client.post("/api/auth/register", json=creds)
+        if resp.status_code != 201:
+            return _fail(f"注册失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        resp = client.post("/api/auth/login", json=creds)
+        if resp.status_code != 200:
+            return _fail(f"登录失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        character_id = _seed_quest_character(username, char_name)
+        print(f"[bot] seeded warrior {char_name} (id={character_id}) Lv15 @ shouren-gu-2")
+
+        # 1. 接悬赏
+        resp = client.post("/api/quest/accept", json={"quest_id": quest_id})
+        if resp.status_code != 200:
+            return _fail(f"quest/accept 失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        accepted = resp.json()
+        print(
+            f"[bot] accepted: {accepted['quest']['name']} "
+            f"status={accepted['quest']['status']}"
+        )
+
+        # 2. 连 SSE 真实挂机：等第一个 quest_progress（tick 击杀钩子集成证明）
+        tick_progress_seen = False
+        # 骷髅在刷怪序里排第 8–11 位（axe×4 → bat×3 → skeleton×4），裸装战士
+        # 每杀约 10–15s：留足清完前置怪的时间窗。
+        deadline = time.monotonic() + max(240, seconds * 5)
+        for event, _sid, data in _iter_sse_frames(client):
+            if time.monotonic() > deadline:
+                break
+            if event != "quest_progress":
+                continue
+            try:
+                payload = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+            assert isinstance(payload, dict)
+            if payload.get("quest_id") == quest_id:
+                tick_progress_seen = True
+                print(
+                    f"[bot] tick-driven quest_progress: "
+                    f"{payload['count']}/{payload['need']}"
+                )
+                break
+        if not tick_progress_seen:
+            return _fail(
+                "超时：挂机期间未见 tick 驱动的 quest_progress（击杀钩子未生效）",
+                EXIT_ASSERT,
+            )
+
+        # 3. REST progress 补满剩余计数（与 tick 钩子同一内存账本）。
+        # 注意竞态：tick 可能与 REST 同时推进——达标后任务移入 completed 组，
+        # 两组都要找；都找不到才算异常。
+        entry: dict[str, object] | None = None
+        status_now = ""
+        while True:
+            resp = client.get("/api/quest/list")
+            if resp.status_code != 200:
+                return _fail(f"quest/list 失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+            body = resp.json()
+            entry = next(
+                (
+                    q
+                    for q in body["in_progress"] + body["completed"]
+                    if q["quest_id"] == quest_id
+                ),
+                None,
+            )
+            if entry is None:
+                return _fail("补满阶段任务不在进行/完成分组", EXIT_ASSERT)
+            status_now = str(entry["status"])
+            if status_now == "completed":
+                break
+            resp = client.post(
+                "/api/quest/progress", json={"quest_id": quest_id, "action": "kill"}
+            )
+            if resp.status_code != 200:
+                return _fail(
+                    f"quest/progress 失败 {resp.status_code}: {resp.text}", EXIT_HTTP
+                )
+        assert entry is not None
+        print(f"[bot] bounty ready: {entry['count']}/{entry['need']} status={status_now}")
+
+        # 4. 交付前基线 → 交付 → 断言奖励入账
+        me_before = client.get("/api/character/me")
+        if me_before.status_code != 200:
+            return _fail(f"character/me 失败 {me_before.status_code}", EXIT_HTTP)
+        gold_before = int(me_before.json()["gold"])
+        exp_before = int(me_before.json()["exp"])
+        resp = client.post("/api/quest/complete", json={"quest_id": quest_id})
+        if resp.status_code != 200:
+            return _fail(f"quest/complete 失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        done = resp.json()
+        rewards = done["rewards"]
+        if int(rewards["gold"]) != 500 or int(rewards["exp"]) != 1500:
+            return _fail(f"奖励数额不符：{rewards}", EXIT_ASSERT)
+        me_after = client.get("/api/character/me")
+        gold_after = int(me_after.json()["gold"])
+        exp_after = int(me_after.json()["exp"])
+        if gold_after != gold_before + 500 or exp_after <= exp_before:
+            return _fail(
+                f"奖励未入账：gold {gold_before}->{gold_after}，exp {exp_before}->{exp_after}",
+                EXIT_ASSERT,
+            )
+        print(
+            f"[bot] rewards credited: gold +500 ({gold_before}->{gold_after}), "
+            f"exp +{exp_after - exp_before}"
+        )
+
+        # 5. 重复交付 → 409
+        resp = client.post("/api/quest/complete", json={"quest_id": quest_id})
+        if resp.status_code != 409:
+            return _fail(
+                f"重复交付未被拒：期望 409 实得 {resp.status_code}: {resp.text}",
+                EXIT_ASSERT,
+            )
+
+        resp = client.post("/api/auth/logout")
+        print(f"[bot] logout: HTTP {resp.status_code}")
+        print("[bot] OK: 接悬赏→tick 击杀推进→REST 补满→交付入账→重复交付 409")
+        return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.scenario == "smoke":
@@ -594,6 +776,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_idle_farm(args.base_url, args.seconds)
     if args.scenario == "taoist_dog":
         return run_taoist_dog(args.base_url, args.seconds)
+    if args.scenario == "quest_kill":
+        return run_quest_kill(args.base_url, args.seconds)
     return _fail(
         f"未知场景 {args.scenario!r}（可选 {', '.join(SCENARIOS)}）", EXIT_SCENARIO_TODO
     )

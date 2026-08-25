@@ -13,6 +13,7 @@ from app.api.character import router as character_router
 from app.api.consumable import router as consumable_router
 from app.api.health import router as health_router
 from app.api.inventory import router as inventory_router
+from app.api.quest import router as quest_router
 from app.api.shop import router as shop_router
 from app.api.skill import router as skill_router
 from app.api.stream import router as stream_router
@@ -37,6 +38,7 @@ app.include_router(character_router)
 app.include_router(consumable_router)
 app.include_router(health_router)
 app.include_router(inventory_router)
+app.include_router(quest_router)
 app.include_router(shop_router)
 app.include_router(skill_router)
 app.include_router(stream_router)
