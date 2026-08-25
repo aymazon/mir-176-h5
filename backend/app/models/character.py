@@ -5,6 +5,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -42,6 +43,12 @@ class Character(Base):
     # 心跳列：tick 落库/断线/登出时刷新（todo 15），供 seed 工具进程外判活（todo 7）。
     last_active_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    # 限时 buff 持久化（todo 26）：未过期效果实例快照 + saved_at 墙钟，登出不清空、
+    # 重登按真实时间折损（离线时长计入 remaining_ticks）。结构：
+    # {"buffs": [{definition_id, owner_id, remaining_ticks, params, ...}], "saved_at": float}
+    buff_json: Mapped[dict[str, object]] = mapped_column(
+        JSONB, nullable=False, server_default="{}", default=dict
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -25,10 +25,13 @@ __all__ = [
     "BAG_CAPACITY",
     "BAG_FREE_SLOTS_RECALL",
     "BIRTH_MAP_ID",
+    "BLESSING_OIL_LUCK_MAX",
+    "BLESSING_OIL_SUCCESS_RATE",
     "CHARM_LEVEL_TOLERANCE",
     "CHARM_MAX_PER_CASTER",
     "CURSE_HIT_BIAS",
     "DEF_DAMAGE_REDUCTION_FACTOR",
+    "DIVINE_WATER_DURATION_TICKS",
     "DOG_BASE_HP",
     "DOG_GROWTH_PER_LEVEL",
     "DROP_TIER_BONUS_MAX",
@@ -42,9 +45,12 @@ __all__ = [
     "MAX_HIT_RATE",
     "MIN_DAMAGE",
     "MIN_HIT_RATE",
+    "PORTAL_RANDOM_MAX_DIST",
+    "PORTAL_RANDOM_MIN_DIST",
     "POTION_COOLDOWN_TICKS",
     "POTION_HP_PCT",
     "POTION_MP_PCT",
+    "POTION_REGEN_TICKS",
     "POTION_URGENT_HP_PCT",
     "REPAIR_PRICE_PER_DURABILITY",
     "SKILL_MULTIPLIER_BASE",
@@ -118,6 +124,26 @@ POTION_COOLDOWN_TICKS: Final[int] = 5
 # 背包剩余空格少于 N 格触发自动回城动作（potion.py 追加 recall 动作）。
 # 出处: docs/MVP/README.md §8（"背包空格<N 时自动回城"），N 具体值自创; 置信度: medium
 BAG_FREE_SLOTS_RECALL: Final[int] = 5
+
+# --- 消耗品（todo 26：祝福油/神水/传送卷）-----------------------------------------
+
+# 祝福油成功率：武器幸运 < 上限时单次使用 +1 的概率（失败不升幸运、油照耗）。
+# 出处: docs/MVP/README.md §8（"祝福油 武器幸运 +1 有失败概率"未给数值），概率自创占位待 todo 37 校准; 置信度: low
+BLESSING_OIL_SUCCESS_RATE: Final[float] = 0.6
+# 武器幸运上限：祝福油最多把武器幸运叠到本值（LUCK_MAX=9 需幸运项链等凑齐）。
+# 出处: docs/MVP/README.md §5（"武器幸运(祝福油,最多 +7)"）+ 176 社区公认事实; 置信度: high
+BLESSING_OIL_LUCK_MAX: Final[int] = 7
+# 神水限时 buff 时长（tick=1s，即 600s）：到期后面板加值自动回落。
+# 出处: 计划 todo 26 规格（持续 600s）+ docs/MVP/README.md §8（攻击/魔力/道术神水限时加属性，未给时长）; 置信度: medium
+DIVINE_WATER_DURATION_TICKS: Final[int] = 600
+# 金创药类缓回药品的回复节奏基准（每 N tick 结算一跳；当前 REST/自动链均瞬回结算，
+# 本值是缓回语义的节奏锚点，供 todo 37 校准与后续逐跳结算改造消费）。
+# 出处: docs/MVP/README.md §8（金创药"缓回"无数值），节奏自创占位; 置信度: low
+POTION_REGEN_TICKS: Final[int] = 5
+# 随机传送卷同图随机位移距离档下限/上限（MVP 无坐标网格，距离档仅入日志播报）。
+# 出处: docs/MVP/README.md §8（"随机传送卷 当前地图内随机坐标"），档位数值自创占位; 置信度: low
+PORTAL_RANDOM_MIN_DIST: Final[int] = 10
+PORTAL_RANDOM_MAX_DIST: Final[int] = 50
 
 # --- 背包 / 掉落 ----------------------------------------------------------------
 

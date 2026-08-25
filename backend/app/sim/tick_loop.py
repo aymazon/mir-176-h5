@@ -10,8 +10,7 @@
     5. 自动吃药（potion.plan_potion_use 纯函数出参直接落地）
     6. 每 tick 至少一条 stat 事件推 SSE（1Hz 连续性锚点）；**publish 在锁外**
     7. 每 PERSIST_EVERY_TICKS tick：``async with session.lock`` 内落库
-       （HP/MP/exp/gold/last_active_at=now() + 背包增量）→ flush_snapshot；
-       **buff_json 列待 todo 26 迁移加入后再纳入落库集合（W2 阶段跳过）**
+       （HP/MP/exp/gold/last_active_at=now() + 背包增量 + buff_json 快照）→ flush_snapshot；
 
 并发纪律（横切约束，todo 23–30 同守）：
 - 战斗纯计算在锁外（防慢客户端堵 REST）；锁临界区仅限 DB 事务+flush/落库，
@@ -32,6 +31,7 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Mapping
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import lru_cache
@@ -44,7 +44,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.combat import balance
 from app.combat.damage import physical_damage
 from app.combat.drops import DroppedItem, roll_drop
-from app.combat.effects import get_effect, tick_effect
+from app.combat.effects import EffectInstance, get_effect, tick_effect
 from app.combat.hit import hit_check
 from app.combat.potion import PotionSpec, plan_potion_use
 from app.combat.skills import SkillRegistry, load_registry, try_cast
@@ -202,6 +202,106 @@ def _potion_catalog() -> dict[str, PotionSpec]:
     return build_potion_catalog()
 
 
+# --- buff 持久化（todo 26）：character.buff_json 快照 + 真实时间过期 -----------------
+
+
+def buffs_to_payload(buffs: list[EffectInstance]) -> dict[str, object]:
+    """未过期效果实例 → buff_json 快照（saved_at 墙钟供离线时长折损）。
+
+    已过期实例不入快照（落库即清理）；结构见 models/character.buff_json 注释。
+    """
+    records = [
+        {
+            "definition_id": inst.definition_id,
+            "owner_id": inst.owner_id,
+            "remaining_ticks": inst.remaining_ticks,
+            "params": dict(inst.params),
+            "blocks_targeting": inst.blocks_targeting,
+            "blocks_movement": inst.blocks_movement,
+            "absorb_remaining": inst.absorb_remaining,
+        }
+        for inst in buffs
+        if not inst.expired
+    ]
+    return {"buffs": records, "saved_at": time.time()}
+
+
+def payload_to_buffs(payload: object) -> list[EffectInstance]:
+    """buff_json → 效果实例列表；按 saved_at 折损离线时长，过期/残缺记录丢弃。
+
+    真实时间过期语义（计划红线）：登出不清空 buff，离线秒数从 remaining_ticks
+    中扣除——重登时已到期的效果自然消失，未到期的带余量继续走 tick。
+    """
+    if not isinstance(payload, Mapping):
+        return []
+    raw = payload.get("buffs")
+    if not isinstance(raw, list):
+        return []
+    saved_at = payload.get("saved_at")
+    elapsed = (
+        max(0, int(time.time() - float(saved_at)))
+        if isinstance(saved_at, (int, float))
+        else 0
+    )
+    out: list[EffectInstance] = []
+    for record in raw:
+        if not isinstance(record, Mapping):
+            continue
+        remaining_raw = record.get("remaining_ticks")
+        definition_raw = record.get("definition_id")
+        absorb_raw = record.get("absorb_remaining", 0)
+        if (
+            not isinstance(remaining_raw, int)
+            or isinstance(remaining_raw, bool)
+            or not isinstance(definition_raw, str)
+        ):
+            continue  # 残缺记录丢弃，不阻断其余 buff 恢复
+        remaining = remaining_raw - elapsed
+        absorb_remaining = (
+            absorb_raw
+            if isinstance(absorb_raw, int) and not isinstance(absorb_raw, bool)
+            else 0
+        )
+        if remaining <= 0:
+            continue  # 离线期间已自然到期
+        params_raw = record.get("params")
+        params: dict[str, int | float] = {}
+        if isinstance(params_raw, Mapping):
+            params = {
+                str(k): v
+                for k, v in params_raw.items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            }
+        out.append(
+            EffectInstance(
+                definition_id=definition_raw,
+                owner_id=str(record.get("owner_id", "")),
+                remaining_ticks=remaining,
+                params=params,
+                blocks_targeting=bool(record.get("blocks_targeting", False)),
+                blocks_movement=bool(record.get("blocks_movement", False)),
+                absorb_remaining=max(0, absorb_remaining),
+            )
+        )
+    return out
+
+
+async def hydrate_buffs(session: PlayerSession) -> int:
+    """DB→内存重读 buff_json 并按真实时间折损（登录/用药前调用，幂等替换）。
+
+    返回恢复的实例数；角色行不存在返回 0。调用方自行保证与写路径的并发安全
+    （start_tick_loop 在会话注册前调用；REST 用药路径在 session.lock 内调用）。
+    """
+    async with SessionLocal() as db:
+        row = await db.get(Character, session.character_id)
+        if row is None:
+            return 0
+        payload = row.buff_json
+    restored = payload_to_buffs(payload)
+    session.buffs = restored
+    return len(restored)
+
+
 # --- 生命周期 ------------------------------------------------------------------
 
 
@@ -233,6 +333,12 @@ async def start_tick_loop(
     except Exception:
         LOG.exception(
             "equip cache load failed for character %s", session.character_id
+        )
+    try:  # buff 恢复（todo 26）：DB 快照 + 离线时长折损；失败不阻断挂机启动
+        await hydrate_buffs(session)
+    except Exception:
+        LOG.exception(
+            "buff hydrate failed for character %s", session.character_id
         )
     session.mark_connected()
     task = asyncio.create_task(
@@ -379,7 +485,8 @@ async def persist_session_state(session: PlayerSession) -> None:
 
     **必须在 ``session.lock`` 临界区内调用**（与 REST 写事务同一把锁串行化，
     防 commit 与 flush 之间的调度窗口被以旧快照覆盖）；commit 后锁内调
-    flush_snapshot（DB→内存重读）。buff_json 待 todo 26 接入（列尚未迁移）。
+    flush_snapshot（DB→内存重读）。buff_json 随本批次一并快照落库（todo 26，
+    未过期实例 + saved_at 墙钟；重登时按真实时间折损）。
     耐久（todo 24）：装备槽引用的实例随每 PERSIST_EVERY_TICKS 批次一并 UPDATE
     （磨损每 tick 只改内存，不逐 tick 写库），同事务刷新装备槽缓存。
     """
@@ -394,6 +501,7 @@ async def persist_session_state(session: PlayerSession) -> None:
                 exp=snap.exp,
                 gold=snap.gold,
                 last_active_at=func.now(),
+                buff_json=buffs_to_payload(session.buffs),
             )
         )
         for row_id in session.removed_item_ids:
@@ -488,7 +596,7 @@ def simulate_tick(session: PlayerSession, tick_index: int) -> list[tuple[str, st
     panel = compute_panel(char_class=ClassKey(snap.class_), level=snap.level)
     events: list[tuple[str, str]] = []
 
-    dot_damage = _tick_buffs(session)
+    dot_damage = _tick_buffs(session, events)
     _player_attack(session, panel, tick_index, events)
     monster_damage = _monster_ai(session, panel, tick_index, events)
 
@@ -529,12 +637,22 @@ def _log_event(kind: str, text: str) -> tuple[str, str]:
     return (EV_LOG, json.dumps({"kind": kind, "text": text}, ensure_ascii=False))
 
 
-def _tick_buffs(session: PlayerSession) -> int:
-    """推进会话 buff 实例一 tick，返回 dot 造成的承伤合计。"""
+def _tick_buffs(session: PlayerSession, events: list[tuple[str, str]]) -> int:
+    """推进会话 buff 实例一 tick，返回 dot 造成的承伤合计。
+
+    限时 buff（kind=buff）到期时追加 log 事件播报面板加值回落；stat 事件由
+    simulate_tick 每 tick 恒发一条，面板数值随之下行（todo 26 过期推送语义）。
+    """
     total = 0
     for inst in session.buffs:
         outcome = tick_effect(inst, get_effect(inst.definition_id))
         total += sum(event.amount for event in outcome.damage_events)
+        if outcome.expired and get_effect(inst.definition_id).kind == "buff":
+            events.append(
+                _log_event(
+                    "buff_expire", f"{inst.definition_id} 效果已消退，加值回落"
+                )
+            )
     session.buffs = [inst for inst in session.buffs if not inst.expired]
     return total
 
