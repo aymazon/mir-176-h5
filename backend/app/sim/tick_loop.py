@@ -39,6 +39,7 @@ from typing import TYPE_CHECKING, Final, cast
 from uuid import uuid4
 
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.combat import balance
@@ -47,7 +48,7 @@ from app.combat.drops import DroppedItem, roll_drop
 from app.combat.effects import EffectInstance, get_effect, tick_effect
 from app.combat.hit import hit_check
 from app.combat.potion import PotionSpec, plan_potion_use
-from app.combat.skills import SkillRegistry, load_registry, try_cast
+from app.combat.skills import SkillRegistry, SkillState, load_registry, try_cast
 from app.combat.stats import ClassKey, StatPanel, compute_panel
 from app.core.config import settings
 from app.core.db import SessionLocal
@@ -56,6 +57,8 @@ from app.gamedata_schema.skills import SkillTarget
 from app.models.character import Character
 from app.models.equipment_slot import EquipmentSlot
 from app.models.item_instance import ItemInstance
+from app.models.skill_state import SkillState as SkillStateRow
+from app.sim.pet import disperse_all, tick_pets
 from app.sim.session import (
     PlayerSession,
     build_potion_catalog,
@@ -82,12 +85,17 @@ EV_ZONE_CHANGE: Final[str] = "zone_change"
 # 不对外发布（下划线前缀 = 非公开事件名，前端 sse.ts 监听清单不含）。
 EV_RECALL: Final[str] = "_recall"
 
+# ≥35 级技能必须技能书习得（docs/MVP/README.md §7：35 技能书掉落/引导任务）；
+# 自动习得（首次施放即 0 级）只覆盖 <35 的按级技能。api/skill.py 同一常量口径。
+BOOK_REQUIRED_LEVEL: Final[int] = 35
+
 # 装备槽缓存：character_id → {slot.value: item_instance_id | None}（todo 24）。
 # simulate_tick 是纯内存计算（无 DB），磨损需要知道哪件实例穿在武器/衣服槽——
 # 映射由 start_tick_loop 启动时、persist_session_state 落库事务内、以及
 # inventory equip/unequip 提交后（reload_equip_cache）刷新；测试可直接写本表
 # 驱动纯内存用例。注销路径（shutdown/宽限超时）弹出防陈旧增长。
 _EQUIP_CACHE: Final[dict[int, dict[str, int | None]]] = {}
+
 
 @dataclass(frozen=True)
 class GroundDrop:
@@ -173,10 +181,14 @@ def pop_ground_drop(
 async def _refresh_equip_cache(db: AsyncSession, character_id: int) -> None:
     """DB→内存重读装备槽映射（调用方保证在 session.lock 临界区内）。"""
     rows = (
-        await db.execute(
-            select(EquipmentSlot).where(EquipmentSlot.character_id == character_id)
+        (
+            await db.execute(
+                select(EquipmentSlot).where(EquipmentSlot.character_id == character_id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     _EQUIP_CACHE[character_id] = {r.slot.value: r.item_instance_id for r in rows}
 
 
@@ -331,15 +343,11 @@ async def start_tick_loop(
     try:  # 装备槽缓存预加载（磨损记账依据）；失败不阻断挂机启动
         await reload_equip_cache(session.character_id)
     except Exception:
-        LOG.exception(
-            "equip cache load failed for character %s", session.character_id
-        )
+        LOG.exception("equip cache load failed for character %s", session.character_id)
     try:  # buff 恢复（todo 26）：DB 快照 + 离线时长折损；失败不阻断挂机启动
         await hydrate_buffs(session)
     except Exception:
-        LOG.exception(
-            "buff hydrate failed for character %s", session.character_id
-        )
+        LOG.exception("buff hydrate failed for character %s", session.character_id)
     session.mark_connected()
     task = asyncio.create_task(
         tick_loop(session, interval=interval),
@@ -369,6 +377,7 @@ async def shutdown_session(character_id: int) -> bool:
     if session is None:
         return False
     await cancel_tick_loop(session)
+    disperse_all(session)  # 召唤物随会话注销解散（todo 28 接通生命周期钩子）
     zone = session.zone
     if zone is not None:
         with suppress(KeyError):
@@ -399,6 +408,7 @@ async def shutdown_all_sessions() -> None:
         if session is None:
             continue
         await cancel_tick_loop(session)
+        disperse_all(session)  # 召唤物随会话注销解散（todo 28）
         zone = session.zone
         if zone is not None:
             with suppress(KeyError):
@@ -407,7 +417,6 @@ async def shutdown_all_sessions() -> None:
         _EQUIP_CACHE.pop(character_id, None)
         _GROUND_DROPS.pop(character_id, None)  # 地面掉落池随会话注销清理（todo 25）
     reset_sessions()
-
 
 
 async def _teardown_on_grace_timeout(session: PlayerSession) -> None:
@@ -419,6 +428,7 @@ async def _teardown_on_grace_timeout(session: PlayerSession) -> None:
         with suppress(KeyError):
             await leave_map(zone.map_id, session.character_id)
         session.zone = None
+    disperse_all(session)  # 宽限超时：召唤物解散（重连后 pets 为空）
     release_session(session.character_id)
     _EQUIP_CACHE.pop(session.character_id, None)
     _GROUND_DROPS.pop(session.character_id, None)
@@ -437,9 +447,7 @@ def _grace_expired(session: PlayerSession) -> bool:
 # --- 主循环 --------------------------------------------------------------------
 
 
-async def tick_loop(
-    session: PlayerSession, *, interval: float | None = None
-) -> None:
+async def tick_loop(session: PlayerSession, *, interval: float | None = None) -> None:
     """1Hz 主循环；被 cancel 即退出。每 5 tick 锁内落库，SSE 推送恒在锁外。"""
     tick_seconds = TICK_SECONDS if interval is None else interval
     n = 0
@@ -535,6 +543,22 @@ async def persist_session_state(session: PlayerSession) -> None:
                 )
         # 同事务刷新装备槽映射（穿戴变更由 equip/unequip 提交后即时刷新兜底）
         await _refresh_equip_cache(db, session.character_id)
+        # 技能熟练度落库（todo 28）：全量 upsert（REST /use 只记内存，本批次覆盖写）
+        for state in session.skill_states.values():
+            stmt = (
+                pg_insert(SkillStateRow)
+                .values(
+                    character_id=session.character_id,
+                    skill_id=state.skill_id,
+                    level=state.level,
+                    exp=state.exp,
+                )
+                .on_conflict_do_update(
+                    constraint="uq_skill_state_character_skill",
+                    set_={"level": state.level, "exp": state.exp},
+                )
+            )
+            await db.execute(stmt)
         await db.commit()
     await session.flush_snapshot()
 
@@ -599,6 +623,7 @@ def simulate_tick(session: PlayerSession, tick_index: int) -> list[tuple[str, st
     dot_damage = _tick_buffs(session, events)
     _player_attack(session, panel, tick_index, events)
     monster_damage = _monster_ai(session, panel, tick_index, events)
+    _tick_pets(session)  # todo 28：召唤物回合（攻主人目标，击杀经验归主人）
 
     damage_taken = dot_damage + monster_damage
     if damage_taken > 0:
@@ -649,12 +674,24 @@ def _tick_buffs(session: PlayerSession, events: list[tuple[str, str]]) -> int:
         total += sum(event.amount for event in outcome.damage_events)
         if outcome.expired and get_effect(inst.definition_id).kind == "buff":
             events.append(
-                _log_event(
-                    "buff_expire", f"{inst.definition_id} 效果已消退，加值回落"
-                )
+                _log_event("buff_expire", f"{inst.definition_id} 效果已消退，加值回落")
             )
     session.buffs = [inst for inst in session.buffs if not inst.expired]
     return total
+
+
+def _tick_pets(session: PlayerSession) -> None:
+    """召唤物回合（todo 28 接通）：pet 攻主人目标、击杀经验归主人。
+
+    pet.py 内部直接 publish（pet_miss/pet_kill/exp 等事件）；本包装吞异常不阻断
+    主循环。无宠物零开销（挂机主流路径不进 try）。
+    """
+    if not session.pets:
+        return
+    try:
+        tick_pets(session)
+    except Exception:
+        LOG.exception("pet tick failed for character %s", session.character_id)
 
 
 def _wear_equipment(session: PlayerSession, slot_key: str, amount: int) -> int | None:
@@ -696,9 +733,7 @@ def _player_attack(
     target = zone.alive_monsters[0]  # MVP 距离档：场上第一只即目标（D12）
     multiplier = _cast_skill(session, panel, tick_index, events)
     if not hit_check(session.rng, panel.accuracy, target.monster_def.agility):
-        events.append(
-            _log_event("miss", f"你攻击{target.monster_def.name}未命中")
-        )
+        events.append(_log_event("miss", f"你攻击{target.monster_def.name}未命中"))
         return
     # 武器磨损（todo 24）：出手命中即扣（未命中不扣）；归零时播报属性失效。
     weapon_durability = _wear_equipment(
@@ -736,13 +771,31 @@ def _cast_skill(
     tick_index: int,
     events: list[tuple[str, str]],
 ) -> float:
-    """尝试施放第一个可用的敌方目标职业技能；成功返回其倍率，否则平砍基数。"""
+    """尝试施放第一个可用的敌方目标职业技能；成功返回其倍率，否则平砍基数。
+
+    todo 28 自动习得：<35 级技能到 learn_level 后首次出手即学会 0 级（内存建行，
+    随每 5 tick persist 批次落库）；≥35 级技能必须技能书（api/skill 同一口径），
+    挂机路径永不自动学。升级时追加 skill_levelup 日志事件。
+    """
     registry = _skills()
     snap = session.char_snapshot
     for skill_id in registry.ids_by_class(snap.class_):
-        state = session.skill_states.get(skill_id)
-        if state is None or registry.get(skill_id).target != SkillTarget.enemy:
+        skill = registry.get(skill_id)
+        if skill.target != SkillTarget.enemy:
             continue
+        state = session.skill_states.get(skill_id)
+        if state is None:
+            if (
+                snap.level < skill.learn_level
+                or skill.learn_level >= BOOK_REQUIRED_LEVEL
+            ):
+                continue  # 未到级 / 书技不自动学
+            state = SkillState(skill_id=skill_id)
+            session.skill_states[skill_id] = state
+            events.append(
+                _log_event("skill_learn", f"初窥门径，你学会了{skill.name}（Lv0）")
+            )
+        level_before = state.level
         attempt = try_cast(
             registry,
             skill_id,
@@ -756,20 +809,21 @@ def _cast_skill(
             continue
         snap.mp = attempt.mp_after
         session.last_cast_ticks[skill_id] = tick_index
-        events.append(
-            _log_event("skill", f"你施放了{registry.get(skill_id).name}")
-        )
+        events.append(_log_event("skill", f"你施放了{registry.get(skill_id).name}"))
+        if state.level > level_before:
+            events.append(
+                _log_event(
+                    "skill_levelup",
+                    f"{skill.name} 熟练度提升至 Lv{state.level}",
+                )
+            )
         return registry.get_multiplier(skill_id, state.level)
     return balance.SKILL_MULTIPLIER_BASE
 
 
-def _monster_hp(
-    session: PlayerSession, monster: MonsterInstance
-) -> int:
+def _monster_hp(session: PlayerSession, monster: MonsterInstance) -> int:
     """怪当前 HP 记账（首见按 def.hp 初始化；MonsterInstance 不携带血量）。"""
-    return session.monster_hp.setdefault(
-        monster.instance_id, monster.monster_def.hp
-    )
+    return session.monster_hp.setdefault(monster.instance_id, monster.monster_def.hp)
 
 
 def _kill_monster(
@@ -839,11 +893,7 @@ def _apply_drop(
         )
         if session.auto_pickup:
             # 开着自动拾取仍失败 = 背包满（_pickup_item 唯一失败原因）→ 日志提示
-            name = (
-                items[item.item_id].name
-                if item.item_id in items
-                else item.item_id
-            )
+            name = items[item.item_id].name if item.item_id in items else item.item_id
             events.append(
                 _log_event(
                     "bag_full",
@@ -878,9 +928,7 @@ def _pickup_item(session: PlayerSession, dropped: DroppedItem) -> bool:
     item_def = items.get(dropped.item_id)
     stackable = bool(getattr(item_def, "stackable", False))
     if stackable:
-        row = next(
-            (r for r in session.inventory if r.item_id == dropped.item_id), None
-        )
+        row = next((r for r in session.inventory if r.item_id == dropped.item_id), None)
         if row is not None:
             row.quantity += dropped.qty
             if row.id is not None:
@@ -912,9 +960,7 @@ def _monster_ai(
     if tick_index % max(1, monster.monster_def.attack_speed) != 0:
         return 0
     if not hit_check(session.rng, monster.monster_def.accuracy, panel.agility):
-        events.append(
-            _log_event("dodge", f"{monster.monster_def.name}攻击你未命中")
-        )
+        events.append(_log_event("dodge", f"{monster.monster_def.name}攻击你未命中"))
         return 0
     # 防具磨损（todo 24）：被命中即扣衣服槽耐久（未命中不扣）；归零播报失效。
     armor_durability = _wear_equipment(
@@ -931,9 +977,7 @@ def _monster_ai(
         target_defense=panel.ac_max,
     )
     events.append(
-        _log_event(
-            "defend", f"{monster.monster_def.name}命中你，造成 {dmg} 点伤害"
-        )
+        _log_event("defend", f"{monster.monster_def.name}命中你，造成 {dmg} 点伤害")
     )
     return dmg
 
