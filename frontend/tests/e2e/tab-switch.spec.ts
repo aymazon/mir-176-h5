@@ -15,6 +15,14 @@ test.beforeEach(async ({ context }) => {
   await context.route('**/api/health', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }),
   )
+  // todo 31 起背包/装备页挂载时拉全量背包（真实后端在跑会返回 401 → 跳登录干扰）
+  await context.route('**/api/inventory/bag', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items: [], gold: 0, capacity: 40, used: 0 }),
+    }),
+  )
 })
 
 for (const tab of TABS) {

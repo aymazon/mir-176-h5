@@ -31,6 +31,12 @@ export function handleUnauthorized(): void {
   redirectTo('/login')
 }
 
+/** 鉴权端点自身的 401 = 凭据错误而非会话过期，不走全局跳登录（todo 31 修正） */
+const AUTH_ENDPOINTS: ReadonlySet<string> = new Set([
+  '/api/auth/login',
+  '/api/auth/register',
+])
+
 export async function restFetch(
   path: string,
   init?: RequestInit,
@@ -39,7 +45,7 @@ export async function restFetch(
     ...init,
     credentials: 'include',
   })
-  if (res.status === 401) {
+  if (res.status === 401 && !AUTH_ENDPOINTS.has(path)) {
     handleUnauthorized()
     throw new UnauthorizedError(path)
   }
@@ -81,30 +87,46 @@ export interface AuthResult {
 }
 
 
+/** 鉴权端点错误体统一 {detail: string}；非 JSON/网络错降级为通用文案 */
+async function authRequest(
+  path: string,
+  username: string,
+  password: string,
+  fallbackMessage: string,
+): Promise<AuthResult> {
+  try {
+    const res = await restFetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+    if (res.ok) return { ok: true }
+    const data = (await res.json().catch(() => null)) as
+      | { detail?: unknown }
+      | null
+    return {
+      ok: false,
+      message:
+        typeof data?.detail === 'string' ? data.detail : fallbackMessage,
+    }
+  } catch (err) {
+    if (err instanceof UnauthorizedError) throw err
+    return { ok: false, message: err instanceof Error ? err.message : fallbackMessage }
+  }
+}
+
 export async function apiRegister(
   username: string,
   password: string,
 ): Promise<AuthResult> {
-  try {
-    await restJson('/api/auth/register', { json: { username, password } })
-    return { ok: true }
-  } catch (err) {
-    if (err instanceof UnauthorizedError) throw err
-    return { ok: false, message: err instanceof Error ? err.message : '注册失败' }
-  }
+  return authRequest('/api/auth/register', username, password, '注册失败')
 }
 
 export async function apiLogin(
   username: string,
   password: string,
 ): Promise<AuthResult> {
-  try {
-    await restJson('/api/auth/login', { json: { username, password } })
-    return { ok: true }
-  } catch (err) {
-    if (err instanceof UnauthorizedError) throw err
-    return { ok: false, message: err instanceof Error ? err.message : '登录失败' }
-  }
+  return authRequest('/api/auth/login', username, password, '登录失败')
 }
 
 export async function apiLogout(): Promise<void> {
@@ -149,5 +171,7 @@ function normalizeCharacter(raw: Record<string, unknown>): CharacterSnapshot | n
     mp: Number(raw.mp ?? 0),
     gold: Number(raw.gold ?? 0),
     bindCity: String(raw.bind_city ?? raw.bindCity ?? ''),
+    exp: Number(raw.exp ?? 0),
+    mapId: String(raw.map_id ?? raw.mapId ?? ''),
   }
 }

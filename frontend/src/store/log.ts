@@ -31,6 +31,8 @@ interface LogStore {
   append: (line: LogLine) => void
   /** 批量插入：单次 set → 单次 React render（重放/批量事件专用） */
   appendBatch: (lines: LogLine[]) => void
+  /** 批量推进去重水位线不入行（stat/exp 等由面板呈现的结构化事件专用） */
+  advanceBatch: (ids: string[]) => void
   /** 收到 event: gap：重置水位线 + 插入分隔行（单次 set 原子完成） */
   applyGap: (text?: string) => void
   clear: () => void
@@ -84,6 +86,29 @@ export const useLogStore = create<LogStore>((set) => ({
         seenNonNumeric: seen,
       }
     }),
+  advanceBatch: (ids) =>
+    set((state) => {
+      if (ids.length === 0) return state
+      let watermark = state.watermark
+      let seen: Set<string> | null = null
+      for (const id of ids) {
+        const seq = toSeq(id)
+        if (seq !== null) {
+          if (watermark !== null && seq <= watermark) continue
+          watermark = seq
+        } else {
+          if (seen === null) seen = new Set(state.seenNonNumeric)
+          if (seen.has(id)) continue
+          seen.add(id)
+        }
+      }
+      if (seen === null && watermark === state.watermark) return state
+      return {
+        watermark,
+        seenNonNumeric: seen ?? state.seenNonNumeric,
+      }
+    }),
+
 
   applyGap: (text = GAP_SEPARATOR_TEXT) =>
     set((state) => {

@@ -1,0 +1,111 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import {
+  useGameStore,
+  parseAttack,
+  parseKill,
+} from '../store/game'
+
+describe('gameStore 战斗日志解析（tick_loop 文案契约）', () => {
+  it('parseAttack 提取怪物名与剩余血量', () => {
+    expect(parseAttack('你命中鸡，造成 3 点伤害（剩余 2）')).toEqual({
+      name: '鸡',
+      remaining: 2,
+    })
+    expect(parseAttack('你攻击鸡未命中')).toBeNull()
+    expect(parseAttack('[模拟战斗日志 #1] 你攻击 木桩 造成 5 点伤害')).toBeNull()
+  })
+
+  it('parseKill 提取被击杀怪物名', () => {
+    expect(parseKill('你击杀了鸡，获得 9 经验')).toBe('鸡')
+    expect(parseKill('你命中鸡，造成 3 点伤害（剩余 2）')).toBeNull()
+  })
+})
+
+function login(): void {
+  useGameStore.getState().setGame({
+    player: { id: 'p1', username: 'tester' },
+    character: {
+      id: 'c1',
+      name: '勇者',
+      class: 'warrior',
+      level: 1,
+      hp: 10,
+      mp: 5,
+      gold: 0,
+      bindCity: 'yin-xing-cun',
+      mapId: 'yin-xing-cun',
+    },
+  })
+}
+
+describe('gameStore stat/日志/掉落入账', () => {
+  beforeEach(() => {
+    useGameStore.getState().clearAuth()
+    login()
+  })
+
+  it('applyStat 更新 hp/mp/exp/gold 与面板快照', () => {
+    useGameStore.getState().applyStat({
+      tick: 3,
+      hp: 24,
+      max_hp: 24,
+      mp: 10,
+      max_mp: 10,
+      exp: 18,
+      gold: 55,
+      panel: { dc_min: 1, dc_max: 5, luck: 0 },
+    })
+    const s = useGameStore.getState()
+    expect(s.character).toMatchObject({ hp: 24, mp: 10, exp: 18, gold: 55 })
+    expect(s.panel).toMatchObject({ dc_max: 5 })
+  })
+
+  it('attack 日志派生怪物血条；kill 移除；同名怪合并', () => {
+    useGameStore.getState().applyCombatLogs([
+      { kind: 'attack', text: '你命中鸡，造成 3 点伤害（剩余 2）' },
+      { kind: 'attack', text: '你命中鸡，造成 1 点伤害（剩余 1）' },
+    ])
+    let monsters = useGameStore.getState().monsters
+    expect(monsters).toHaveLength(1)
+    expect(monsters[0]).toMatchObject({ key: '鸡', hp: 1 })
+
+    useGameStore.getState().applyCombatLogs([
+      { kind: 'kill', text: '你击杀了鸡，获得 9 经验' },
+    ])
+    monsters = useGameStore.getState().monsters
+    expect(monsters).toHaveLength(0)
+  })
+
+  it('zone_change 切地图并清空怪物与地面掉落', () => {
+    useGameStore.getState().applyCombatLogs([
+      { kind: 'attack', text: '你命中鸡，造成 3 点伤害（剩余 2）' },
+    ])
+    useGameStore.getState().applyDropLoot([
+      { item_id: 'meat', qty: 1, picked: false, drop_id: 'd-1' },
+    ])
+    useGameStore.getState().applyZoneChange('biqi-wild')
+    const s = useGameStore.getState()
+    expect(s.character?.mapId).toBe('biqi-wild')
+    expect(s.monsters).toHaveLength(0)
+    expect(s.groundDrops).toHaveLength(0)
+  })
+
+  it('drop loot 仅收 picked=false 的物品；拾取后可移除', () => {
+    useGameStore.getState().applyDropLoot([
+      { gold: 15 },
+      { item_id: 'meat', qty: 1, picked: true },
+      { item_id: 'wooden_sword', qty: 1, picked: false, drop_id: 'd-9' },
+    ])
+    const drops = useGameStore.getState().groundDrops
+    expect(drops).toEqual([{ dropId: 'd-9', itemId: 'wooden_sword', qty: 1 }])
+
+    useGameStore.getState().removeGroundDrop('d-9')
+    expect(useGameStore.getState().groundDrops).toHaveLength(0)
+  })
+
+  it('未登录时 applyStat 不建角色快照', () => {
+    useGameStore.getState().clearAuth()
+    useGameStore.getState().applyStat({ hp: 5, mp: 5, exp: 0, gold: 1 })
+    expect(useGameStore.getState().character).toBeNull()
+  })
+})
