@@ -153,6 +153,29 @@ MIR_APP_PASSWORD=<hex48> ./deploy/dell1-setup.sh   # 显式指定 mir_app 口令
 - 坑位记录：SSE 计时必须用**全新账号**（buffer 为空）——断线宽限期内旧会话 buffer 会
   被无 Last-Event-ID 的新连接全量重放，瞬时到达的历史事件会把逐条计时打成假 FAIL。
 
+### 2026-08-29 14:47 — releases/20260829-144745（M5 收口：校准 + 换皮构建，task 38）
+
+- 备份：`pg_dump mir_prod` → `backups/20260829-144745.sql`（18KB，含 task 35–37 验收账号数据）
+- 内容：backend（换皮后 gamedata + reskin.py + 校准后 balance）+ 换皮后 frontend/dist + deploy/
+- DB：alembic upgrade → 已在 `0004_traveling_until (head)`（本 release 无新迁移，no-op）
+- 切换：`current -> releases/20260829-144745`；`systemctl restart mir-backend`（unit/nginx 配置
+  未变，不重装不重载）；health 200 / index 200
+- **todo 36 三实证复跑（换皮构建上，全绿）**：
+  - SSE 逐条到达：全新账号 v38*（buffer 空），12 条 stat 心跳 12.1s 渐进到达，
+    stat-to-stat mean=1.009s / pvariance=0.0002 / min=0.961 / max=1.017 → PASS
+  - 单 worker：`ss -ltnp :8000` 恰 1 PID（uvicorn 2541996）→ PASS
+  - playwright dell1-smoke（全新随机账号 d38_*）：1 passed (38.3s) → PASS；
+    截图确认线上 UI 显示换皮后名称（月华村/边境原野/小野雉）
+  - 备注：smoke 首跑在 backend 重启后数秒内失败一次（疑似冷启动竞态），
+    重跑稳定通过；详情见 task-38 evidence
+- **回滚用例（todo 35 流程演练，全绿）**：
+  - 人为迁移失败：scratch release `rollback-drill`（cp -al 硬链拷贝）+ 故意抛错的
+    0005_rollback_drill 迁移 → alembic exit 1，DB 停 0004 不变，symlink 未动，
+    站点全程 200；演练后 scratch release 已删
+  - symlink 回滚：`current -> 20260829-085045`（旧版）→ restart → 站点 200；
+    恢复：`current -> 20260829-144745` → restart → 200 + 单 worker 复核（PID 2542734）
+- 回滚点：`releases/20260829-085045`；证据 `.omo/evidence/task-38-mir-176-h5-mvp.log`
+
 
 ## 10. GPL 合规姿态（task 38 复查结论，draft D13）
 
