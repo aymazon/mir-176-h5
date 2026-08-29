@@ -3,6 +3,7 @@ import { useLogStore } from '../store/log'
 import { useGameStore } from '../store/game'
 import { selectCurrentMap } from '../store/game'
 import { MAPS, EXP_TO_NEXT } from '../data/gamedata'
+import PotionSettings from './PotionSettings'
 
 /**
  * 战斗 Tab（todo 31）：
@@ -10,6 +11,7 @@ import { MAPS, EXP_TO_NEXT } from '../data/gamedata'
  *  - 怪物血条列表 ← 战斗日志派生（attack 剩余血量 / kill 移除；stat 无怪物字段）
  *  - 当前地图 CSS 抽象区域图：当前图高亮 + 邻接图节点（纯 DOM，零图片）
  *  - 日志流 ← log store（含 gap 分隔行）；滚到底自动滚动，上滑暂停
+ *  - 设置区（todo 32）：吃药策略表单（PotionSettings）
  */
 
 function StatBar(props: {
@@ -204,6 +206,12 @@ export default function BattleTab() {
             ))}
           </ul>
         )}
+      </div>
+
+      {/* --- 设置区：吃药策略（todo 32） --- */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
+        <h2 className="mb-2 text-xs font-semibold text-slate-400">吃药策略</h2>
+        <PotionSettings />
       </div>
 
       {/* --- 日志流 --- */}

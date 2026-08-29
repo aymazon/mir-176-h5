@@ -23,6 +23,41 @@ test.beforeEach(async ({ context }) => {
       body: JSON.stringify({ items: [], gold: 0, capacity: 40, used: 0 }),
     }),
   )
+  // todo 32 起技能/任务/传送页挂载时各拉一次清单（同上，防 401 跳登录）
+  await context.route('**/api/skill/list', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ learned: [], available: [] }),
+    }),
+  )
+  await context.route('**/api/quest/list', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        not_started: [],
+        in_progress: [],
+        completed: [],
+        delivered: [],
+      }),
+    }),
+  )
+  await context.route('**/api/teleport/panel', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        current_map_id: 'yin-xing-cun',
+        current_map_name: '银杏村',
+        bind_city: 'yin-xing-cun',
+        traveling: false,
+        travel_remaining_seconds: null,
+        travel_target_map_id: null,
+        destinations: [],
+      }),
+    }),
+  )
 })
 
 for (const tab of TABS) {

@@ -4,7 +4,9 @@
 > 与代码不一致时：先改本文档或先改代码，二者不允许长期漂移
 > （验收脚本会 grep FastAPI 路由表 vs 本文档端点清单）。
 >
-> 来源：`backend/app/main.py` 注册的 4 个 router（auth / character / health / stream），
+> 来源：`backend/app/main.py` 注册的 10 个 router（auth / character / consumable / health /
+> inventory / quest / shop / skill / stream / teleport），
+> 对应 todo 3（鉴权）、todo 5（SSE）、todo 23/25–30（外围系统）。后续 todo 新增端点必须同步更新本文档。
 > 对应 todo 3（鉴权）、todo 5（SSE）。后续 todo 新增端点必须同步更新本文档。
 
 ## 通用约定
@@ -54,6 +56,125 @@ DB 探活。**公开端点，无需登录**。
 - response:
   - `200` `{"status": "ok"}`
   - `503` `{"detail": "database unavailable"}`
+
+## GET /api/skill/list
+
+技能清单（todo 28）。需登录且已建号。
+
+- response:
+  - `200` `{"learned": [{skill_id, name, level, exp, max_level, next_level_exp}], "available": [{skill_id, name, learn_level, mp_cost, requires_book}]}`
+    （`next_level_exp`=0 为满级哨兵；`requires_book`=true 的 ≥35 级技能只能走技能书习得）
+  - `401` 未登录
+
+## POST /api/skill/learn
+
+显式按级习得（<35 级技能；≥35 级必须技能书）。需登录。
+
+- request: `{"skill_id": string}`
+- response:
+  - `200` `{"skill_id": string, "name": string, "level": 0, "exp": 0, "source": "learn"}`
+  - `409` `{"detail": "已学会 <名>"}`
+  - `422` 等级不足 / 需技能书 / 未知技能
+
+## POST /api/skill/learn_from_book
+
+技能书习得（35 级技能唯一入口）：扣一本书 + 写技能行。需登录。
+
+- request: `{"item_instance_id": int}`
+- response:
+  - `200` LearnOut（`source`: `"book"`）
+  - `404` 物品不存在；`409` 已学会 / 数量不足；`422` 非技能书 / 职业不符 / 等级不足 / 技能未开放
+
+## POST /api/skill/use
+
+施放技能（三道闸：未习得/冷却/MP）；成功扣蓝 +1 熟练，升级推 SSE `skill_levelup`。需登录。
+
+- request: `{"skill_id": string, "target_id": string|null}`（MVP 自动锁定首怪，target_id 预留不消费）
+- response:
+  - `200` `{"skill_id", "success", "reason": "ok|not_learned|cooldown|insufficient_mp", "mp_after", "exp_gained", "level_before", "level_after", "leveled_up", "pet_id"}`
+  - `409` 行进中无法施放
+
+## GET /api/quest/list
+
+全部任务按状态分组（todo 29）。需登录且已建号。
+
+- response:
+  - `200` `{"not_started": QuestOut[], "in_progress": QuestOut[], "completed": QuestOut[], "delivered": QuestOut[]}`
+
+### QuestOut schema
+
+```jsonc
+{
+  "quest_id": string,
+  "name": string,
+  "kind": "kill" | "collect" | "dialogue" | "profession",
+  "status": "not_started" | "in_progress" | "completed" | "delivered",
+  "level_req": int,
+  "required_class": string | null,
+  "target_id": string,          // kill=怪物 id / collect=物品 id / dialogue=NPC id
+  "target_count": int,
+  "count": int,                 // 当前进度
+  "need": int,                  // = target_count
+  "reward_gold": int,
+  "reward_exp": int,
+  "reward_items": string[],
+  "dialogue": object,
+  "arena_map_id": string | null  // boss_instance 任务竞技场图 id
+}
+```
+
+## POST /api/quest/accept
+
+接任务（未接→进行）；boss_instance 任务接取即传送进竞技场。需登录。
+
+- request: `{"quest_id": string}`
+- response:
+  - `200` `{"quest": QuestOut, "message": string, "map_id": string|null}`
+  - `404` 任务不存在；`409` 已接取；`422` 等级/职业不符
+
+## POST /api/quest/progress
+
+推进进度：kill/boss +1；collect 缴纳扣背包一次交割；dialog 同图 NPC 对话。需登录。
+
+- request: `{"quest_id": string, "action": "kill"|"collect"|"dialog"|"boss"}`
+- response:
+  - `200` `{"quest_id", "count", "need", "status", "message"}`
+  - `404` 任务不存在；`409` 已交付/已完成待交付；`422` 未接取 / action 与类型不配 / 物品不足 / 不同图 / 不在竞技场
+
+## POST /api/quest/complete
+
+交付任务（completed→delivered 终态）：发金币/经验/物品奖励。需登录。
+
+- request: `{"quest_id": string}`
+- response:
+  - `200` `{"quest_id", "name", "status": "delivered", "gold", "exp", "rewards": {"gold", "exp", "items": [{item_id, name, quantity}]}}`
+  - `404` 任务不存在；`409` 已交付；`422` 未接取 / 进度未满 / 背包已满
+
+## GET /api/teleport/panel
+
+传送面板（todo 30）：当前图 + 可达目的地费率清单 + 行进中状态。需登录。
+
+- response:
+  - `200` `{"current_map_id", "current_map_name", "bind_city", "traveling": bool, "travel_remaining_seconds": float|null, "travel_target_map_id": string|null, "destinations": [{"map_id", "name", "fee": int, "kind": "route"|"cave", "depth": int|null}]}`
+
+## POST /api/teleport/warp
+
+付费传送：扣金币 + 登记 traveling_until 倒计时（5–20s 随机）；到点由 tick_loop 切图并推 SSE `zone_change(reason=travel)`。需登录。
+
+- request: `{"target_map_id": string, "layer": int|null}`（洞穴层传 layer 深度档，缺省第 1 层）
+- response:
+  - `200` `{"target_map_id", "layer", "fee", "gold_after", "travel_seconds", "traveling_until"}`
+  - `404` 目的地不存在；`409` 行进中；`422` 已在目的地 / 不可达 / 金币不足
+
+## POST /api/character/policy（⚠️ 前端契约期望，后端未实现）
+
+吃药策略存会话（todo 32 前端表单对接）。**todo 26 只落了 sim 层 `session.potion_policy` 字段，未提供 REST 端点**——当前调用返回 404，前端降级为 localStorage 本地持久化。后端补端点后此处转正式契约。
+
+- request: `{"hp_pct": float, "urgent_hp_pct": float, "mp_pct": float, "recall_free_slots": int}`
+  （前三键与 combat/potion.py policy 覆盖键同源；语义：HP<X% 喝回血药 / HP<Y% 危险线优先高级药 / MP<Z% 喝回蓝药 / 背包空格<N 自动回城，0=关闭）
+- response（预期）: `200` `{"ok": true}`
+
+---
 
 ## POST /api/character
 
@@ -111,10 +232,14 @@ DB 探活。**公开端点，无需登录**。
 | event | id | data（JSON 字符串） | 状态 |
 |---|---|---|---|
 | `message` | 有 | `{"text": string}` 战斗日志文本 | ✅ 已实现（dev 模拟源 1Hz；todo 15 起为真实 tick 日志） |
-| `log` | 有 | `{"text": string, ...}` 结构化日志行 | 预留（todo 15） |
-| `stat` | 有 | `{"hp": int, "mp": int, ...}` 属性快照 | 预留（todo 15） |
-| `drop` | 有 | `{"item_id": string, "quantity": int, ...}` 掉落 | 预留（todo 15） |
-| `exp` | 有 | `{"exp": int, "level": int, ...}` 经验/升级 | 预留（todo 15） |
+| `log` | 有 | `{"text": string, ...}` 结构化日志行 | ✅ 已实现（todo 15 起） |
+| `stat` | 有 | `{"tick", "hp", "max_hp", "mp", "max_mp", "exp", "gold", "reason"?, "panel"?}` 属性快照 | ✅ 已实现（todo 15 起） |
+| `drop` | 有 | `{"loot": [{item_id, qty, picked, drop_id, gold?}]}` 掉落 | ✅ 已实现（todo 15 起） |
+| `exp` | 有 | `{"exp": int, "level": int, ...}` 经验/升级 | ✅ 已实现（todo 15 起） |
+| `zone_change` | 有 | `{"map_id": string, "reason": string}` 换图 | ✅ 已实现（todo 15/26/29/30） |
+| `skill_learn` | 有 | `{"skill_id", "name", "level", "source"}` 技能习得 | ✅ 已实现（todo 28） |
+| `skill_levelup` | 有 | `{"skill_id", "name", "level", "exp"}` 技能升级 | ✅ 已实现（todo 28） |
+| `travel_start` | 有 | `{"target_map_id", "layer", "fee", "gold_after", "seconds", "traveling_until"}` 传送出发 | ✅ 已实现（todo 30） |
 | `disconnect` | 有 | `{}` 会话终止通知 | 预留（todo 15） |
 | `gap` | **无** | `{"reason": "buffer_overflow"}` | ✅ 已实现 |
 

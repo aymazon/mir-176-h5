@@ -32,8 +32,8 @@ export class ApiError extends Error {
   }
 }
 
-/** JSON POST/GET：非 2xx 抛 ApiError(detail) */
-async function requestJson<T>(
+/** JSON POST/GET：非 2xx 抛 ApiError(detail)；todo 32 起 skill/quest/teleport/potion 模块复用 */
+export async function requestJson<T>(
   path: string,
   init?: RequestInit & { json?: unknown },
 ): Promise<T> {
