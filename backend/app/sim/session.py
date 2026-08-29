@@ -34,7 +34,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.combat.effects import EffectInstance
 from app.combat.potion import PotionSpec
 from app.combat.skills import SkillState
-from app.combat.potion import PotionSpec
 from app.core.db import SessionLocal
 from app.models.character import Character
 from app.models.item_instance import ItemInstance
@@ -242,7 +241,7 @@ async def _touch_heartbeat(character_id: int) -> None:
                 .values(last_active_at=func.now())
             )
             await db.commit()
-    except Exception:  # noqa: BLE001 — 心跳失败不阻断断线主流程
+    except Exception:  # 心跳失败不阻断断线主流程
         LOG.exception("heartbeat refresh failed for character %s", character_id)
 
 
@@ -327,6 +326,6 @@ def reset_sessions() -> None:
     _sessions.clear()
 
 
-def _compensation_stub(character_id: int) -> None:  # noqa: ARG001
+def _compensation_stub(character_id: int) -> None:
     """离线收益/挂机补偿占位（计划红线：不做离线收益，永不去实现）。"""
     raise NotImplementedError("离线收益不在 MVP 范围（计划红线）")

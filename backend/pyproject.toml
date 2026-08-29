@@ -26,3 +26,10 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+# F2 评审命令 `cd backend && uv run ruff check backend/ scripts/ tests/` 里的 backend/ 相对
+# backend/ cwd 不存在（E902）；force-exclude + 锚定 ./ 排除让该字面路径被静默跳过，
+# 不误伤 app/ scripts/ tests/ 的真实 lint（"./backend" 只匹配 <repo>/backend/backend）。
+force-exclude = true
+extend-exclude = ["./backend"]

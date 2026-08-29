@@ -25,7 +25,6 @@ from app.sim.session import (
     on_disconnect,
     register_session,
     release_session,
-    reset_sessions,
     session_for,
 )
 from app.sse.session_state import get_or_create_session, reset_sessions
@@ -144,7 +143,7 @@ def test_max_hp_placeholder_formulas() -> None:
 async def test_get_or_create_player_session_loads_from_db(
     seeded_char: tuple[str, int],
 ) -> None:
-    username, character_id = seeded_char
+    _, character_id = seeded_char
     async with SessionLocal() as db:
         session = await get_or_create_player_session(db, character_id)
     assert session_for(character_id) is session  # 已注册单例
@@ -211,7 +210,7 @@ async def test_on_disconnect_refreshes_heartbeat_in_db(
     """断线心跳刷新：单行 UPDATE last_active_at=now()（豁免取锁的豁免项验证）。"""
     _, character_id = seeded_char
     async with SessionLocal() as db:
-        session = await get_or_create_player_session(db, character_id)
+        await get_or_create_player_session(db, character_id)
     assert on_disconnect(character_id) is True
     age = 999.0  # 等 fire-and-forget 心跳任务落地（最多 ~2s）
     for _ in range(100):

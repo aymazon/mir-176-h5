@@ -5,8 +5,9 @@ roll → 幸运/诅咒位置修正（luck≥9 硬规则刀刀上限）→ 技能
 减防御/魔御（DEF_DAMAGE_REDUCTION_FACTOR）→ round_half_up → 钳制 ≥ MIN_DAMAGE。
 """
 
+from collections.abc import Callable
 from random import Random
-from typing import Callable, Final
+from typing import Final
 
 import pytest
 
@@ -102,11 +103,11 @@ def test_intermediate_luck_shifts_toward_max() -> None:
     ("channel", "kwargs", "roll", "expected"),
     [
         # 物理：攻[4,8] roll=6 vs DEF=2 → 6 − 0.10 → 6
-        (physical_damage, dict(attack_min=4, attack_max=8, target_defense=2), 6, 6),
+        (physical_damage, {"attack_min": 4, "attack_max": 8, "target_defense": 2}, 6, 6),
         # 魔法：魔[10,20] roll=12 vs MAC=15 → 12 − 0.75 = 11.25 → 11
-        (magical_damage, dict(magic_min=10, magic_max=20, target_mac=15), 12, 11),
+        (magical_damage, {"magic_min": 10, "magic_max": 20, "target_mac": 15}, 12, 11),
         # 道术：道[7,11] roll=9 vs DEF=40（社区近似按 DEF 计）→ 9 − 2.00 → 7
-        (taoist_damage, dict(tao_min=7, tao_max=11, target_defense=40), 9, 7),
+        (taoist_damage, {"tao_min": 7, "tao_max": 11, "target_defense": 40}, 9, 7),
     ],
 )
 def test_three_channels_table(
@@ -174,9 +175,9 @@ def test_degenerate_range_never_crashes() -> None:
 
 
 @pytest.mark.parametrize(("kwargs", "match"), [
-    (dict(attack_min=8, attack_max=4, target_defense=0), "attack_max"),
-    (dict(attack_min=4, attack_max=8, target_defense=0, luck=-1), "非负"),
-    (dict(attack_min=4, attack_max=8, target_defense=0, curse=-1), "非负"),
+    ({"attack_min": 8, "attack_max": 4, "target_defense": 0}, "attack_max"),
+    ({"attack_min": 4, "attack_max": 8, "target_defense": 0, "luck": -1}, "非负"),
+    ({"attack_min": 4, "attack_max": 8, "target_defense": 0, "curse": -1}, "非负"),
 ])
 def test_invalid_inputs_rejected(kwargs: dict[str, int], match: str) -> None:
     with pytest.raises(ValueError, match=match):

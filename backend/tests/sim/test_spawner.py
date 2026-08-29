@@ -23,7 +23,6 @@ from app.gamedata_schema.spawns import SpawnEntry
 from app.models.boss_respawn import BossRespawn
 from app.sim.spawner import (
     load_pending_bosses,
-    make_boss_kill_recorder,
     record_boss_kill,
     spawn_target,
     spawner_loop,

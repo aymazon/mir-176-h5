@@ -232,7 +232,7 @@ class ZoneInstance:
         assert self._on_boss_killed is not None
         try:
             await self._on_boss_killed(self, monster)
-        except Exception:  # noqa: BLE001 — 持久化失败不阻断战斗主流程
+        except Exception:  # 持久化失败不阻断战斗主流程
             LOG.exception("boss_respawn write failed for %s", monster.monster_id)
 
     async def drain_boss_hooks(self) -> None:

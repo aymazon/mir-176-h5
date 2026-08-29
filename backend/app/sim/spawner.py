@@ -58,7 +58,7 @@ async def spawner_loop(
         raise
 
 
-SessionFactory = "async_sessionmaker[AsyncSession]"
+type SessionFactory = async_sessionmaker[AsyncSession]
 
 
 async def record_boss_kill(

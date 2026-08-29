@@ -33,7 +33,6 @@ from app.sim.session import (
     on_disconnect,
     register_session,
     release_session,
-    reset_sessions,
     session_for,
 )
 from app.sim.tick_loop import (
@@ -43,8 +42,8 @@ from app.sim.tick_loop import (
     simulate_tick,
     start_tick_loop,
 )
-from app.sse.session_state import get_or_create_session, reset_sessions
 from app.sim.zone import ZoneInstance, shutdown_all
+from app.sse.session_state import get_or_create_session, reset_sessions
 
 
 @pytest.fixture(autouse=True)
