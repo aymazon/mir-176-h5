@@ -254,9 +254,9 @@ def test_item_probes_exist_with_thresholds():
 
 
 def test_wuji_cudgel_need_level_28():
-    """待定项裁决：无极棍按社区主流 28 级录入（置信度中）。"""
+    """待定项裁决：浑元棍（旧名无极棍）按社区主流 28 级录入（置信度中）。"""
     item = ItemDef.model_validate(_load_sample("items", "wuji_cudgel"))
-    assert item.name == "无极棍"
+    assert item.name == "浑元棍"
     assert item.need_level == 28
 
 
@@ -312,18 +312,18 @@ def test_skill_learn_levels_match_readme():
 
 
 def test_magic_shield_learn_level_31():
-    """QA 锚点：魔法盾 L31（README §4.2 表）。"""
+    """QA 锚点：魔力护盾（旧名魔法盾） L31（README §4.2 表，换皮映射见 docs/reskin-mapping.md）。"""
     s = SkillDef.model_validate(_load_sample("skills", "magic_shield"))
-    assert s.name == "魔法盾"
+    assert s.name == "魔力护盾"
     assert s.learn_level == 31
 
 
 def test_level35_trio():
-    """QA 锚点：烈火剑法/冰咆哮/召唤神兽 均 L35。"""
+    """QA 锚点：焚焰剑法/冰霜咆哮/召唤灵兽（旧名烈火剑法/冰咆哮/召唤神兽） 均 L35。"""
     for stem, name in (
-        ("liehuo", "烈火剑法"),
-        ("ice_thunder", "冰咆哮"),
-        ("summon_beast", "召唤神兽"),
+        ("liehuo", "焚焰剑法"),
+        ("ice_thunder", "冰霜咆哮"),
+        ("summon_beast", "召唤灵兽"),
     ):
         s = SkillDef.model_validate(_load_sample("skills", stem))
         assert s.learn_level == 35, f"{stem} learn_level={s.learn_level} != 35"

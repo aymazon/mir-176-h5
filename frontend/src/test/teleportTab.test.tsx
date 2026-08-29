@@ -7,14 +7,14 @@ import { useInventoryStore } from '../store/inventory'
 
 const panelResponse = {
   current_map_id: 'yin-xing-cun',
-  current_map_name: '银杏村',
+  current_map_name: '月华村',
   bind_city: 'yin-xing-cun',
   traveling: false,
   travel_remaining_seconds: null,
   travel_target_map_id: null,
   destinations: [
-    { map_id: 'biqi-wild', name: '比奇野外', fee: 100, kind: 'route', depth: null },
-    { map_id: 'shimen', name: '石墓（猪洞） 5 层', fee: 500, kind: 'cave', depth: 5 },
+    { map_id: 'biqi-wild', name: '边境原野', fee: 100, kind: 'route', depth: null },
+    { map_id: 'shimen', name: '沉岩墓（野猪窟） 5 层', fee: 500, kind: 'cave', depth: 5 },
   ],
 }
 
@@ -60,7 +60,7 @@ describe('TeleportTab', () => {
     render(<TeleportTab />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('teleport-current')).toHaveTextContent('银杏村')
+      expect(screen.getByTestId('teleport-current')).toHaveTextContent('月华村')
     })
     expect(screen.getByTestId('teleport-bind')).toHaveTextContent('yin-xing-cun')
     expect(screen.getByTestId('teleport-fee-biqi-wild:0')).toHaveTextContent('100 金')

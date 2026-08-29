@@ -7,7 +7,7 @@ const skillListResponse = {
   learned: [
     {
       skill_id: 'basic_sword',
-      name: '基本剑术',
+      name: '剑招起手',
       level: 1,
       exp: 300,
       max_level: 3,
@@ -15,7 +15,7 @@ const skillListResponse = {
     },
     {
       skill_id: 'throw_sword',
-      name: '攻杀剑术',
+      name: '破击剑术',
       level: 3,
       exp: 0,
       max_level: 3,
@@ -25,14 +25,14 @@ const skillListResponse = {
   available: [
     {
       skill_id: 'assassination',
-      name: '刺杀剑术',
+      name: '贯刺剑术',
       learn_level: 19,
       mp_cost: 5,
       requires_book: false,
     },
     {
       skill_id: 'liehuo',
-      name: '烈火剑法',
+      name: '焚焰剑法',
       learn_level: 35,
       mp_cost: 20,
       requires_book: true,
@@ -102,7 +102,7 @@ describe('SkillTab', () => {
         return new Response(
           JSON.stringify({
             skill_id: 'assassination',
-            name: '刺杀剑术',
+            name: '贯刺剑术',
             level: 0,
             exp: 0,
             source: 'learn',
@@ -115,7 +115,7 @@ describe('SkillTab', () => {
 
     fireEvent.click(screen.getByTestId('skill-learn-assassination'))
     await waitFor(() => {
-      expect(screen.getByTestId('toast')).toHaveTextContent('已学会 刺杀剑术')
+      expect(screen.getByTestId('toast')).toHaveTextContent('已学会 贯刺剑术')
     })
   })
 
@@ -130,7 +130,7 @@ describe('SkillTab', () => {
       const url = typeof input === 'string' ? input : (input as Request).url
       if (url.includes('/api/skill/learn')) {
         return new Response(
-          JSON.stringify({ detail: '等级不足：刺杀剑术 需要 19 级' }),
+          JSON.stringify({ detail: '等级不足：贯刺剑术 需要 19 级' }),
           { status: 422 },
         )
       }

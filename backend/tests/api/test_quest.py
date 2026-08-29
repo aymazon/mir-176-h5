@@ -393,7 +393,7 @@ async def test_fate_blade_arena_and_weapon_reward(harness: _Harness) -> None:
     clone = sess.zone.alive_monsters[0].monster_def
     origin = _monster_def("wild_boar_white")
     assert clone.id == "wild_boar_white_weak_clone"
-    assert clone.name == "弱化的白野猪"
+    assert clone.name == "弱化的白鬃野猪王"  # task 38 换皮：白野猪→白鬃野猪王
     assert clone.hp == int(origin.hp * 0.7)  # 2000 → 1400
     assert clone.attack == int(origin.attack * 0.7)  # 55 → 38
     assert clone.boss is False  # 分身不写 boss_respawn
@@ -425,7 +425,7 @@ async def test_fate_blade_arena_and_weapon_reward(harness: _Harness) -> None:
     assert r.status_code == 200, r.text
     done = r.json()
     assert done["rewards"]["items"] == [
-        {"item_id": "fate_blade", "name": "命运之刃", "quantity": 1}
+        {"item_id": "fate_blade", "name": "淬锋之刃", "quantity": 1}  # task 38 换皮后新名
     ]
     assert done["rewards"]["exp"] == 20000
     assert await harness.item_rows(cid, "fate_blade") != []

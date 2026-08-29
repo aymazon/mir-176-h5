@@ -43,7 +43,7 @@ backend/gamedata/
 ```json
 {
   "id": "yin-xing-cun",
-  "name": "银杏村",
+  "name": "月华村",
   "level_min": 0,
   "level_max": 7,
   "region": "newbie",
@@ -75,7 +75,7 @@ backend/gamedata/
 ```json
 {
   "id": "chicken",
-  "name": "鸡",
+  "name": "小野雉",
   "level": 1,
   "hp": 5,
   "attack": 2,
@@ -114,7 +114,7 @@ backend/gamedata/
 ```json
 {
   "id": "wooden_sword",
-  "name": "木剑",
+  "name": "木刃",
   "kind": "weapon",
   "need_level": 1,
   "need_strength": 0,
@@ -148,7 +148,7 @@ backend/gamedata/
 ```json
 {
   "id": "basic_sword",
-  "name": "基本剑术",
+  "name": "剑招起手",
   "class": "warrior",
   "learn_level": 7,
   "mp_cost": 0,
@@ -178,7 +178,7 @@ backend/gamedata/
   "map_id": "yin-xing-cun",
   "kind": "vendor",
   "shop_items": ["wooden_sword"],
-  "dialogue": ["欢迎来到银杏村。", "需要点什么吗？"]
+  "dialogue": ["欢迎来到月华村。", "需要点什么吗？"]
 }
 ```
 
@@ -200,7 +200,7 @@ backend/gamedata/
 ```json
 {
   "id": "newbie_kill_5",
-  "name": "除害新手村",
+  "name": "村口除害",
   "kind": "kill",
   "level_req": 1,
   "target_id": "chicken",
@@ -209,7 +209,7 @@ backend/gamedata/
   "reward_exp": 50,
   "reward_items": ["wooden_sword"],
   "dialogue": {
-    "accept": "村外的鸡太多了，帮我杀 5 只。",
+    "accept": "村外的小野雉太多了，帮我杀 5 只。",
     "progress": "还没杀够，继续加油。",
     "complete": "干得漂亮，这是你的奖励。"
   }

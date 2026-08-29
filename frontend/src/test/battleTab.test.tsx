@@ -60,10 +60,10 @@ describe('BattleTab', () => {
 
   it('当前地图高亮 + 邻接区域节点（纯 CSS 抽象图）', () => {
     render(<BattleTab />)
-    expect(screen.getByTestId('map-current')).toHaveTextContent('银杏村')
+    expect(screen.getByTestId('map-current')).toHaveTextContent('月华村')
     expect(screen.getByTestId('map-player-dot')).toBeInTheDocument()
-    // 银杏村邻接：比奇野外
-    expect(screen.getByTestId('map-node-biqi-wild')).toHaveTextContent('比奇野外')
+    // 月华村邻接：边境原野
+    expect(screen.getByTestId('map-node-biqi-wild')).toHaveTextContent('边境原野')
   })
 
   it('怪物血条列表随战斗日志派生更新；击杀后清空', () => {
@@ -72,16 +72,16 @@ describe('BattleTab', () => {
 
     act(() => {
       useGameStore.getState().applyCombatLogs([
-        { kind: 'attack', text: '你命中鸡，造成 3 点伤害（剩余 2）' },
+        { kind: 'attack', text: '你命中小野雉，造成 3 点伤害（剩余 2）' },
       ])
     })
-    const bar = screen.getByTestId('monster-鸡')
-    expect(bar).toHaveTextContent('鸡')
+    const bar = screen.getByTestId('monster-小野雉')
+    expect(bar).toHaveTextContent('小野雉')
     expect(bar).toHaveTextContent('2/2')
 
     act(() => {
       useGameStore.getState().applyCombatLogs([
-        { kind: 'kill', text: '你击杀了鸡，获得 9 经验' },
+        { kind: 'kill', text: '你击杀了小野雉，获得 9 经验' },
       ])
     })
     expect(screen.getByTestId('monster-empty')).toBeInTheDocument()
@@ -89,7 +89,7 @@ describe('BattleTab', () => {
 
   it('日志流渲染普通行与 gap 分隔行', () => {
     seedLog([
-      line('1', '你命中鸡'),
+      line('1', '你命中小野雉'),
       {
         id: 'gap-1',
         kind: 'gap',
@@ -100,7 +100,7 @@ describe('BattleTab', () => {
       line('2', '获得经验'),
     ])
     render(<BattleTab />)
-    expect(screen.getByTestId('log-line-1')).toHaveTextContent('你命中鸡')
+    expect(screen.getByTestId('log-line-1')).toHaveTextContent('你命中小野雉')
     expect(screen.getByTestId('log-gap')).toHaveTextContent('期间部分日志丢失')
     expect(screen.getByTestId('log-line-2')).toHaveTextContent('获得经验')
   })

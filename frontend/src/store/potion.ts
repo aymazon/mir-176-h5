@@ -2,8 +2,8 @@ import { create } from 'zustand'
 
 /**
  * 吃药策略 store（todo 32）：
- *  - hpPct：HP < X% 喝回血药（金创药族，常规线；后端 POTION_HP_PCT 默认 30）
- *  - urgentHpPct：HP < Y% 危险线优先高级药（太阳水；POTION_URGENT_HP_PCT 默认 15）
+ *  - hpPct：HP < X% 喝回血药（止血草药族，常规线；后端 POTION_HP_PCT 默认 30）
+ *  - urgentHpPct：HP < Y% 危险线优先高级药（日光露；POTION_URGENT_HP_PCT 默认 15）
  *  - mpPct：MP < Z% 喝回蓝药（魔法药；POTION_MP_PCT 默认 20）
  *  - recallFreeSlots：背包空格 < N 自动回城（BAG_FREE_SLOTS_RECALL 默认 5；0 = 关闭）
  * 本地 localStorage 持久化（键 mir.potionPolicy）；REST 落会话见 api/potion.ts。
@@ -38,7 +38,7 @@ export function validatePotionPolicy(p: PotionPolicy): string | null {
     }
   }
   if (p.urgentHpPct >= p.hpPct) {
-    return 'HP 危险线必须低于回血线（危险线优先喝太阳水保命）'
+    return 'HP 危险线必须低于回血线（危险线优先喝日光露保命）'
   }
   if (
     !Number.isInteger(p.recallFreeSlots) ||

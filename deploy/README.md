@@ -152,3 +152,21 @@ MIR_APP_PASSWORD=<hex48> ./deploy/dell1-setup.sh   # 显式指定 mir_app 口令
 - 证据：`.omo/evidence/task-36-mir-176-h5-mvp.log` + `-battle.png` + 两份 raw log。
 - 坑位记录：SSE 计时必须用**全新账号**（buffer 为空）——断线宽限期内旧会话 buffer 会
   被无 Last-Event-ID 的新连接全量重放，瞬时到达的历史事件会把逐条计时打成假 FAIL。
+
+
+## 10. GPL 合规姿态（task 38 复查结论，draft D13）
+
+**结论：本项目为私有仓库、仅私有 LAN 部署（dell1 192.168.1.12:8443，自签证书、无公网
+分发），不向外部分发源码或二进制 → GPL 义务不触发。**
+
+复查要点：
+- `backend/gamedata/` 的 JSON 由 GPL 许可的 Mir2 服务端数据源（GeeM2 / Crystal /
+  OpenMir2，详见 docs/data-coverage.md）转换而来，属**内部开发数据**，仅存在于私有仓库，
+  不分发；工程红线「不提交任何 GPL 原始 DB 文件入库」自 todo 13 起持续遵守。
+- 数值（HP/经验/习得等级/门槛/费率）为事实性数据，不受版权保护——保留不改；
+  显示文案（地图/怪物/物品/技能/NPC/任务名与对话）已全量换皮为自造词，
+  映射与豁免清单见 `docs/reskin-mapping.md`（scripts/reskin.py 机械执行，
+  词表 git grep 零命中验证于 2026-08-29，证据 .omo/evidence/task-38-mir-176-h5-mvp.log）。
+- **若未来改变分发姿态**（公开发布源码/镜像/向他人提供服务端副本）：整个项目须整体
+  按 GPL v2 开源并在根 README 显著声明；并需另行评估 Mir 商标/素材风险。
+  本结论届时必须重查。

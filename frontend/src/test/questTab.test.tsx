@@ -6,7 +6,7 @@ import { useQuestStore } from '../store/quest'
 function questRow(over: Record<string, unknown>): Record<string, unknown> {
   return {
     quest_id: 'q1',
-    name: '除鸡行动',
+    name: '除小野雉行动',
     kind: 'kill',
     status: 'not_started',
     level_req: 1,
@@ -27,10 +27,10 @@ function questRow(over: Record<string, unknown>): Record<string, unknown> {
 const questListResponse = {
   not_started: [questRow({ quest_id: 'q_new', name: '新手悬赏' })],
   in_progress: [
-    questRow({ quest_id: 'q_kill', name: '杀鸡悬赏', status: 'in_progress', count: 2 }),
+    questRow({ quest_id: 'q_kill', name: '猎小野雉悬赏', status: 'in_progress', count: 2 }),
     questRow({
       quest_id: 'q_collect',
-      name: '收集鸡肉',
+      name: '收集小野雉羽',
       kind: 'collect',
       target_id: 'chicken_meat',
       status: 'in_progress',

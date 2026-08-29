@@ -9,7 +9,7 @@ const bagResponse = {
     {
       item_instance_id: 12,
       item_id: 'wooden_sword',
-      name: '木剑',
+      name: '木刃',
       kind: 'weapon',
       quantity: 1,
       durability: 3800,
@@ -17,7 +17,7 @@ const bagResponse = {
     {
       item_instance_id: 13,
       item_id: 'cloth_robe',
-      name: '布衣',
+      name: '粗布袍',
       kind: 'armor',
       quantity: 1,
       durability: null,
@@ -117,7 +117,7 @@ describe('EquipTab', () => {
     const fetchMock = mockFetch()
     render(<EquipTab />)
     const wearBtn = await screen.findByTestId('wear-12')
-    expect(wearBtn).toHaveTextContent('穿戴 木剑')
+    expect(wearBtn).toHaveTextContent('穿戴 木刃')
 
     fetchMock.mockImplementation(async (input, init) => {
       const url = typeof input === 'string' ? input : (input as Request).url
@@ -142,7 +142,7 @@ describe('EquipTab', () => {
 
     fireEvent.click(wearBtn)
     await waitFor(() => {
-      expect(screen.getByTestId('equip-item-weapon')).toHaveTextContent('木剑')
+      expect(screen.getByTestId('equip-item-weapon')).toHaveTextContent('木刃')
     })
     // 耐久条：3800/4000
     expect(screen.getByTestId('durability-text-weapon')).toHaveTextContent(

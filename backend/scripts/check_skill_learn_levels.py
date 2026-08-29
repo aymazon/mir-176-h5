@@ -5,7 +5,10 @@
 - README 表中的每个技能必须在 gamedata 中存在且等级一致；
 - gamedata 中不得出现 README §4 之外的技能（防录 1.8+ 技能混入）。
 
-QA failure 场景：把魔法盾 learn_level 改 30 → 报出 文件 + 字段 + 两边数值。
+task 38 换皮适配：README §4 是上游契约、保留旧名；比对前用
+docs/reskin-mapping.md skills 段把 README 旧名翻译成新名（习得等级数值不变）。
+
+QA failure 场景：把魔力护盾（旧名：魔法盾） learn_level 改 30 → 报出 文件 + 字段 + 两边数值。
 
 用法：cd backend && uv run python scripts/check_skill_learn_levels.py
 退出码：0 = 全部一致；1 = 存在差异。
@@ -20,6 +23,8 @@ import re
 import sys
 from pathlib import Path
 
+from scripts.reskin import load_reskin_mapping
+
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _README = _REPO_ROOT / "docs" / "MVP" / "README.md"
 
@@ -27,7 +32,7 @@ _ROW_RE = re.compile(r"^\|([^|]+)\|\s*(\d+)\s*\|")
 
 
 def readme_learn_levels() -> dict[str, int]:
-    """README §4 三张表 → {技能名: 习得等级}。"""
+    """README §4 三张表 → {技能名: 习得等级}（task 38 起经换皮映射翻译成新名）。"""
     text = _README.read_text(encoding="utf-8")
     section = text.split("## 4.", 1)[1].split("## 5.", 1)[0]
     table: dict[str, int] = {}
@@ -39,7 +44,12 @@ def readme_learn_levels() -> dict[str, int]:
         if name in ("技能", "---", "") or name.startswith("-"):
             continue
         table[name] = int(match.group(2))
-    return table
+    # README 旧名 → 换皮后新名（映射键是 id，需按 (old, new) 值建 old→new 索引；
+    # 无映射行则原样，防 README 表外词干扰）
+    old_to_new = {
+        old: new for old, new in load_reskin_mapping().entities.get("skills", {}).values()
+    }
+    return {old_to_new.get(name, name): level for name, level in table.items()}
 
 
 def check(backend_root: Path, expected: dict[str, int] | None = None) -> list[str]:

@@ -5,7 +5,7 @@ import { apiSavePotionPolicy } from '../api/potion'
 
 /**
  * 吃药策略表单（todo 32，战斗页设置区）：
- *  - HP<X% 喝金创药（常规回血线）/ HP<Y% 喝太阳水（危险线）/
+ *  - HP<X% 喝止血草药（常规回血线）/ HP<Y% 喝日光露（危险线）/
  *    MP<Z% 喝魔法药 / 背包空格<N 自动回城（0 = 关闭）
  *  - 提交前本地校验（validatePotionPolicy：1–99 整数百分比、危险线<回血线、
  *    空格 0–40）；越界（如 150%）拦截不发请求
@@ -27,7 +27,7 @@ const FIELDS: FieldDef[] = [
   {
     key: 'hpPct',
     label: 'HP 低于',
-    hint: '% 喝金创药',
+    hint: '% 喝止血草药',
     min: 1,
     max: 99,
     testId: 'policy-hp-pct',
@@ -35,7 +35,7 @@ const FIELDS: FieldDef[] = [
   {
     key: 'urgentHpPct',
     label: 'HP 低于',
-    hint: '% 喝太阳水（危险线，须低于回血线）',
+    hint: '% 喝日光露（危险线，须低于回血线）',
     min: 1,
     max: 99,
     testId: 'policy-urgent-hp-pct',

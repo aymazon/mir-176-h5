@@ -86,9 +86,9 @@ interface GameStore {
 
 // --- 战斗日志解析（后端 tick_loop._log_event 文案契约，勿在别处复制） -------------
 
-/** 「你命中鸡，造成 3 点伤害（剩余 2）」→ { name, remaining } */
+/** 「你命中小野雉，造成 3 点伤害（剩余 2）」→ { name, remaining } */
 const ATTACK_RE = /^你命中(.+?)，造成 \d+ 点伤害（剩余 (\d+)）$/
-/** 「你击杀了鸡，获得 9 经验」→ 鸡 */
+/** 「你击杀了小野雉，获得 9 经验」→ 小野雉 */
 const KILL_RE = /^你击杀了(.+?)，获得 \d+ 经验$/
 
 export function parseAttack(text: string): { name: string; remaining: number } | null {

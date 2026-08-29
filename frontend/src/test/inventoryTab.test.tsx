@@ -17,7 +17,7 @@ const bagResponse = {
     {
       item_instance_id: 12,
       item_id: 'wooden_sword',
-      name: '木剑',
+      name: '木刃',
       kind: 'weapon',
       quantity: 1,
       durability: 3800,
@@ -58,7 +58,7 @@ describe('InventoryTab', () => {
     })
     // 堆叠数量
     expect(screen.getByTestId('bag-qty-0')).toHaveTextContent('×3')
-    expect(screen.getByTestId('bag-cell-1')).toHaveTextContent('木剑')
+    expect(screen.getByTestId('bag-cell-1')).toHaveTextContent('木刃')
     // 空格计数 = capacity - used = 38；空格子从 index 2 起为虚线格
     expect(screen.getByTestId('bag-empty-count')).toHaveTextContent('38')
     expect(screen.getByTestId('bag-gold')).toHaveTextContent('88')
@@ -153,7 +153,7 @@ describe('InventoryTab', () => {
     render(<InventoryTab />)
 
     const pickBtn = await screen.findByTestId('pick-d-42')
-    expect(pickBtn).toHaveTextContent('拾取 木剑')
+    expect(pickBtn).toHaveTextContent('拾取 木刃')
 
     fetchMock.mockImplementation(async (input, init) => {
       const url = typeof input === 'string' ? input : (input as Request).url
@@ -166,7 +166,7 @@ describe('InventoryTab', () => {
             item_drop_id: 'd-42',
             item_instance_id: 12,
             item_id: 'wooden_sword',
-            name: '木剑',
+            name: '木刃',
             quantity: 1,
             gold: 0,
           }),
@@ -177,7 +177,7 @@ describe('InventoryTab', () => {
     })
     fireEvent.click(pickBtn)
     await waitFor(() => {
-      expect(screen.getByTestId('toast')).toHaveTextContent('拾取 木剑 ×1')
+      expect(screen.getByTestId('toast')).toHaveTextContent('拾取 木刃 ×1')
     })
     // 地面条目已移除
     expect(useGameStore.getState().groundDrops).toHaveLength(0)

@@ -49,7 +49,7 @@ from app.sse.session_state import get_or_create_session
 from app.sse.session_state import reset_sessions as reset_sse
 
 BIND_CITY = "yin-xing-cun"
-MID_HP_POTION = "potion_hp_medium"  # 金创药（中量），stackable=True
+MID_HP_POTION = "potion_hp_medium"  # 止血草药（中）（旧名金创药·中量），stackable=True
 
 # --- 公共脚手架 ------------------------------------------------------------------
 
@@ -200,7 +200,7 @@ async def test_pick_merges_stack_into_single_row_20(harness: _Harness) -> None:
     body = r.json()
     assert body["item_id"] == MID_HP_POTION
     assert body["quantity"] == 20
-    assert body["name"] == "金创药（中量）"
+    assert body["name"] == "止血草药（中）"
 
     async with SessionLocal() as db:
         rows = (
@@ -230,7 +230,7 @@ async def test_bag_endpoint_shape(harness: _Harness) -> None:
     assert bag["used"] == 1
     entry = next(i for i in bag["items"] if i["item_id"] == MID_HP_POTION)
     assert entry["quantity"] == 12
-    assert entry["name"] == "金创药（中量）"
+    assert entry["name"] == "止血草药（中）"
     assert entry["kind"] == "potion"
 
 

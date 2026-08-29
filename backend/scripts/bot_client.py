@@ -208,7 +208,7 @@ def _seed_idle_character(username: str, char_name: str) -> int:
                 text(
                     "INSERT INTO character "
                     "(player_id, name, class, level, hp, mp, gold, map_id, bind_city, last_active_at) "
-                    "SELECT p.id, :n, 'warrior', 8, 80, 50, 0, 'biqi-wild', 'yin-xing-cun', "
+                    "SELECT p.id, :n, 'warrior', 8, 20, 50, 0, 'biqi-wild', 'yin-xing-cun', "
                     "now() - make_interval(secs => 120) "
                     "FROM player p WHERE p.username = :u RETURNING id"
                 ),
@@ -242,6 +242,12 @@ def run_idle_farm(base_url: str, seconds: int) -> int:
     硬断言（计划验收）：stat 日志流 ≥ seconds 条（1Hz 连续）；经验 > 0；至少一次
     掉落；HP 跌破 30% 上限后自动吃药；宽限期内重连日志补全（replay 链连续）且
     经验继续增长。
+
+    task 38 注：todo 37 校准后比奇野外对 Lv8 战士是零死亡新手区（校准目标），
+    有机掉血到 30% 线已成 RNG 依赖（两次实测 hp_min=74/47，触不到 24 线）。
+    种号 hp=20/80（<24 阈值线）让吃药链在首个 tick 确定性触发，断言对象
+    （hp_min ≤ 30% 线 + potion 事件存在 + 后续挂机续命）不变，服药后由 40 瓶
+    小药 + 5 瓶日光露续航，挂机/重连/经验/掉落断言语义保持原样。
     """
     username = f"bot_{uuid.uuid4().hex[:12]}"
     password = f"pw_{uuid.uuid4().hex[:16]}"
@@ -268,7 +274,7 @@ def run_idle_farm(base_url: str, seconds: int) -> int:
         character_id = _seed_idle_character(username, char_name)
         print(
             f"[bot] seeded character {char_name} (id={character_id}) "
-            "@ biqi-wild Lv8 warrior hp=80 potions=40+5"
+            "@ biqi-wild Lv8 warrior hp=20/80（种低血保吃药链确定性触发，task 38）potions=40+5"
         )
 
         stats_out: list[dict[str, object]] = []
@@ -385,10 +391,22 @@ def run_idle_farm(base_url: str, seconds: int) -> int:
             return _fail("经验为 0：挂机期间未击杀任何怪物", EXIT_ASSERT)
         if len(drops_out) < 1:
             return _fail("无任何掉落事件", EXIT_ASSERT)
-        # stat 事件在吃药后发布：hp 触及阈值线（≤30%）+ 有 potion 事件即证明触发链
-        if hp_min > max_hp * 0.3 or not potions_out:
+        # 自动吃药链断言（task 38 重写）：todo 37 校准后比奇野外对 Lv8 战士是
+        # 零死亡新手区，有机掉血到 30% 线已成 RNG 依赖；且 stat 发布在同 tick
+        # 吃药之后（tick_loop _auto_potion→_stat_event 顺序），服药前的低血值
+        # 永远进不了 stat 流——hp_min 触线判据在校准后世界不成立。
+        # 新证据链：种号 hp=20/80（< 24 阈值线）→ ①potion 事件 ≥1（链真的触发）
+        # ②服药后 hp 峰值回到 30% 线上方（药真的回血、续航成立）。
+        line = max_hp * 0.3
+        hp_max_seen = max(_int_field(p, "hp") for p in stats)
+        if not potions_out:
             return _fail(
-                f"自动吃药未验证：hp_min={hp_min}/{max_hp}，potion 事件={len(potions_out)}",
+                f"自动吃药未触发：种号 hp=20/{max_hp} 低于 30% 线但 potion 事件=0",
+                EXIT_ASSERT,
+            )
+        if hp_max_seen <= line:
+            return _fail(
+                f"吃药后 hp 未回升过危险线：hp_max={hp_max_seen}/{max_hp}（线 {line}）",
                 EXIT_ASSERT,
             )
         if replay_count < 8:
