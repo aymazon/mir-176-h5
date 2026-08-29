@@ -124,3 +124,15 @@ MIR_APP_PASSWORD=<hex48> ./deploy/dell1-setup.sh   # 显式指定 mir_app 口令
 6. 自签证书 mir.crt/mir.key
 7. /opt/mir-176-h5 骨架 + current symlink
 8. 全量验收通过，证据：`.omo/evidence/task-33-mir-176-h5-mvp.log`
+
+## 9. 部署日志
+
+### 2026-08-29 08:54 — releases/20260829-085045（首版，task 35）
+
+- 备份：`docker exec postgres pg_dump -U postgres mir_prod` → `backups/20260829-085045.sql`（空库基线）
+- 内容：backend（uv.lock 锁定，远端 `uv sync --frozen`，37 包）+ frontend/dist + deploy/
+- DB：alembic upgrade → `0004_traveling_until (head)`，exit 0
+- 切换：`current -> releases/20260829-085045`；systemd unit + nginx site（8443）安装启用
+- 验收：health 200 / index.html 200 / SPA 深链 200 / PG 停→503→恢复 200；journal 零 error
+- 环境修复记录：dell1 ufw 增 `allow 8443/tcp`（原 DROP 拦截）；工作站 curl 需 `--noproxy '*'`（本机 8180 代理拦截 LAN）
+- 回滚点：`releases/bootstrap`；证据 `.omo/evidence/task-35-mir-176-h5-mvp.log`
