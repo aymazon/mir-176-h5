@@ -1,6 +1,6 @@
 {
   "id": "red_potion",
-  "name": "红色药水",
+  "name": "赤色药水",
   "kind": "potion",
   "need_level": 0,
   "need_strength": 0,

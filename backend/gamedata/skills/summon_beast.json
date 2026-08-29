@@ -1,6 +1,6 @@
 {
   "id": "summon_beast",
-  "name": "召唤神兽",
+  "name": "召唤灵兽",
   "class": "taoist",
   "learn_level": 35,
   "mp_cost": 45,

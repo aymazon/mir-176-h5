@@ -1,6 +1,6 @@
 {
   "id": "collect_flower_fruit",
-  "name": "食人花果",
+  "name": "噬人藤花果",
   "kind": "collect",
   "level_req": 4,
   "required_class": null,
@@ -10,8 +10,8 @@
   "reward_exp": 150,
   "reward_items": [],
   "dialogue": {
-    "accept": "食人花的果子是难得的药材，带 5 颗回来。",
-    "progress": "食人花果还没完成，继续加油。",
+    "accept": "噬人藤花的果子是难得的药材，带 5 颗回来。",
+    "progress": "噬人藤花果还没完成，继续加油。",
     "complete": "果子很新鲜，辛苦了。"
   },
   "boss_instance": null

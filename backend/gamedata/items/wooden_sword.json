@@ -1,6 +1,6 @@
 {
   "id": "wooden_sword",
-  "name": "木剑",
+  "name": "木刃",
   "kind": "weapon",
   "need_level": 1,
   "need_strength": 0,

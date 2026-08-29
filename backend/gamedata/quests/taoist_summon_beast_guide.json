@@ -1,6 +1,6 @@
 {
   "id": "taoist_summon_beast_guide",
-  "name": "神兽召唤引",
+  "name": "灵兽召唤引",
   "kind": "profession",
   "level_req": 35,
   "required_class": "taoist",
@@ -12,9 +12,9 @@
     "book_summon_beast"
   ],
   "dialogue": {
-    "accept": "沃玛教主手中有一册召唤神兽的书，取回它，让神兽听你号令。",
-    "progress": "神兽召唤引还没完成，继续加油。",
-    "complete": "从此神兽与你同行。"
+    "accept": "雾喉大祭司手中有一册召唤灵兽的书，取回它，让灵兽听你号令。",
+    "progress": "灵兽召唤引还没完成，继续加油。",
+    "complete": "从此灵兽与你同行。"
   },
   "boss_instance": null
 }

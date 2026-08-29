@@ -1,6 +1,6 @@
 {
   "id": "biqi_blacksmith",
-  "name": "比奇武器店老板",
+  "name": "边境武器店老板",
   "map_id": "biqi-wild",
   "kind": "vendor",
   "city_level": 2,
@@ -86,6 +86,6 @@
     }
   ],
   "dialogue": [
-    "比奇最好的兵器，都在这儿了。"
+    "边境最好的兵器，都在这儿了。"
   ]
 }

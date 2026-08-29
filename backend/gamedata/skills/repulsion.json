@@ -1,6 +1,6 @@
 {
   "id": "repulsion",
-  "name": "抗拒火环",
+  "name": "斥退火环",
   "class": "wizard",
   "learn_level": 12,
   "mp_cost": 8,

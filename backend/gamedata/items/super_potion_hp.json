@@ -1,6 +1,6 @@
 {
   "id": "super_potion_hp",
-  "name": "超级金创药",
+  "name": "超级止血草药",
   "kind": "potion",
   "need_level": 0,
   "need_strength": 0,

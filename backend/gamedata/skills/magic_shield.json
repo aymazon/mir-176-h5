@@ -1,6 +1,6 @@
 {
   "id": "magic_shield",
-  "name": "魔法盾",
+  "name": "魔力护盾",
   "class": "wizard",
   "learn_level": 31,
   "mp_cost": 40,

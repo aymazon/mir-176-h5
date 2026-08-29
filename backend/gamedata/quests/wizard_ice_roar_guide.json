@@ -1,6 +1,6 @@
 {
   "id": "wizard_ice_roar_guide",
-  "name": "冰咆哮书引",
+  "name": "冰霜咆哮书引",
   "kind": "profession",
   "level_req": 35,
   "required_class": "wizard",
@@ -12,8 +12,8 @@
     "book_ice_roar"
   ],
   "dialogue": {
-    "accept": "冰咆哮的秘密藏在石墓深处——白野猪守护着技能书，去把它夺回来。",
-    "progress": "冰咆哮书引还没完成，继续加油。",
+    "accept": "冰霜咆哮的秘密藏在沉岩墓深处——白鬃野猪王守护着技能书，去把它夺回来。",
+    "progress": "冰霜咆哮书引还没完成，继续加油。",
     "complete": "恭喜你掌握了大范围群攻的奥义。"
   },
   "boss_instance": null

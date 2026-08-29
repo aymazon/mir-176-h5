@@ -1,6 +1,6 @@
 {
   "id": "super_potion_mp",
-  "name": "超级魔法药",
+  "name": "超级回蓝药水",
   "kind": "potion",
   "need_level": 0,
   "need_strength": 0,

@@ -1,6 +1,6 @@
 {
   "id": "basic_sword",
-  "name": "基本剑术",
+  "name": "剑招起手",
   "class": "warrior",
   "learn_level": 7,
   "mp_cost": 0,

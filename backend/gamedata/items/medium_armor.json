@@ -1,6 +1,6 @@
 {
   "id": "medium_armor",
-  "name": "中型盔甲",
+  "name": "镶铁皮甲",
   "kind": "armor",
   "need_level": 16,
   "need_strength": 0,

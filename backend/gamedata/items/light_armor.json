@@ -1,6 +1,6 @@
 {
   "id": "light_armor",
-  "name": "轻型盔甲",
+  "name": "轻装皮甲",
   "kind": "armor",
   "need_level": 11,
   "need_strength": 0,

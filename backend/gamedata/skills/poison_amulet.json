@@ -1,6 +1,6 @@
 {
   "id": "poison_amulet",
-  "name": "施毒术",
+  "name": "淬毒术",
   "class": "taoist",
   "learn_level": 14,
   "mp_cost": 10,

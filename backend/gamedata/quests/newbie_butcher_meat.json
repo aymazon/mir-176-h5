@@ -1,6 +1,6 @@
 {
   "id": "newbie_butcher_meat",
-  "name": "屠夫的肉",
+  "name": "屠夫的鲜肉",
   "kind": "collect",
   "level_req": 2,
   "required_class": null,
@@ -12,8 +12,8 @@
     "potion_hp_small"
   ],
   "dialogue": {
-    "accept": "给我带 10 块新鲜的肉来，杀鸡割鹿都行。",
-    "progress": "屠夫的肉还没完成，继续加油。",
+    "accept": "给我带 10 块新鲜的肉来，杀小野雉割林羚都行。",
+    "progress": "屠夫的鲜肉还没完成，继续加油。",
     "complete": "嗯，肉很新鲜，这些药水你拿着。"
   },
   "boss_instance": null

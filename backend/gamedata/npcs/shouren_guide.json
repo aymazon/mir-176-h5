@@ -1,6 +1,6 @@
 {
   "id": "shouren_guide",
-  "name": "古墓向导",
+  "name": "巢穴向导",
   "map_id": "shouren-gu-1",
   "kind": "teleport",
   "city_level": null,
@@ -15,6 +15,6 @@
   "shop_items": [],
   "shop_entries": [],
   "dialogue": [
-    "古墓共三层，越深越凶险，也越值钱。"
+    "巢穴共三层，越深越凶险，也越值钱。"
   ]
 }

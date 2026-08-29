@@ -1,6 +1,6 @@
 {
   "id": "potion_mp_medium",
-  "name": "魔法药（中量）",
+  "name": "回蓝药水（中）",
   "kind": "potion",
   "need_level": 0,
   "need_strength": 0,

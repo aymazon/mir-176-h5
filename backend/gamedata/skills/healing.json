@@ -1,6 +1,6 @@
 {
   "id": "healing",
-  "name": "治愈术",
+  "name": "祈愈术",
   "class": "taoist",
   "learn_level": 7,
   "mp_cost": 8,

@@ -1,6 +1,6 @@
 {
   "id": "fireball",
-  "name": "火球术",
+  "name": "炎弹术",
   "class": "wizard",
   "learn_level": 7,
   "mp_cost": 7,

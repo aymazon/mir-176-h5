@@ -1,6 +1,6 @@
 {
   "id": "random_scroll",
-  "name": "随机传送卷",
+  "name": "随机挪移卷轴",
   "kind": "scroll",
   "need_level": 0,
   "need_strength": 0,

@@ -1,6 +1,6 @@
 {
   "id": "thunder_bolt",
-  "name": "雷电术",
+  "name": "落雷术",
   "class": "wizard",
   "learn_level": 17,
   "mp_cost": 14,

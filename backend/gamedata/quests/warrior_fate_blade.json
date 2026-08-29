@@ -1,6 +1,6 @@
 {
   "id": "warrior_fate_blade",
-  "name": "命运之刃",
+  "name": "淬锋之刃",
   "kind": "kill",
   "level_req": 35,
   "required_class": "warrior",
@@ -12,9 +12,9 @@
     "fate_blade"
   ],
   "dialogue": {
-    "accept": "收集玄铁交给铁匠铸出剑坯，再前往石墓五层挑战白野猪的弱化分身，以战意淬火方可开锋。",
-    "progress": "命运之刃还没完成，继续加油。",
-    "complete": "剑已成——命运之刃，配得上真正的战士！"
+    "accept": "收集玄铁交给铁匠铸出剑坯，再前往沉岩墓五层挑战白鬃野猪王的弱化分身，以战意淬火方可开锋。",
+    "progress": "淬锋之刃还没完成，继续加油。",
+    "complete": "剑已成——淬锋之刃，配得上真正的战士！"
   },
   "boss_instance": {
     "zone_id": "shimen-5",

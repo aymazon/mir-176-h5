@@ -1,6 +1,6 @@
 {
   "id": "bounty_clamp_worm_15",
-  "name": "土城悬赏：钳虫",
+  "name": "苍岩城悬赏：凶钳虫",
   "kind": "kill",
   "level_req": 20,
   "required_class": null,
@@ -10,8 +10,8 @@
   "reward_exp": 6000,
   "reward_items": [],
   "dialogue": {
-    "accept": "死亡山谷的邪恶钳虫赏金很高，取 15 只性命来。",
-    "progress": "土城悬赏：钳虫还没完成，继续加油。",
+    "accept": "寂岭的凶钳虫赏金很高，取 15 只性命来。",
+    "progress": "苍岩城悬赏：凶钳虫还没完成，继续加油。",
     "complete": "赏金如约奉上，好样的。"
   },
   "boss_instance": null

@@ -1,6 +1,6 @@
 {
   "id": "book_basic_sword",
-  "name": "基本剑术（书）",
+  "name": "剑招起手（书）",
   "kind": "book",
   "need_level": 7,
   "need_strength": 0,

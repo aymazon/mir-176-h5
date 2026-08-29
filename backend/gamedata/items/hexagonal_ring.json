@@ -1,6 +1,6 @@
 {
   "id": "hexagonal_ring",
-  "name": "六角戒指",
+  "name": "六棱戒指",
   "kind": "ring",
   "need_level": 7,
   "need_strength": 0,

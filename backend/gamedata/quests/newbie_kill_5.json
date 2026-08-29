@@ -1,6 +1,6 @@
 {
   "id": "newbie_kill_5",
-  "name": "除害新手村",
+  "name": "村口除害",
   "kind": "kill",
   "level_req": 1,
   "required_class": null,
@@ -12,8 +12,8 @@
     "wooden_sword"
   ],
   "dialogue": {
-    "accept": "村外的鸡太多了，帮我杀 5 只。",
-    "progress": "除害新手村还没完成，继续加油。",
+    "accept": "村外的小野雉太多了，帮我杀 5 只。",
+    "progress": "村口除害还没完成，继续加油。",
     "complete": "干得漂亮，这是你的奖励。"
   },
   "boss_instance": null

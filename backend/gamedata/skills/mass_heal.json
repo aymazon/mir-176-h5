@@ -1,6 +1,6 @@
 {
   "id": "mass_heal",
-  "name": "群体治愈术",
+  "name": "群体祈愈术",
   "class": "taoist",
   "learn_level": 33,
   "mp_cost": 35,

@@ -1,6 +1,6 @@
 {
   "id": "biqi_veteran",
-  "name": "比奇老兵",
+  "name": "边境老兵",
   "map_id": "biqi-wild",
   "kind": "quest",
   "city_level": 2,
@@ -14,6 +14,6 @@
   "shop_items": [],
   "shop_entries": [],
   "dialogue": [
-    "骷髅洞里的骷髅越来越猖狂了，替我清剿一番？"
+    "白骨洞窟里的白骨兵越来越猖狂了，替我清剿一番？"
   ]
 }

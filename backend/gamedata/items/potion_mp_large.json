@@ -1,6 +1,6 @@
 {
   "id": "potion_mp_large",
-  "name": "魔法药（大量）",
+  "name": "回蓝药水（大）",
   "kind": "potion",
   "need_level": 0,
   "need_strength": 0,
