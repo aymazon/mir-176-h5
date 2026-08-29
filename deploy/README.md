@@ -136,3 +136,19 @@ MIR_APP_PASSWORD=<hex48> ./deploy/dell1-setup.sh   # 显式指定 mir_app 口令
 - 验收：health 200 / index.html 200 / SPA 深链 200 / PG 停→503→恢复 200；journal 零 error
 - 环境修复记录：dell1 ufw 增 `allow 8443/tcp`（原 DROP 拦截）；工作站 curl 需 `--noproxy '*'`（本机 8180 代理拦截 LAN）
 - 回滚点：`releases/bootstrap`；证据 `.omo/evidence/task-35-mir-176-h5-mvp.log`
+
+### 2026-08-29 09:13 — 部署实证验收（task 36，三项全绿）
+
+- **SSE /api/stream 逐条到达**（proxy_buffering off 实证）：全新账号注册/登录/建号后，
+  httpx 手解 SSE 帧计时，21 条事件（11 条 stat 心跳，id 1..21 单调唯一），
+  stat-to-stat 间隔 mean=1.008s / pvariance=0.0002 / min=0.966 / max=1.015，
+  总时长 10.08s 渐进到达（若攒批，~1KB 样本会被默认 4k proxy buffer 全扣住、末尾一次冲出）。
+  注：同 tick 的 log/stat/drop 共享到达时刻是应用层同批 publish，跨 tick 心跳才是 buffering 判据。
+- **单 worker**：`ssh dell1 'sudo -n ss -ltnp | grep ":8000\b"'` → 恰 1 PID
+  （uvicorn 2507742，`--workers 1` 字面硬编码于 ExecStart，无 supervisor）。
+- **真机冒烟**：`frontend/tests/e2e/dell1-smoke.spec.ts`（test.use 覆盖 baseURL=https://dell1:8443
+  + ignoreHTTPSErrors），chromium-mobile 390×844，注册→登录→建号→战斗页挂机 30s
+  （日志行数递增 + stat-hp + monster-list）→ 截图，`playwright test dell1-smoke.spec.ts` 1 passed。
+- 证据：`.omo/evidence/task-36-mir-176-h5-mvp.log` + `-battle.png` + 两份 raw log。
+- 坑位记录：SSE 计时必须用**全新账号**（buffer 为空）——断线宽限期内旧会话 buffer 会
+  被无 Last-Event-ID 的新连接全量重放，瞬时到达的历史事件会把逐条计时打成假 FAIL。
