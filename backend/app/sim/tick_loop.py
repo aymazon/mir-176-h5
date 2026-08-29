@@ -939,7 +939,9 @@ def _kill_monster(
     if killed is None:
         return
     session.monster_hp.pop(target.instance_id, None)
-    exp_gain = killed.monster_def.exp
+    # 全局经验倍率（todo 37 校准总闸）：gamedata 怪物 exp 为双源锚定值不改，
+    # 手感缺口由 balance.EXP_GAIN_RATE 集中收；整数化下取整。
+    exp_gain = int(killed.monster_def.exp * balance.EXP_GAIN_RATE)
     session.char_snapshot.exp += exp_gain
     events.append(
         (

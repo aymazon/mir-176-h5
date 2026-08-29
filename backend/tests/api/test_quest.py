@@ -333,7 +333,9 @@ async def test_kill_bounty_full_loop(harness: _Harness) -> None:
     assert done["rewards"]["exp"] == 1500
     assert done["status"] == "delivered"
     assert await harness.char_field(cid, "gold") == gold_before + 500
-    assert await harness.char_field(cid, "exp") == exp_before + 2800 + 1500
+    # 击杀经验随 balance.EXP_GAIN_RATE 缩放（todo 37 校准总闸）——断言符号化跟随系数。
+    kill_exp = 20 * int(skeleton.exp * balance.EXP_GAIN_RATE)
+    assert await harness.char_field(cid, "exp") == exp_before + kill_exp + 1500
 
     # DB 行终态 delivered；重复交付 409
     row = await harness.quest_row(cid, SKELETON_BOUNTY)
@@ -428,7 +430,11 @@ async def test_fate_blade_arena_and_weapon_reward(harness: _Harness) -> None:
     assert done["rewards"]["exp"] == 20000
     assert await harness.item_rows(cid, "fate_blade") != []
     assert await harness.char_field(cid, "exp") == (
-        exp_before + origin.exp + clone.exp + done["rewards"]["exp"]
+        exp_before
+        # 两路击杀经验均随 balance.EXP_GAIN_RATE 缩放（todo 37），符号化跟随
+        + int(origin.exp * balance.EXP_GAIN_RATE)
+        + int(clone.exp * balance.EXP_GAIN_RATE)
+        + done["rewards"]["exp"]
     )
 
     # 交付后离开竞技场回绑定城，竞技场实例销毁

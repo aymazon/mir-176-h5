@@ -38,6 +38,7 @@ __all__ = [
     "DROP_TIER_RATES",
     "DURABILITY_LOSS_PER_ATTACK",
     "DURABILITY_LOSS_PER_HIT",
+    "EXP_GAIN_RATE",
     "GLOBAL_DROP_RATE",
     "GRACE_PERIOD_SECONDS",
     "LUCK_HIT_BIAS",
@@ -148,6 +149,18 @@ POTION_REGEN_TICKS: Final[int] = 5
 # 出处: docs/MVP/README.md §8（"随机传送卷 当前地图内随机坐标"），档位数值自创占位; 置信度: low
 PORTAL_RANDOM_MIN_DIST: Final[int] = 10
 PORTAL_RANDOM_MAX_DIST: Final[int] = 50
+
+# --- 经验 ---------------------------------------------------------------------
+
+# 全局经验倍率：击杀经验 = gamedata 怪物 exp × 本系数（整数化下取整）。
+# 与 GLOBAL_DROP_RATE 对称的校准总闸：怪物经验是双源锚定的经典数据（不改），
+# 新手期节奏缺口由本系数统一收。todo 37 矩阵实证：ATTACK_INTERVAL_TICKS=1 +
+# 比奇野外补鸡后 1→7 预估 26.9min(战)/51.4min(道)/63.4min(法)；法师档位要 ×2.11，
+# 留 RNG 方差余量取 2.5 → 10.8/20.6/25.3min 全收进 ≤30min（.omo/evidence/task-37）。
+# 高值系数同时是对已知简化债的补偿：tick_loop 面板不吃装备（经典新手持乌木剑
+# +4~8 dc），裸装面板系统性偏低约 2 倍。
+# 出处: 自创（todo 37 校准流程产物；任务文本点名 EXP_GAIN_RATE 为预期旋钮）; 置信度: low
+EXP_GAIN_RATE: Final[float] = 2.5
 
 # --- 背包 / 掉落 ----------------------------------------------------------------
 

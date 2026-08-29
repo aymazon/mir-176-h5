@@ -383,6 +383,51 @@ def evaluate(run: RunResult, exp_need_lv7: int) -> None:
             )
 
 
+def _comparison_section(
+    first: RunRecord, last: RunRecord, exp_need_lv7: int
+) -> list[str]:
+    """BEFORE/AFTER 对照表：首末两次 run 按 (class, zone) 对齐 exp/死亡/预估时长。"""
+    first_cells = {(c["class_"], c["zone_id"]): c for c in first.get("cells", [])}
+    last_cells = {(c["class_"], c["zone_id"]): c for c in last.get("cells", [])}
+
+    def _est(cell: CellRecord | None) -> str:
+        if cell is None or cell["metric"] is None:
+            return "—"
+        m = cell["metric"]
+        exp_gained = _num(m.get("exp_gained", 0))
+        wall = _num(m.get("wall_seconds", 0))
+        if exp_gained <= 0 or wall <= 0:
+            return "—"
+        return f"{wall * exp_need_lv7 / exp_gained / 60:.1f}min"
+
+    def _exp(cell: CellRecord | None) -> str:
+        if cell is None or cell["metric"] is None:
+            return "—"
+        return f"{_num(cell['metric'].get('exp_gained', 0)):.0f}"
+
+    def _death(cell: CellRecord | None) -> str:
+        if cell is None or cell["metric"] is None:
+            return "—"
+        return f"{_num(cell['metric'].get('survive_events', 0)):.0f}"
+
+    lines = [
+        f"## BEFORE/AFTER 对照（{first['label']} → {last['label']}）",
+        "",
+        "| 职业 | 地图 | exp BEFORE | exp AFTER | 死亡 BEFORE | 死亡 AFTER | 预估1→7 BEFORE | 预估1→7 AFTER |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for zone_id, zone_name in ZONES:
+        for class_ in CLASSES:
+            before = first_cells.get((class_, zone_id))
+            after = last_cells.get((class_, zone_id))
+            lines.append(
+                f"| {CLASS_NAMES[class_]} | {zone_name} | {_exp(before)} | {_exp(after)} "
+                f"| {_death(before)} | {_death(after)} | {_est(before)} | {_est(after)} |"
+            )
+    lines.append("")
+    return lines
+
+
 # --- 报告重建（jsonl → md，幂等）----------------------------------------------
 
 
@@ -504,6 +549,8 @@ def rebuild_report(exp_need_lv7: int) -> None:
         summary_line = f"断言合计：{len(assertions) - len(failed)} 过 / {len(failed)} 败"
         parts.append(summary_line)
         parts.append("")
+    if len(runs) >= 2:
+        parts.extend(_comparison_section(runs[0], runs[-1], exp_need_lv7))
     REPORT_MD.write_text("\n".join(parts), encoding="utf-8")
 
 
