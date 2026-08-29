@@ -221,6 +221,7 @@ def _balance_snapshot() -> dict[str, object]:
         "MIN_HIT_RATE": balance.MIN_HIT_RATE,
         "MAX_HIT_RATE": balance.MAX_HIT_RATE,
         "DEF_DAMAGE_REDUCTION_FACTOR": balance.DEF_DAMAGE_REDUCTION_FACTOR,
+        "EXP_GAIN_RATE": balance.EXP_GAIN_RATE,
         "GLOBAL_DROP_RATE": balance.GLOBAL_DROP_RATE,
         "POTION_HP_PCT": balance.POTION_HP_PCT,
         "POTION_URGENT_HP_PCT": balance.POTION_URGENT_HP_PCT,
