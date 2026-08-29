@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -32,7 +33,7 @@ import httpx
 from httpx_sse import connect_sse
 
 DEFAULT_BASE_URL: Final[str] = "http://127.0.0.1:8000"
-SCENARIOS: Final[tuple[str, ...]] = ("smoke", "idle_farm", "taoist_dog", "quest_kill")
+SCENARIOS: Final[tuple[str, ...]] = ("smoke", "idle_farm", "taoist_dog", "quest_kill", "farm_metric")
 # SSE_MOCK_INTERVAL=1s/条：10 条约 11s；read 超时兜底防流挂起时永久阻塞。
 HTTP_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(
     connect=5.0, read=30.0, write=5.0, pool=5.0
@@ -71,7 +72,32 @@ def build_parser() -> argparse.ArgumentParser:
         "--seconds",
         type=int,
         default=60,
-        help="挂机时长秒数（默认 60，仅 idle_farm 用）",
+        help="挂机时长秒数（默认 60，idle_farm / farm_metric 用）",
+    )
+    parser.add_argument(
+        "--map",
+        dest="map_id",
+        default="biqi-wild",
+        help="挂机目标地图 gamedata id（默认 biqi-wild，仅 farm_metric 用）",
+    )
+    parser.add_argument(
+        "--class",
+        dest="class_",
+        choices=("warrior", "wizard", "taoist"),
+        default="warrior",
+        help="角色职业（默认 warrior，仅 farm_metric 用）",
+    )
+    parser.add_argument(
+        "--potions",
+        type=int,
+        default=40,
+        help="种子金创药(小量)数量（默认 40；0 = 不塞药的对照组，仅 farm_metric 用）",
+    )
+    parser.add_argument(
+        "--sun-waters",
+        type=int,
+        default=5,
+        help="种子太阳水数量（默认 5，仅 farm_metric 用）",
     )
     return parser
 
@@ -768,6 +794,300 @@ def run_quest_kill(base_url: str, seconds: int = 60) -> int:
         return EXIT_OK
 
 
+# --- farm_metric（todo 37）：数值手感校准矩阵单元 ------------------------------
+#
+# 与 idle_farm 的差异：本场景是**测量**而非冒烟断言——不走断网重连链路，
+# 只在目标图静挂 seconds 秒收集事件流，采集结束后读库对账，汇总成一行
+# METRIC JSON 供 scripts/bot_matrix.py 聚合。数值不达标是**数据**不是错误：
+# 只有采集链断裂（stat 心跳严重不足）才返回非 0。
+
+
+def _seed_farm_character(
+    username: str,
+    char_name: str,
+    class_: str,
+    map_id: str,
+    potions: int,
+    sun_waters: int,
+) -> int:
+    """直接写库种 1 级裸装号到目标图（register/login 走 API、角色走 DB 的混合路径）。
+
+    hp/mp 按 session.py 占位上限公式落库（max_hp=16+8×1=24，max_mp=10+5×1=15）；
+    last_active_at 置 120s 前绕过 seed 心跳门禁（idle_farm 同款）。药瓶数量参数化
+    （0 = 不塞，供"不氪药"对照组）。返回 character_id。
+    """
+    import asyncio
+
+    os.chdir(_BACKEND_ROOT)  # .env 相对 cwd 解析（与 seed_character 同约定）
+    from sqlalchemy import text
+
+    from app.core.db import SessionLocal, engine
+
+    async def _run() -> int:
+        # 收尾 dispose 全局 engine（task 15 跨 loop 投毒教训：池化连接绑旧 loop，
+        # 同一脚本下一个 asyncio.run 检出即 RuntimeError）。
+        try:
+            async with SessionLocal() as db:
+                row = await db.execute(
+                    text(
+                        "INSERT INTO character "
+                        "(player_id, name, class, level, hp, mp, gold, map_id, bind_city, last_active_at) "
+                        "SELECT p.id, :n, :c, 1, 24, 15, 0, :m, 'yin-xing-cun', "
+                        "now() - make_interval(secs => 120) "
+                        "FROM player p WHERE p.username = :u RETURNING id"
+                    ),
+                    {"n": char_name, "c": class_, "m": map_id, "u": username},
+                )
+                character_id = int(row.scalar_one())
+                for item_id, qty in (
+                    ("potion_hp_small", potions),
+                    ("sun_water", sun_waters),
+                ):
+                    if qty <= 0:
+                        continue
+                    await db.execute(
+                        text(
+                            "INSERT INTO item_instance (character_id, item_id, quantity) "
+                            "VALUES (:cid, :iid, :qty)"
+                        ),
+                        {"cid": character_id, "iid": item_id, "qty": qty},
+                    )
+                await db.commit()
+                return character_id
+        finally:
+            await engine.dispose()
+
+    return asyncio.run(_run())
+
+
+def _final_char_state(character_id: int) -> dict[str, object]:
+    """采集结束后读库对账：等级/经验/金币/背包余量（dispose 同 _seed_farm_character）。"""
+    import asyncio
+
+    os.chdir(_BACKEND_ROOT)
+    from sqlalchemy import text
+
+    from app.core.db import SessionLocal, engine
+
+    async def _run() -> dict[str, object]:
+        try:
+            async with SessionLocal() as db:
+                row = (
+                    await db.execute(
+                        text(
+                            "SELECT level, exp, gold, hp, mp FROM character WHERE id = :cid"
+                        ),
+                        {"cid": character_id},
+                    )
+                ).one()
+                items = (
+                    await db.execute(
+                        text(
+                            "SELECT item_id, quantity FROM item_instance "
+                            "WHERE character_id = :cid ORDER BY item_id"
+                        ),
+                        {"cid": character_id},
+                    )
+                ).all()
+                return {
+                    "level": int(row.level),
+                    "exp": int(row.exp),
+                    "gold": int(row.gold),
+                    "hp": int(row.hp),
+                    "mp": int(row.mp),
+                    "bag": {str(r.item_id): int(r.quantity) for r in items},
+                }
+        finally:
+            await engine.dispose()
+
+    return asyncio.run(_run())
+
+
+def _cumulative_exp_thresholds() -> dict[int, int]:
+    """levels.json → {目标等级: 从 1 级 0 经验升到该级所需累计经验}。"""
+    data = json.loads(
+        (_BACKEND_ROOT / "gamedata" / "levels.json").read_text(encoding="utf-8")
+    )
+    entries = sorted(
+        (int(e["level"]), int(e["exp_to_next"])) for e in data["levels"]
+    )
+    cumulative: dict[int, int] = {}
+    total = 0
+    for level, exp_to_next in entries:
+        if exp_to_next <= 0:
+            break
+        total += exp_to_next
+        cumulative[level + 1] = total
+    return cumulative
+
+
+def _as_int(value: object) -> int:
+    """宽松 int 归一（bool 拒绝）：SSE payload 的 object 值域收窄。"""
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def run_farm_metric(
+    base_url: str,
+    seconds: int,
+    map_id: str,
+    class_: str,
+    potions: int,
+    sun_waters: int,
+) -> int:
+    """校准矩阵单元：种 1 级号到 --map → 静挂 seconds 秒 → 汇总 METRIC JSON。
+
+    采集：exp/drop/stat/potion/survive/kill/recall 事件全量计数，exp 事件按
+    levels.json 累计门槛记录 time_to_level（虚拟升级——MVP 无在线升级机制，
+    level 永不自动变，见 todo 37 前勘）。survive 事件 = MVP 钳 1 血保命次数，
+    即"死亡"指标（死亡/复活系统不在 MVP）。
+    """
+    username = f"bot_{uuid.uuid4().hex[:12]}"
+    password = f"pw_{uuid.uuid4().hex[:16]}"
+    char_name = f"bot{uuid.uuid4().hex[:10]}"
+
+    with httpx.Client(base_url=base_url, timeout=HTTP_TIMEOUT) as client:
+        try:
+            resp = client.get("/api/health")
+        except httpx.ConnectError as exc:
+            return _fail(
+                f"Cannot connect to {base_url} —— 后端未启动？({exc})", EXIT_CONNECT
+            )
+        if resp.status_code != 200:
+            return _fail(f"/api/health 返回 {resp.status_code}: {resp.text}", EXIT_HTTP)
+
+        creds = {"username": username, "password": password}
+        resp = client.post("/api/auth/register", json=creds)
+        if resp.status_code != 201:
+            return _fail(f"注册失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        resp = client.post("/api/auth/login", json=creds)
+        if resp.status_code != 200:
+            return _fail(f"登录失败 {resp.status_code}: {resp.text}", EXIT_HTTP)
+        character_id = _seed_farm_character(
+            username, char_name, class_, map_id, potions, sun_waters
+        )
+        print(
+            f"[bot] seeded {class_} {char_name} (id={character_id}) Lv1 @ {map_id} "
+            f"potions={potions}+{sun_waters}",
+            flush=True,
+        )
+
+        thresholds = _cumulative_exp_thresholds()
+        stats_out: list[dict[str, object]] = []
+        exp_total = 0
+        kills = 0
+        drops = 0
+        recalls = 0
+        survive_events = 0
+        potions_used: dict[str, int] = {}
+        time_to_level: dict[str, float] = {}
+        t0: float | None = None
+
+        def _consume(event: str, _sid: str, data: str) -> None:
+            nonlocal exp_total, kills, drops, recalls, survive_events, t0
+            try:
+                payload = json.loads(data)
+            except json.JSONDecodeError:
+                return
+            if not isinstance(payload, dict):
+                return
+            now = time.monotonic()
+            if event == "stat":
+                if t0 is None:
+                    t0 = now
+                stats_out.append(payload)
+                return
+            if t0 is None:
+                t0 = now
+            if event == "exp":
+                amount = payload.get("amount", 0)
+                total = payload.get("total", 0)
+                exp_total += amount if isinstance(amount, int) else 0
+                total_int = total if isinstance(total, int) else 0
+                for level, need in thresholds.items():
+                    key = str(level)
+                    if total_int >= need and key not in time_to_level:
+                        time_to_level[key] = round(now - t0, 1)
+            elif event == "drop":
+                drops += 1
+            elif event == "log":
+                kind = payload.get("kind")
+                if kind == "potion":
+                    text_body = str(payload.get("text", ""))
+                    matched = re.search(r"自动喝下([a-z0-9_]+)", text_body)
+                    item_id = matched.group(1) if matched else "unknown"
+                    potions_used[item_id] = potions_used.get(item_id, 0) + 1
+                elif kind == "survive":
+                    survive_events += 1
+                elif kind == "kill":
+                    kills += 1
+                elif kind == "recall":
+                    recalls += 1
+
+        deadline = time.monotonic() + seconds * 2 + 60
+        stream_iter = _iter_sse_frames(client)
+        try:
+            for event, sid, data in stream_iter:
+                if time.monotonic() > deadline:
+                    return _fail(
+                        f"超时：{len(stats_out)}/{seconds} 条 stat 内未收满",
+                        EXIT_ASSERT,
+                    )
+                _consume(event, sid, data)
+                if len(stats_out) >= seconds:
+                    break
+        finally:
+            stream_iter.close()
+
+        # 显式登出：取消 tick task（防宽限期 60s 内继续空烧药/占图）。
+        resp = client.post("/api/auth/logout")
+        print(f"[bot] logout: HTTP {resp.status_code}", flush=True)
+
+        if len(stats_out) < seconds * 9 // 10:
+            return _fail(
+                f"stat 心跳断裂：只收到 {len(stats_out)} 条（期望 ≥{seconds}）",
+                EXIT_ASSERT,
+            )
+
+        first_stat, last_stat = stats_out[0], stats_out[-1]
+        wall_seconds = round(time.monotonic() - (t0 or time.monotonic()), 1)
+        hp_values: list[int] = []
+        for p in stats_out:
+            hp_value = p.get("hp")
+            if isinstance(hp_value, int) and not isinstance(hp_value, bool):
+                hp_values.append(hp_value)
+        final = _final_char_state(character_id)
+        metric: dict[str, object] = {
+            "scenario": "farm_metric",
+            "character_id": character_id,
+            "class": class_,
+            "map_id": map_id,
+            "seconds_requested": seconds,
+            "stat_events": len(stats_out),
+            "wall_seconds": wall_seconds,
+            "exp_gained": exp_total,
+            "exp_per_hour": round(exp_total / max(wall_seconds, 1) * 3600, 1),
+            "kills": kills,
+            "drops": drops,
+            "gold_gained": _as_int(last_stat.get("gold"))
+            - _as_int(first_stat.get("gold")),
+            "potions_used": potions_used,
+            "survive_events": survive_events,
+            "recalls": recalls,
+            "hp_min": min(hp_values) if hp_values else 0,
+            "max_hp": _as_int(first_stat.get("max_hp")),
+            "time_to_level": time_to_level,
+            "final_db": final,
+        }
+        print(
+            f"[bot] done: exp={exp_total} kills={kills} drops={drops} "
+            f"survive={survive_events} potions={potions_used} "
+            f"hp_min={metric['hp_min']}/{metric['max_hp']}",
+            flush=True,
+        )
+        print("METRIC " + json.dumps(metric, ensure_ascii=False), flush=True)
+        return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.scenario == "smoke":
@@ -778,6 +1098,15 @@ def main(argv: list[str] | None = None) -> int:
         return run_taoist_dog(args.base_url, args.seconds)
     if args.scenario == "quest_kill":
         return run_quest_kill(args.base_url, args.seconds)
+    if args.scenario == "farm_metric":
+        return run_farm_metric(
+            args.base_url,
+            args.seconds,
+            args.map_id,
+            args.class_,
+            args.potions,
+            args.sun_waters,
+        )
     return _fail(
         f"未知场景 {args.scenario!r}（可选 {', '.join(SCENARIOS)}）", EXIT_SCENARIO_TODO
     )
