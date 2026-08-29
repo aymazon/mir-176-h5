@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import re
 import struct
+from itertools import pairwise
 from pathlib import Path
 from typing import TypedDict
 
@@ -700,3 +701,78 @@ def load_openmir2_magic_rows() -> tuple[list[dict[str, str]], Path | None]:
     if path is None:
         return [], None
     return parse_openmir2_magics(path), path
+
+
+# ---------------------------------------------------------------------------
+# MapInfo 锚点提取（todo 21）——Server.MirDB 确实含地图区段
+# ---------------------------------------------------------------------------
+
+
+class CrystalMapRef(TypedDict):
+    """Crystal MapInfo 引用三元组。
+
+    完整 MapInfo 布局含嵌套 SafeZone/Movement 列表（版本分支多），超出 todo 21
+    消费面；本任务只需「源地理存在性」证据，故按锚点法提取
+    (index, file_name, title)。结构信号：index 沿文件严格递增。
+    """
+
+    index: int
+    file_name: str
+    title: str
+
+
+# FileName(7bit 长度 + ASCII) + Title(7bit 长度 + ≥2 个 CJK 字符)
+_MAP_ANCHOR_RE = re.compile(
+    rb"([\x01-\x20])([A-Z][A-Za-z0-9]{1,7})"
+    rb"([\x06-\x3c])"
+    rb"([\xe0-\xef][\x80-\xbf]{2}(?:[\xe0-\xef][\x80-\xbf]{2}){1,14})"
+)
+
+
+def parse_crystal_mirdb_maps(path: Path) -> list[CrystalMapRef]:
+    """扫描 Server.MirDB 的 MapInfo 区段，提取 (index, file_name, title)。
+
+    布局实证（scripts/cache/probe 脚本可复跑）：记录形如
+    ``<i32 Index><str FileName><str Title>...``，锚点正则命中 248 条且
+    index 单调递增（结构信号）；低于 50 条视为误报环境，返回空列表。
+    """
+    data = path.read_bytes()
+    hits: list[CrystalMapRef] = []
+    for m in _MAP_ANCHOR_RE.finditer(data):
+        fn_len = m.group(1)[0]
+        fname_raw = m.group(2)
+        if len(fname_raw) != fn_len:
+            continue
+        t_len = m.group(3)[0]
+        title_raw = m.group(4)
+        if len(title_raw) != t_len:
+            continue
+        idx_pos = m.start() - 4
+        if idx_pos < 0:
+            continue
+        index = struct.unpack_from("<i", data, idx_pos)[0]
+        if not (0 <= index <= 0xFFFF):
+            continue
+        try:
+            title = title_raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        hits.append(
+            {
+                "index": index,
+                "file_name": fname_raw.decode("ascii"),
+                "title": title,
+            }
+        )
+    # 结构信号：index 严格递增才认账（防杂讯误报）
+    seq = [h["index"] for h in hits]
+    if len(hits) < 50 or not all(a < b for a, b in pairwise(seq)):
+        return []
+    return hits
+
+
+def load_crystal_map_refs() -> tuple[list[CrystalMapRef], Path | None]:
+    crystal_path, _ = resolve_source_paths()
+    if crystal_path is None:
+        return [], None
+    return parse_crystal_mirdb_maps(crystal_path), crystal_path
