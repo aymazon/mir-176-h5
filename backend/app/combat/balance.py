@@ -100,10 +100,11 @@ MIN_DAMAGE: Final[int] = 1
 
 # --- 节奏 / 会话 ---------------------------------------------------------------
 
-# 基础攻击间隔：每 N tick 出手一次（tick = 1Hz，即每 2 秒出手一次）。
+# 基础攻击间隔：每 N tick 出手一次（tick = 1Hz，即每秒出手一次）。
 # 职业/武器攻速、技能加速在 stats/skill 内派生（本值只是基准拍点）。
-# 出处: 自创近似（176 无公开 tick 制攻速表，按挂机手感定基准）; 置信度: medium
-ATTACK_INTERVAL_TICKS: Final[int] = 2
+# 出处: docs/MVP/README.md §3.1（176 攻击间隔约 0.8–1.2s，1Hz 手感一致 → N=1）；todo 37
+#       矩阵实证 N=2 时比奇野外 1→7 预估 62–174min（目标 ≤30min，.omo/evidence/task-37）; 置信度: medium
+ATTACK_INTERVAL_TICKS: Final[int] = 1
 # 断线宽限期（秒）：SSE 断开后会话存活窗口。与 app.core.config 的
 # settings.SSE_GRACE_PERIOD_SECONDS **重复声明是有意的**——combat 模块不依赖
 # settings 实例以防耦合；两处必须同步改（tests/test_balance.py 有交叉断言）。

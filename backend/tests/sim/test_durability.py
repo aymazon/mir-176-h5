@@ -23,6 +23,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 
 from app.combat.balance import (
+    ATTACK_INTERVAL_TICKS,
     DURABILITY_LOSS_PER_ATTACK,
     DURABILITY_LOSS_PER_HIT,
     REPAIR_PRICE_PER_DURABILITY,
@@ -163,7 +164,7 @@ def test_100_attacks_wear_weapon_by_100(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setattr("app.sim.tick_loop.hit_check", lambda *a, **k: True)
     monkeypatch.setattr("app.sim.tick_loop.physical_damage", lambda *a, **k: 0)
 
-    for n in range(1, 201):  # ATTACK_INTERVAL_TICKS=2 → 恰好 100 次出手
+    for n in range(1, 100 * ATTACK_INTERVAL_TICKS + 1):  # 100 次出手（间隔系数符号化，todo 37 调 N=1）
         simulate_tick(session, n)
 
     assert weapon.durability == 1000 - 100 * DURABILITY_LOSS_PER_ATTACK == 900
