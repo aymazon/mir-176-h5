@@ -1,0 +1,25 @@
+{
+  "map_id": "biqi-wild",
+  "monster_id": "chicken",
+  "density": 10,
+  "respawn_seconds": 60,
+  "count": 20,
+  "locations": [
+    {
+      "x": 60,
+      "y": 80
+    },
+    {
+      "x": 85,
+      "y": 70
+    },
+    {
+      "x": 105,
+      "y": 95
+    },
+    {
+      "x": 120,
+      "y": 75
+    }
+  ]
+}

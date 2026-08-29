@@ -254,14 +254,15 @@ async def test_refill_never_exceeds_density(gd: dict[str, object]) -> None:
     zone = make_zone(gd, "biqi-wild", clock)
     zone.fill_initial()
 
-    # 人为超容：alive > density（防御分支的前置态）
-    deer_def = zone.alive_monsters[0].monster_def
+    # 人为超容：alive > density（防御分支的前置态）；不假设 alive_monsters[0] 是鹿
+    # （todo 37 起 biqi-wild 首个刷怪点是 chicken）——显式按 spawn_key 取鹿。
+    deer_inst = next(m for m in zone.alive_monsters if m.spawn_key == DEER_KEY)
+    deer_def = deer_inst.monster_def
     entry = zone.static_spawn_table[DEER_KEY]
     zone.spawn_monster(deer_def, entry)
     assert zone.alive_count(DEER_KEY) == DEER_DENSITY + 1
 
-    victim = zone.alive_monsters[0]
-    zone.kill_monster(victim.instance_id)  # alive 回到 density，但挂了一张重生票
+    zone.kill_monster(deer_inst.instance_id)  # alive 回到 density，但挂了一张重生票
     now[0] += DEER_RESPAWN + 1
 
     # 容量已满 → 弃票，保不变量 alive ≤ density
