@@ -237,13 +237,57 @@ DB 探活。**公开端点，无需登录**。
 | `drop` | 有 | `{"loot": [{item_id, qty, picked, drop_id, gold?}]}` 掉落 | ✅ 已实现（todo 15 起） |
 | `exp` | 有 | `{"exp": int, "level": int, ...}` 经验/升级 | ✅ 已实现（todo 15 起） |
 | `zone_change` | 有 | `{"map_id": string, "reason": string}` 换图 | ✅ 已实现（todo 15/26/29/30） |
-| `skill_learn` | 有 | `{"skill_id", "name", "level", "source"}` 技能习得 | ✅ 已实现（todo 28） |
-| `skill_levelup` | 有 | `{"skill_id", "name", "level", "exp"}` 技能升级 | ✅ 已实现（todo 28） |
+| `scene` | 有 | 见下方 YAML payload | ✅ 已实现 |
 | `travel_start` | 有 | `{"target_map_id", "layer", "fee", "gold_after", "seconds", "traveling_until"}` 传送出发 | ✅ 已实现（todo 30） |
 | `disconnect` | 有 | `{}` 会话终止通知 | 预留（todo 15） |
 | `gap` | **无** | `{"reason": "buffer_overflow"}` | ✅ 已实现 |
 
-前端监听全部具名事件（见 `frontend/src/api/sse.ts` 的 `SSE_EVENT_NAMES`）；未知事件类型可安全忽略。
+前端 `frontend/src/api/sse.ts` 的 `SSE_EVENT_NAMES` 注册监听：`zone_change`、`scene`、`travel_start`、`pet_summon`、`pet_died`、`pet_dispersed`；其余事件类型可安全忽略。
+
+### event: scene 语义
+
+```yaml
+scene:
+  payload:
+    map_id: str
+    monsters:
+      - id: str
+        monster_id: str
+        name: str
+        hp: int
+        max_hp: int
+        boss: bool
+        is_target: bool
+    pets:
+      - id: str
+        type: str  # 'skull' | 'dog' | 'charm'
+        name: str
+        hp: int
+        max_hp: int
+  semantics: |
+    Dual-channel publish:
+    (a) New connection → authoritative full snapshot pushed immediately after subscribe
+        (self-healing anchor for page refresh / reconnect / buffer-overflow gap).
+    (b) Tick on-change diff → only when current payload differs from last published.
+```
+
+### log 事件结构化字段
+
+`log` 事件的 `kind` 字段标识具体类型，每种 kind 额外携带不同字段：
+
+| kind | 额外字段 | 说明 |
+|---|---|---|
+| `attack` | `target_id`, `target_name`, `dmg`, `remaining_hp`, `skill_id`? | 玩家命中怪（skill_id=null 为平砍） |
+| `miss` | `target_id`, `target_name`, `skill_id`? | 玩家未命中 |
+| `kill` | `target_id`, `target_name`, `monster_id`, `exp` | 玩家击杀怪物 |
+| `defend` | `attacker_id`, `attacker_name`, `dmg` | 怪命中玩家 |
+| `dodge` | `attacker_id`, `attacker_name` | 怪未命中玩家 |
+| `skill` | `skill_id` | 施放技能 |
+| `potion` | `item_id`, `hp_restore`, `mp_restore` | 自动喝药 |
+| `pet_miss` | `pet_id`, `target_id` | 宠物未命中 |
+| `pet_kill` | `pet_id`, `target_id`, `monster_id`, `exp` | 宠物击杀 |
+| `skill_learn` | — | 习得技能（通过 `_log_event` 发出，非独立 SSE 事件） |
+| `skill_levelup` | — | 技能熟练度提升（通过 `_log_event` 发出，非独立 SSE 事件） |
 
 ### event: gap 语义（关键契约）
 
