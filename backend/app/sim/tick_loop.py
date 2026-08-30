@@ -68,6 +68,7 @@ from app.sim.quest import (
 from app.sim.quest import (
     on_monster_killed as _quest_on_kill,
 )
+from app.sim.scene import build_scene_payload
 from app.sim.session import (
     PlayerSession,
     build_potion_catalog,
@@ -96,6 +97,7 @@ EV_STAT: Final[str] = "stat"
 EV_DROP: Final[str] = "drop"
 EV_EXP: Final[str] = "exp"
 EV_ZONE_CHANGE: Final[str] = "zone_change"
+EV_SCENE: Final[str] = "scene"
 # 内部回城标记（todo 25）：simulate_tick 产出、tick_loop 拦截后调 trigger_return_city，
 # 不对外发布（下划线前缀 = 非公开事件名，前端 sse.ts 监听清单不含）。
 EV_RECALL: Final[str] = "_recall"
@@ -736,6 +738,17 @@ def simulate_tick(session: PlayerSession, tick_index: int) -> list[tuple[str, st
         snap.mp = min(snap.max_mp, snap.mp + 1)
 
     _auto_potion(session, tick_index, events)
+    # 场景快照 on-change diff（battle-scene-ui todo 2 通道 A）：sort_keys 规范化
+    # 序列化后与上次发布比对，变化才发（红线：不得每 tick 恒发）；行进早退分支
+    # 在上面已 return，不会走到这里（zone 未切，画面不该变）。
+    scene_json = json.dumps(
+        build_scene_payload(session), ensure_ascii=False, sort_keys=True
+    )
+    if scene_json != session.last_scene_json:
+        events.append((EV_SCENE, scene_json))
+        session.last_scene_json = scene_json
+    events.append(_stat_event(session, tick_index))
+    return events
     events.append(_stat_event(session, tick_index))
     return events
 

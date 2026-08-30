@@ -21,8 +21,9 @@ from sse_starlette import EventSourceResponse
 from app.api.deps import CurrentPlayerId, DbSession
 from app.core.config import settings
 from app.models.character import Character
+from app.sim.scene import build_scene_payload
 from app.sim.session import get_or_create_player_session, on_disconnect
-from app.sim.tick_loop import start_tick_loop
+from app.sim.tick_loop import EV_SCENE, start_tick_loop
 from app.sse.buffer import parse_last_event_id, plan_replay
 from app.sse.session_state import SessionState, get_or_create_session
 
@@ -91,8 +92,22 @@ async def stream(
     player_session = await get_or_create_player_session(db, character_id)
     await start_tick_loop(player_session)
 
+    # 新连接场景权威快照（battle-scene-ui todo 2 通道 B，自愈锚点）：
+    # 刷新/重连/buffer 滚出三场景，前端拿到本帧即可重建战斗画面。
+    # 同步写入 last_scene_json（与 tick diff 同一基线），且本块无 await——
+    # tick task 首 tick 在 1s 后，不会与锚点重复发布。
+    scene_json = json.dumps(
+        build_scene_payload(player_session), ensure_ascii=False, sort_keys=True
+    )
+    player_session.last_scene_json = scene_json
+    state.publish(EV_SCENE, scene_json)
+
     raw_last_event_id = request.headers.get("last-event-id")
     plan = plan_replay(state, raw_last_event_id)
+    if plan.gap:
+        # gap 分支 reset_epoch 清空了 buffer（含上面那条锚点快照）→
+        # 重发一条，保证 scene 紧随 gap 到达（前端重置后立即拿到权威帧）。
+        state.publish(EV_SCENE, scene_json)
 
     async def on_client_close(_message: object) -> None:
         # hook：标记断线 + 宽限期起表（tick_loop 消费）；不取消 tick task。

@@ -11,6 +11,7 @@ autouse fixture 清理会话注册表并取消模拟任务，防跨用例泄漏�
 """
 
 import asyncio
+import json
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
@@ -18,6 +19,7 @@ import pytest
 import uvicorn
 from httpx import AsyncClient
 from httpx_sse import aconnect_sse
+from sse_starlette.sse import AppStatus
 
 from app.api.stream import _dev_mock_enabled, _mock_log_tasks, shutdown_mock_sources
 from app.core.config import settings
@@ -42,6 +44,7 @@ async def _clean_sse_runtime() -> AsyncIterator[None]:
 @pytest.fixture
 async def server() -> AsyncIterator[str]:
     """同事件循环内起真实 uvicorn（ephemeral 端口），退出时优雅关停。"""
+    AppStatus.should_exit = False  # 重置全局状态，防止前一个 server 的 shutdown 泄漏到本次。
     config = uvicorn.Config(app, host="127.0.0.1", port=0, log_level="warning")
     uv_server = uvicorn.Server(config)
     serve_task = asyncio.create_task(uv_server.serve())
@@ -95,6 +98,22 @@ async def _collect(
     return await asyncio.wait_for(_drain(), timeout=timeout)
 
 
+async def _collect_full(
+    event_source: object, count: int, timeout: float = 5.0
+) -> list[tuple[str, str, str]]:
+    """同 _collect，但保留 data 供 payload 断言（scene 快照形状校验用）。"""
+
+    async def _drain() -> list[tuple[str, str, str]]:
+        received: list[tuple[str, str, str]] = []
+        async for sse in event_source.aiter_sse():  # type: ignore[attr-defined]
+            received.append((sse.event, sse.id, sse.data))
+            if len(received) >= count:
+                break
+        return received
+
+    return await asyncio.wait_for(_drain(), timeout=timeout)
+
+
 def test_stream_route_registered() -> None:
     # FastAPI 0.141+ include_router 走 _IncludedRouter 惰性包装，app.routes 不再平铺
     # path；改用 OpenAPI schema 断言（同时验证路由确实可被文档化/访问）。
@@ -120,7 +139,10 @@ async def test_stream_increasing_ids(client: AsyncClient, monkeypatch: pytest.Mo
         assert event_source.response.status_code == 200
         events = await _collect(event_source, 10)
 
-    assert all(name == "message" for name, _ in events), events
+    names = [name for name, _ in events]
+    # 新连接首批必含 scene 权威快照（todo 2 通道 B 锚点），其余为模拟 message。
+    assert set(names) <= {"message", "scene"}, names
+    assert "message" in names and "scene" in names
     ids = [int(event_id) for _, event_id in events]
     assert len(set(ids)) == 10
     assert ids == sorted(ids), f"id 必须严格递增：{ids}"
@@ -208,5 +230,58 @@ async def test_prod_env_disables_mock_source(
     async with aconnect_sse(client, "GET", "/api/stream") as event_source:
         assert event_source.response.status_code == 200
         assert _mock_log_tasks == {}, "prod 模式不得启动模拟源任务"
+        # scene 锚点是真实事件（非模拟源），prod 也发；其后 0.6s 内无任何事件。
+        # 注意：httpx 响应流只能迭代一次，两个读阶段必须共用同一迭代器。
+        aiter = event_source.aiter_sse()
+        first = await asyncio.wait_for(aiter.__anext__(), timeout=2.0)
+        assert first.event == "scene"
         with pytest.raises(asyncio.TimeoutError):
-            await _collect(event_source, 1, timeout=0.6)
+            await asyncio.wait_for(aiter.__anext__(), timeout=0.6)
+
+
+
+async def test_new_connection_first_batch_includes_scene_snapshot(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """新连接首批事件含 scene 全量快照（todo 2 通道 B 自愈锚点：刷新/重连重建画面）。"""
+    monkeypatch.setattr(settings, "SSE_MOCK_INTERVAL", 0.02)
+    await _register_login_create(client)
+
+    async with aconnect_sse(client, "GET", "/api/stream") as event_source:
+        assert event_source.response.status_code == 200
+        batch = await _collect_full(event_source, 6)
+
+    scene_frames = [data for name, _, data in batch if name == "scene"]
+    assert scene_frames, f"首批事件无 scene 快照：{[n for n, _, _ in batch]}"
+    payload = json.loads(scene_frames[0])
+    assert set(payload) == {"map_id", "monsters", "pets"}
+    assert isinstance(payload["map_id"], str)
+    assert isinstance(payload["monsters"], list)
+    assert isinstance(payload["pets"], list)
+
+
+async def test_gap_followed_by_scene_snapshot(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """buffer 滚出 → gap 后紧跟 scene 全量快照（前端重置画面后立即拿到权威帧）。"""
+    monkeypatch.setattr(settings, "SSE_MOCK_INTERVAL", 0.05)
+    monkeypatch.setattr(settings, "SSE_BUFFER_SIZE", 5)
+    await _register_login_create(client)
+
+    async with aconnect_sse(client, "GET", "/api/stream") as event_source:
+        head = await _collect(event_source, 2)
+    stale_id = int(head[-1][1])
+
+    # 断开期间产出 ≈7 条 > 容量 5 → Last-Event-ID 已滚出 buffer。
+    await asyncio.sleep(0.35)
+
+    async with aconnect_sse(
+        client, "GET", "/api/stream", headers={"Last-Event-ID": str(stale_id)}
+    ) as event_source:
+        got = await _collect(event_source, 4)
+
+    assert got[0][0] == "gap", got
+    assert got[1][0] == "scene", got
+    assert got[1][1] == "1", "gap 后新 epoch：scene 为 id=1（紧随 gap 的锚点帧）"
+    after_ids = [int(event_id) for _, event_id in got[1:]]
+    assert after_ids == [1, 2, 3], after_ids

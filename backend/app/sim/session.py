@@ -126,6 +126,10 @@ class PlayerSession:
     pending_items: list[ItemInstance] = field(default_factory=list)
     dirty_quantities: set[int] = field(default_factory=set)
     removed_item_ids: set[int] = field(default_factory=set)
+    # 场景快照 diff 基线（battle-scene-ui todo 2）：最近一次已发布的 scene
+    # payload JSON；None = 从未发布（首 tick 恒触发发布）。新连接锚点由
+    # api/stream 在 plan_replay 前同步写入，防 tick diff 与锚点重复发布。
+    last_scene_json: str | None = None
 
     def mark_connected(self) -> None:
         """连接建立/重连：清除断线标记与宽限期计时起点。"""

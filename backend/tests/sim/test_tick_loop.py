@@ -10,7 +10,9 @@ force-inject 序列化保证（commit 后 flush 前让出，intruder 无法插�
 """
 
 import asyncio
+import json
 import random
+import time
 from collections.abc import AsyncIterator
 from contextlib import suppress
 from typing import cast
@@ -36,12 +38,14 @@ from app.sim.session import (
     session_for,
 )
 from app.sim.tick_loop import (
+    EV_SCENE,
     PERSIST_EVERY_TICKS,
     cancel_tick_loop,
     persist_session_state,
     simulate_tick,
     start_tick_loop,
 )
+from app.sim.travel import TravelState, clear_travel, start_travel
 from app.sim.zone import ZoneInstance, shutdown_all
 from app.sse.session_state import get_or_create_session, reset_sessions
 
@@ -455,3 +459,60 @@ async def test_lock_serializes_commit_flush_window(db_char: tuple[str, int]) -> 
 def test_persist_every_constant_is_five() -> None:
     """计划红线：每 5 tick 落库。"""
     assert PERSIST_EVERY_TICKS == 5
+
+
+# --- scene 事件 on-change diff（battle-scene-ui todo 2 通道 A）-------------------
+
+
+def _scene_events(events: list[tuple[str, str]]) -> list[str]:
+    return [data for name, data in events if name == EV_SCENE]
+
+
+def test_scene_published_once_when_roster_unchanged() -> None:
+    """无变化不重复发：两连 tick 场上无变化 → 仅首 tick 一条 scene。"""
+    session = make_session(30)  # 无图模式：scene 恒为空帧
+    first = simulate_tick(session, 1)
+    second = simulate_tick(session, 2)
+    assert len(_scene_events(first)) == 1
+    assert _scene_events(second) == []
+    payload = json.loads(_scene_events(first)[0])
+    assert set(payload) == {"map_id", "monsters", "pets"}
+
+
+def test_scene_published_on_kill_tick() -> None:
+    """击杀改变场上 roster → 击杀当 tick 末尾 diff 触发 scene 发布。"""
+    gd = cast("dict[str, object]", load_all())
+    spawns = cast("dict[str, SpawnEntry]", gd["spawns"])
+    table = {k: v for k, v in spawns.items() if v.map_id == "biqi-wild"}
+    zone = ZoneInstance(
+        map_id="biqi-wild",
+        static_spawn_table=table,
+        monster_defs=cast("dict[str, MonsterDef]", gd["monsters"]),
+    )
+    zone.fill_initial()
+    session = make_session(31, map_id="biqi-wild")
+    session.zone = zone
+
+    killed = False
+    for n in range(1, 61):
+        events = simulate_tick(session, n)
+        if any(e[0] == "exp" for e in events):
+            killed = True
+            assert _scene_events(events), "击杀 tick 必须发布 scene（roster 已变）"
+            break
+    assert killed, "60 tick 内未产生击杀"
+
+
+def test_travel_branch_does_not_publish_scene() -> None:
+    """行进中早退分支：zone 未切 → 不发 scene，且不写 diff 基线。"""
+    session = make_session(32)
+    start_travel(
+        32, TravelState(target_map_id="biqi-wild", until=time.time() + 999, fee=100)
+    )
+    try:
+        events = simulate_tick(session, 1)
+    finally:
+        clear_travel(32)
+    assert _scene_events(events) == []
+    assert session.last_scene_json is None
+    assert [e for e in events if e[0] == "stat"]  # stat 心跳仍在
