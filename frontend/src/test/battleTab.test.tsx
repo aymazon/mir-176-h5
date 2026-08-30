@@ -58,11 +58,10 @@ describe('BattleTab', () => {
     )
   })
 
-  it('当前地图高亮 + 邻接区域节点（纯 CSS 抽象图）', () => {
+  it('BattleScene 挂载且显示地图名和战斗场景', () => {
     render(<BattleTab />)
-    expect(screen.getByTestId('map-current')).toHaveTextContent('月华村')
-    // 月华村邻接：边境原野
-    expect(screen.getByTestId('map-node-biqi-wild')).toHaveTextContent('边境原野')
+    expect(screen.getByTestId('battle-scene')).toBeInTheDocument()
+    expect(screen.getByTestId('scene-map-name')).toHaveTextContent('月华村')
   })
 
   it('日志流渲染普通行与 gap 分隔行', () => {

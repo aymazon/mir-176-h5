@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLogStore } from '../store/log'
 import { useGameStore } from '../store/game'
-import { selectCurrentMap } from '../store/game'
-import { MAPS, EXP_TO_NEXT } from '../data/gamedata'
+import { EXP_TO_NEXT } from '../data/gamedata'
 import PotionSettings from './PotionSettings'
+import BattleScene from './scene/BattleScene'
 
 /**
  * 战斗 Tab（todo 31）：
  *  - 人物 HP/MP/经验条 ← SSE stat 事件（game store）
- *  - 怪物血条列表 ← 战斗日志派生（attack 剩余血量 / kill 移除；stat 无怪物字段）
- *  - 当前地图 CSS 抽象区域图：当前图高亮 + 邻接图节点（纯 DOM，零图片）
+ *  - 战斗场景（BattleScene）← 地图背景 + 单位 + 动作层
  *  - 日志流 ← log store（含 gap 分隔行）；滚到底自动滚动，上滑暂停
  *  - 设置区（todo 32）：吃药策略表单（PotionSettings）
  */
@@ -46,8 +45,6 @@ function StatBar(props: {
 export default function BattleTab() {
   const lines = useLogStore((s) => s.lines)
   const character = useGameStore((s) => s.character)
-  const monsters = useGameStore((s) => s.monsters)
-  const currentMap = useGameStore(selectCurrentMap)
 
   const logBoxRef = useRef<HTMLDivElement>(null)
   const autoScrollRef = useRef(true)
@@ -124,89 +121,8 @@ export default function BattleTab() {
         </div>
       </div>
 
-      {/* --- 当前地图抽象区域图（纯 CSS grid）--- */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-        <h2 className="mb-2 text-xs font-semibold text-slate-400">当前区域</h2>
-        {currentMap || character?.mapId ? (
-          <div className="grid grid-cols-2 gap-2">
-            <div
-              data-testid="map-current"
-              className="relative col-span-2 rounded-lg border border-amber-400/70 bg-amber-400/10 px-3 py-2"
-            >
-              <span className="text-sm font-semibold text-amber-300">
-                {currentMap?.name ?? character?.mapId}
-              </span>
-              <span className="ml-2 text-[10px] text-slate-400">
-                Lv.{currentMap?.levelMin ?? '?'}–{currentMap?.levelMax ?? '?'}
-              </span>
-              <span
-                data-testid="map-player-dot"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-emerald-400"
-              >
-                ● 玩家
-              </span>
-              {monsters.length > 0 && (
-                <span
-                  data-testid="map-monster-count"
-                  className="absolute bottom-1 right-3 text-[10px] text-rose-300"
-                >
-                  怪物 ×{monsters.length}
-                </span>
-              )}
-            </div>
-            {(currentMap?.adjacent ?? []).map((adjId) => {
-              const adj = MAPS[adjId]
-              return (
-                <div
-                  key={adjId}
-                  data-testid={`map-node-${adjId}`}
-                  className="rounded-lg border border-slate-700 bg-slate-950/60 px-2.5 py-1.5"
-                >
-                  <div className="truncate text-xs text-slate-300">
-                    {adj?.name ?? adjId}
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    {adj ? `Lv.${adj.levelMin}–${adj.levelMax}` : '—'}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-xs text-slate-600">（等待地图信息…）</p>
-        )}
-      </div>
-
-      {/* --- 怪物血条列表 --- */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-        <h2 className="mb-2 text-xs font-semibold text-slate-400">当前目标</h2>
-        {monsters.length === 0 ? (
-          <p data-testid="monster-empty" className="text-xs text-slate-600">
-            （暂无交战目标）
-          </p>
-        ) : (
-          <ul data-testid="monster-list" className="space-y-2">
-            {monsters.map((m) => (
-              <li key={m.key} data-testid={`monster-${m.key}`}>
-                <div className="mb-0.5 flex items-baseline justify-between text-[11px]">
-                  <span className="text-slate-200">{m.name}</span>
-                  <span className="font-mono text-slate-400">
-                    {m.hp}/{m.maxHp}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="h-full rounded-full bg-rose-600 transition-[width] duration-500"
-                    style={{
-                      width: `${m.maxHp > 0 ? Math.min(100, (m.hp / m.maxHp) * 100) : 0}%`,
-                    }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {/* --- 战斗场景（BattleScene）--- */}
+      <BattleScene />
 
       {/* --- 设置区：吃药策略（todo 32） --- */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
