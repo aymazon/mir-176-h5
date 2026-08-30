@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/game'
 import type { CharacterSnapshot } from '../store/game'
+import { useSceneStore } from '../store/scene'
 
 /**
  * REST fetch 封装：
@@ -25,9 +26,10 @@ export function resetUnauthorizedRedirect(): void {
   }
 }
 
-/** 401 统一处理：清登录态 + 跳登录页（SSE 探测也复用） */
+/** 401 统一处理：清登录态 + 清场景 + 跳登录页（SSE 探测也复用） */
 export function handleUnauthorized(): void {
   useGameStore.getState().clearAuth()
+  useSceneStore.getState().resetScene()
   redirectTo('/login')
 }
 

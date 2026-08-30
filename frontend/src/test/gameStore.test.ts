@@ -1,25 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import {
-  useGameStore,
-  parseAttack,
-  parseKill,
-} from '../store/game'
-
-describe('gameStore 战斗日志解析（tick_loop 文案契约）', () => {
-  it('parseAttack 提取怪物名与剩余血量', () => {
-    expect(parseAttack('你命中小野雉，造成 3 点伤害（剩余 2）')).toEqual({
-      name: '小野雉',
-      remaining: 2,
-    })
-    expect(parseAttack('你攻击小野雉未命中')).toBeNull()
-    expect(parseAttack('[模拟战斗日志 #1] 你攻击 木桩 造成 5 点伤害')).toBeNull()
-  })
-
-  it('parseKill 提取被击杀怪物名', () => {
-    expect(parseKill('你击杀了小野雉，获得 9 经验')).toBe('小野雉')
-    expect(parseKill('你命中小野雉，造成 3 点伤害（剩余 2）')).toBeNull()
-  })
-})
+import { useGameStore } from '../store/game'
 
 function login(): void {
   useGameStore.getState().setGame({
@@ -60,33 +40,13 @@ describe('gameStore stat/日志/掉落入账', () => {
     expect(s.panel).toMatchObject({ dc_max: 5 })
   })
 
-  it('attack 日志派生怪物血条；kill 移除；同名怪合并', () => {
-    useGameStore.getState().applyCombatLogs([
-      { kind: 'attack', text: '你命中小野雉，造成 3 点伤害（剩余 2）' },
-      { kind: 'attack', text: '你命中小野雉，造成 1 点伤害（剩余 1）' },
-    ])
-    let monsters = useGameStore.getState().monsters
-    expect(monsters).toHaveLength(1)
-    expect(monsters[0]).toMatchObject({ key: '小野雉', hp: 1 })
-
-    useGameStore.getState().applyCombatLogs([
-      { kind: 'kill', text: '你击杀了小野雉，获得 9 经验' },
-    ])
-    monsters = useGameStore.getState().monsters
-    expect(monsters).toHaveLength(0)
-  })
-
-  it('zone_change 切地图并清空怪物与地面掉落', () => {
-    useGameStore.getState().applyCombatLogs([
-      { kind: 'attack', text: '你命中小野雉，造成 3 点伤害（剩余 2）' },
-    ])
+  it('zone_change 切地图并清空地面掉落', () => {
     useGameStore.getState().applyDropLoot([
       { item_id: 'meat', qty: 1, picked: false, drop_id: 'd-1' },
     ])
     useGameStore.getState().applyZoneChange('biqi-wild')
     const s = useGameStore.getState()
     expect(s.character?.mapId).toBe('biqi-wild')
-    expect(s.monsters).toHaveLength(0)
     expect(s.groundDrops).toHaveLength(0)
   })
 

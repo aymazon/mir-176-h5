@@ -8,7 +8,7 @@ import { create } from 'zustand'
  * dying 清理由下一次 applyScene 快照驱动兜底，动画结束回调走 sweepDying 快路径）。
  */
 
-/** 场景怪物实例：同名怪按 id 多实例共存（取代 game store 按名合并的 MonsterBar） */
+/** 场景怪物实例：同名怪按 id 多实例共存（取代 game store 时代按名合并的怪物血条派生） */
 export interface SceneMonster {
   id: string
   monsterId: string

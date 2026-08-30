@@ -30,15 +30,6 @@ export interface CharacterSnapshot {
 /** 面板快照：与后端 StatPanel（combat/stats.py）字段一一对应（snake_case 直传） */
 export type PanelSnapshot = Record<string, number>
 
-/** 怪物血条条目：由战斗日志（attack/kill）派生——stat 事件不含怪物字段 */
-export interface MonsterBar {
-  /** 以怪物名为 key（同名怪合并一条，MVP 简化） */
-  key: string
-  name: string
-  hp: number
-  maxHp: number
-}
-
 /** 地面掉落条目：drop 事件中 picked=false 的物品，等待手动拾取 */
 export interface GroundDrop {
   dropId: string
@@ -50,7 +41,6 @@ interface GameStore {
   player: PlayerSnapshot | null
   character: CharacterSnapshot | null
   panel: PanelSnapshot | null
-  monsters: MonsterBar[]
   groundDrops: GroundDrop[]
   /**
    * 局部更新登录态/角色快照：
@@ -69,60 +59,19 @@ interface GameStore {
    * { tick?, reason?, hp, max_hp, mp, max_mp, exp, gold, panel? }
    */
   applyStat: (raw: Record<string, unknown>) => void
-  /** SSE zone_change 事件：切地图 + 清空怪物/地面掉落（换图语义） */
+  /** SSE zone_change 事件：切地图 + 清空地面掉落（换图语义；场景清理由 scene store resetScene 自理） */
   applyZoneChange: (mapId: string) => void
-  /**
-   * 战斗日志批量派生怪物血条（attack 命中剩余血量 / kill 移除）。
-   * 批量入口保证一帧多条日志只触发一次 store 更新。
-   */
-  applyCombatLogs: (entries: ReadonlyArray<{ kind: string; text: string }>) => void
   /** SSE drop 事件 loot[]：picked=false 的物品进地面池（条目含 gold/item_id/qty/picked/drop_id） */
   applyDropLoot: (loot: ReadonlyArray<Record<string, unknown>>) => void
   /** 拾取成功后移除地面条目 */
   removeGroundDrop: (dropId: string) => void
-  /** 登出/会话重置：清空战斗瞬态（面板/怪物/地面掉落） */
-  resetTransient: () => void
-}
-
-// --- 战斗日志解析（后端 tick_loop._log_event 文案契约，勿在别处复制） -------------
-
-/** 「你命中小野雉，造成 3 点伤害（剩余 2）」→ { name, remaining } */
-const ATTACK_RE = /^你命中(.+?)，造成 \d+ 点伤害（剩余 (\d+)）$/
-/** 「你击杀了小野雉，获得 9 经验」→ 小野雉 */
-const KILL_RE = /^你击杀了(.+?)，获得 \d+ 经验$/
-
-export function parseAttack(text: string): { name: string; remaining: number } | null {
-  const m = ATTACK_RE.exec(text)
-  if (!m) return null
-  return { name: m[1]!, remaining: Number(m[2]) }
-}
-
-export function parseKill(text: string): string | null {
-  const m = KILL_RE.exec(text)
-  return m ? m[1]! : null
-}
-
-function upsertMonster(list: MonsterBar[], name: string, hp: number): MonsterBar[] {
-  const idx = list.findIndex((m) => m.key === name)
-  if (idx >= 0) {
-    const prev = list[idx]!
-    const next: MonsterBar = {
-      ...prev,
-      hp,
-      maxHp: Math.max(prev.maxHp, hp),
-    }
-    const copy = list.slice()
-    copy[idx] = next
-    return copy
-  }
-  // 首见按当前剩余血量近似满血（怪出生即满血；命中日志不透露上限）
-  return [...list, { key: name, name, hp, maxHp: Math.max(hp, 1) }]
 }
 
 export const useGameStore = create<GameStore>((set) => ({
   player: null,
   character: null,
   panel: null,
+  // 遗留运行时占位：BattleTab 旧怪物面板仍订阅 s.monsters（恒空数组），todo 13 随面板一并删除
   monsters: [],
   groundDrops: [],
 
@@ -138,7 +87,6 @@ export const useGameStore = create<GameStore>((set) => ({
       player: null,
       character: null,
       panel: null,
-      monsters: [],
       groundDrops: [],
     }),
 
@@ -170,23 +118,7 @@ export const useGameStore = create<GameStore>((set) => ({
       const character = state.character
         ? { ...state.character, mapId }
         : state.character
-      return { character, monsters: [], groundDrops: [] }
-    }),
-
-  applyCombatLogs: (entries) =>
-    set((state) => {
-      let monsters = state.monsters
-      for (const { kind, text } of entries) {
-        if (kind === 'attack') {
-          const hit = parseAttack(text)
-          if (hit) monsters = upsertMonster(monsters, hit.name, hit.remaining)
-        } else if (kind === 'kill') {
-          const name = parseKill(text)
-          if (name) monsters = monsters.filter((m) => m.key !== name)
-        }
-      }
-      if (monsters === state.monsters) return state
-      return { monsters }
+      return { character, groundDrops: [] }
     }),
 
   applyDropLoot: (loot) =>
@@ -210,8 +142,6 @@ export const useGameStore = create<GameStore>((set) => ({
     set((state) => ({
       groundDrops: state.groundDrops.filter((d) => d.dropId !== dropId),
     })),
-
-  resetTransient: () => set({ panel: null, monsters: [], groundDrops: [] }),
 }))
 
 /** selector：登录态派生值，避免订阅整个 store 造成重渲染 */

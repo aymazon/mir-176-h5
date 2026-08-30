@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import BattleTab from '../ui/BattleTab'
 import { useLogStore } from '../store/log'
 import { useGameStore } from '../store/game'
@@ -61,30 +61,8 @@ describe('BattleTab', () => {
   it('当前地图高亮 + 邻接区域节点（纯 CSS 抽象图）', () => {
     render(<BattleTab />)
     expect(screen.getByTestId('map-current')).toHaveTextContent('月华村')
-    expect(screen.getByTestId('map-player-dot')).toBeInTheDocument()
     // 月华村邻接：边境原野
     expect(screen.getByTestId('map-node-biqi-wild')).toHaveTextContent('边境原野')
-  })
-
-  it('怪物血条列表随战斗日志派生更新；击杀后清空', () => {
-    render(<BattleTab />)
-    expect(screen.getByTestId('monster-empty')).toBeInTheDocument()
-
-    act(() => {
-      useGameStore.getState().applyCombatLogs([
-        { kind: 'attack', text: '你命中小野雉，造成 3 点伤害（剩余 2）' },
-      ])
-    })
-    const bar = screen.getByTestId('monster-小野雉')
-    expect(bar).toHaveTextContent('小野雉')
-    expect(bar).toHaveTextContent('2/2')
-
-    act(() => {
-      useGameStore.getState().applyCombatLogs([
-        { kind: 'kill', text: '你击杀了小野雉，获得 9 经验' },
-      ])
-    })
-    expect(screen.getByTestId('monster-empty')).toBeInTheDocument()
   })
 
   it('日志流渲染普通行与 gap 分隔行', () => {

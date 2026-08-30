@@ -1,6 +1,8 @@
 import { useLogStore } from '../store/log'
 import type { LogLine } from '../store/log'
 import { useGameStore } from '../store/game'
+import { useSceneStore } from '../store/scene'
+import type { SceneLogPayload, SceneSnapshotPayload } from '../store/scene'
 import { MAPS } from '../data/gamedata'
 import { handleUnauthorized } from './rest'
 
@@ -10,16 +12,30 @@ import { handleUnauthorized } from './rest'
  *  - 事件按 id 走 log store 水位线去重
  *  - 收到 named event: gap → 先重置去重水位线，再插入「期间部分日志丢失」分隔行
  *  - 同一事件循环内的多条消息合并为一次 appendBatch（单次 store 更新防重渲染风暴）；
- *    todo 31 起结构化事件在同一微任务边界批量分发：
- *      stat → 人物血条/面板；zone_change → 地图切换；log(kind) → 怪物血条派生；
- *      drop → 地面掉落池。重放风暴下每帧至多一次 log set + 一次 game set。
+ *    结构化事件在同一微任务边界批量分发：
+ *      stat → 人物血条/面板；zone_change → 地图切换 + 场景重置；scene → 场景快照；
+ *      log(kind) → 场景动作队列；drop → 地面掉落池。
+ *      重放风暴下每帧至多一次 log set，结构化分发按事件序在同帧完成。
  *  - onerror 时探测 /api/health：若 401 → 清登录态并跳登录页；
  *    其余错误（断流/重启中）静默，交给浏览器自动重连
  */
 
 export const SSE_STREAM_PATH = '/api/stream'
 /** 与 todo 7 契约的事件类型清单对齐；gap 单独处理 */
-const SSE_EVENT_NAMES = ['message', 'log', 'stat', 'drop', 'exp', 'disconnect']
+const SSE_EVENT_NAMES = [
+  'message',
+  'log',
+  'stat',
+  'drop',
+  'exp',
+  'disconnect',
+  'zone_change',
+  'scene',
+  'travel_start',
+  'pet_summon',
+  'pet_died',
+  'pet_dispersed',
+]
 /** 401 探测端点（todo 3 提供 /api/health） */
 const HEALTH_PROBE_PATH = '/api/health'
 
@@ -48,9 +64,11 @@ export class SseClient {
       })
     }
 
-    // gap 不带 id：先重置水位线再插入分隔行（原子落在 store.applyGap）
+    // gap 不带 id：先重置水位线再插入分隔行（原子落在 store.applyGap）；
+    // 随后 resetScene 清空场景，等后端 channel B 权威快照重建（gap 自愈）
     es.addEventListener('gap', () => {
       useLogStore.getState().applyGap()
+      useSceneStore.getState().resetScene()
     })
 
     es.onerror = () => {
@@ -114,22 +132,30 @@ export class SseClient {
 
     // --- 结构化事件批量分发（同一帧内完成，React 自动批合并渲染） ---------------
     const game = useGameStore.getState()
-    const combatEntries: Array<{ kind: string; text: string }> = []
+    const scene = useSceneStore.getState()
     const lootEntries: Array<Record<string, unknown>> = []
     let lastStat: Record<string, unknown> | null = null
 
     for (const { event, payload } of batch) {
       if (event === 'zone_change' && typeof payload.map_id === 'string') {
         game.applyZoneChange(payload.map_id)
+        // 换图即清场景：下一条 scene 快照（channel B）重建新图单位
+        scene.resetScene()
+      } else if (
+        event === 'scene' &&
+        typeof payload.map_id === 'string' &&
+        Array.isArray(payload.monsters) &&
+        Array.isArray(payload.pets)
+      ) {
+        scene.applyScene(payload as unknown as SceneSnapshotPayload)
       } else if (event === 'log' && typeof payload.kind === 'string') {
-        combatEntries.push({ kind: payload.kind, text: String(payload.text ?? '') })
+        scene.pushLogAction(payload as unknown as SceneLogPayload)
       } else if (event === 'drop' && Array.isArray(payload.loot)) {
         lootEntries.push(...(payload.loot as Array<Record<string, unknown>>))
       } else if (event === 'stat') {
         lastStat = payload // 快照语义：一帧多条只取最后一条
       }
     }
-    if (combatEntries.length > 0) game.applyCombatLogs(combatEntries)
     if (lootEntries.length > 0) game.applyDropLoot(lootEntries)
     if (lastStat !== null) game.applyStat(lastStat)
   }
