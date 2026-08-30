@@ -51,6 +51,10 @@ export interface SceneAction {
   exp?: number
   hpRestore?: number
   mpRestore?: number
+  /** 施放/攻击方宠物 id（pet_miss/pet_kill 定位宠物锚点） */
+  petId?: string
+  /** 原始日志文本（skill 横幅取「你施放了」前缀后的技能名） */
+  text?: string
 }
 
 /** scene 快照 payload（SSE scene 事件契约，snake_case 直传） */
@@ -83,6 +87,8 @@ export interface SceneLogPayload {
   exp?: number
   hp_restore?: number
   mp_restore?: number
+  pet_id?: string
+  text?: string
 }
 
 /** 动作队列容量：超出丢弃最旧（重连重放风暴保护） */
@@ -192,6 +198,8 @@ export const useSceneStore = create<SceneStore>((set) => ({
         exp: payload.exp,
         hpRestore: payload.hp_restore,
         mpRestore: payload.mp_restore,
+        petId: payload.pet_id,
+        text: payload.text,
       })
       // 同帧去重：队尾同 kind + 同 targetId → 合并，数值字段取最新值
       const tail = state.actions[state.actions.length - 1]

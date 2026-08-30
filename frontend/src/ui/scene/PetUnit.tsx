@@ -1,5 +1,6 @@
 import { useSceneStore } from '../../store/scene'
 import type { ScenePet } from '../../store/scene'
+import { useAnchor } from './anchorContext'
 
 /**
  * 宠物单位组（todo 10，挂载位由 todo 9 BattleScene 提供）：
@@ -31,8 +32,10 @@ function hpPct(pet: ScenePet): number {
 
 function PetAvatar(props: { pet: ScenePet }) {
   const { pet } = props
+  const anchorRef = useAnchor(pet.id)
   return (
     <div
+      ref={anchorRef}
       data-testid={`pet-${pet.id}`}
       className="flex w-9 flex-col items-center"
     >

@@ -2,6 +2,7 @@ import { useState, type AnimationEvent } from 'react'
 import type { SceneMonster } from '../../store/scene'
 import { useSceneStore } from '../../store/scene'
 import { monsterVisualOf, type MonsterVisual } from '../../data/monster-visuals'
+import { useAnchor } from './anchorContext'
 
 /**
  * 场景怪物单元（todo 11）：
@@ -32,6 +33,7 @@ export default function MonsterUnit({ monster }: { monster: SceneMonster }) {
   const sweepDying = useSceneStore((s) => s.sweepDying)
   const [entering, setEntering] = useState(true)
   const dying = monster.dyingUntil !== undefined
+  const anchorRef = useAnchor(monster.id)
 
   const visual = monsterVisualOf(monster.monsterId)
   const tier = effectiveTier(visual, monster.boss)
@@ -48,6 +50,7 @@ export default function MonsterUnit({ monster }: { monster: SceneMonster }) {
 
   return (
     <div
+      ref={anchorRef}
       data-testid={`scene-monster-${monster.id}`}
       className={[
         'relative flex flex-col items-center gap-0.5',

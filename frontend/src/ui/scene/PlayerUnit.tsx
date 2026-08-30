@@ -1,6 +1,7 @@
 import { useGameStore } from '../../store/game'
 import type { CharacterClass } from '../../store/game'
 import { useSceneStore } from '../../store/scene'
+import { useAnchor } from './anchorContext'
 
 /**
  * 玩家单位（todo 10，挂载位由 todo 9 BattleScene 提供）：
@@ -41,11 +42,13 @@ export default function PlayerUnit() {
   const casting = useSceneStore((s) =>
     s.actions.some((a) => a.kind === 'skill'),
   )
+  const anchorRef = useAnchor('player')
 
   if (character === null) return null
 
   return (
     <div
+      ref={anchorRef}
       data-testid="player-unit"
       className={`absolute bottom-3 left-4 flex w-16 flex-col items-center ${
         underHit ? 'scene-shake' : ''
