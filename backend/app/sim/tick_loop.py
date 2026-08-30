@@ -773,8 +773,11 @@ def _stat_event(session: PlayerSession, tick_index: int) -> tuple[str, str]:
     )
 
 
-def _log_event(kind: str, text: str) -> tuple[str, str]:
-    return (EV_LOG, json.dumps({"kind": kind, "text": text}, ensure_ascii=False))
+def _log_event(kind: str, text: str, **extra: object) -> tuple[str, str]:
+    return (
+        EV_LOG,
+        json.dumps({"kind": kind, "text": text, **extra}, ensure_ascii=False),
+    )
 
 
 def _tick_buffs(session: PlayerSession, events: list[tuple[str, str]]) -> int:
@@ -846,9 +849,17 @@ def _player_attack(
     if tick_index % balance.ATTACK_INTERVAL_TICKS != 0:
         return
     target = zone.alive_monsters[0]  # MVP 距离档：场上第一只即目标（D12）
-    multiplier = _cast_skill(session, panel, tick_index, events)
+    multiplier, skill_id = _cast_skill(session, panel, tick_index, events)
     if not hit_check(session.rng, panel.accuracy, target.monster_def.agility):
-        events.append(_log_event("miss", f"你攻击{target.monster_def.name}未命中"))
+        events.append(
+            _log_event(
+                "miss",
+                f"你攻击{target.monster_def.name}未命中",
+                target_id=target.instance_id,
+                target_name=target.monster_def.name,
+                skill_id=skill_id,
+            )
+        )
         return
     # 武器磨损（todo 24）：出手命中即扣（未命中不扣）；归零时播报属性失效。
     weapon_durability = _wear_equipment(
@@ -876,6 +887,11 @@ def _player_attack(
                 "attack",
                 f"你命中{target.monster_def.name}，造成 {dmg} 点伤害"
                 f"（剩余 {remaining}）",
+                target_id=target.instance_id,
+                target_name=target.monster_def.name,
+                dmg=dmg,
+                remaining_hp=remaining,
+                skill_id=skill_id,
             )
         )
 
@@ -885,8 +901,9 @@ def _cast_skill(
     panel: StatPanel,
     tick_index: int,
     events: list[tuple[str, str]],
-) -> float:
-    """尝试施放第一个可用的敌方目标职业技能；成功返回其倍率，否则平砍基数。
+) -> tuple[float, str | None]:
+    """尝试施放第一个可用的敌方目标职业技能；成功返回 (倍率, skill_id)，
+    否则 (平砍基数, None)。
 
     todo 28 自动习得：<35 级技能到 learn_level 后首次出手即学会 0 级（内存建行，
     随每 5 tick persist 批次落库）；≥35 级技能必须技能书（api/skill 同一口径），
@@ -924,7 +941,13 @@ def _cast_skill(
             continue
         snap.mp = attempt.mp_after
         session.last_cast_ticks[skill_id] = tick_index
-        events.append(_log_event("skill", f"你施放了{registry.get(skill_id).name}"))
+        events.append(
+            _log_event(
+                "skill",
+                f"你施放了{registry.get(skill_id).name}",
+                skill_id=skill_id,
+            )
+        )
         if state.level > level_before:
             events.append(
                 _log_event(
@@ -932,8 +955,8 @@ def _cast_skill(
                     f"{skill.name} 熟练度提升至 Lv{state.level}",
                 )
             )
-        return registry.get_multiplier(skill_id, state.level)
-    return balance.SKILL_MULTIPLIER_BASE
+        return registry.get_multiplier(skill_id, state.level), skill_id
+    return balance.SKILL_MULTIPLIER_BASE, None
 
 
 def _monster_hp(session: PlayerSession, monster: MonsterInstance) -> int:
@@ -970,7 +993,14 @@ def _kill_monster(
         )
     )
     events.append(
-        _log_event("kill", f"你击杀了{killed.monster_def.name}，获得 {exp_gain} 经验")
+        _log_event(
+            "kill",
+            f"你击杀了{killed.monster_def.name}，获得 {exp_gain} 经验",
+            target_id=killed.instance_id,
+            target_name=killed.monster_def.name,
+            monster_id=killed.monster_id,
+            exp=exp_gain,
+        )
     )
     # 任务进度挂钩（todo 29）：击杀悬赏/分身挑战在此同步推进 quest_state（锁外内存）
     _quest_on_kill(session, killed)
@@ -1079,7 +1109,14 @@ def _monster_ai(
     if tick_index % max(1, monster.monster_def.attack_speed) != 0:
         return 0
     if not hit_check(session.rng, monster.monster_def.accuracy, panel.agility):
-        events.append(_log_event("dodge", f"{monster.monster_def.name}攻击你未命中"))
+        events.append(
+            _log_event(
+                "dodge",
+                f"{monster.monster_def.name}攻击你未命中",
+                attacker_id=monster.instance_id,
+                attacker_name=monster.monster_def.name,
+            )
+        )
         return 0
     # 防具磨损（todo 24）：被命中即扣衣服槽耐久（未命中不扣）；归零播报失效。
     armor_durability = _wear_equipment(
@@ -1096,7 +1133,13 @@ def _monster_ai(
         target_defense=panel.ac_max,
     )
     events.append(
-        _log_event("defend", f"{monster.monster_def.name}命中你，造成 {dmg} 点伤害")
+        _log_event(
+            "defend",
+            f"{monster.monster_def.name}命中你，造成 {dmg} 点伤害",
+            attacker_id=monster.instance_id,
+            attacker_name=monster.monster_def.name,
+            dmg=dmg,
+        )
     )
     return dmg
 
@@ -1142,6 +1185,9 @@ def _auto_potion(
                 "potion",
                 f"自动喝下{action.item_id}"
                 f"（HP+{hp_restore} MP+{mp_restore} → {snap.hp}/{snap.max_hp}）",
+                item_id=action.item_id,
+                hp_restore=hp_restore,
+                mp_restore=mp_restore,
             )
         )
 

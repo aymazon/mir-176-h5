@@ -216,6 +216,9 @@ def test_potion_triggers_when_hp_below_threshold() -> None:
     assert session.potion_cooldowns["potion_hp_small"] == 3 + 5
     potions = _events_of_kind(events, "potion")
     assert len(potions) == 1
+    assert potions[0]["item_id"] == "potion_hp_small"
+    assert potions[0]["hp_restore"] == 30
+    assert potions[0]["mp_restore"] == 0
     # HP 已回到阈值上方 → 下个 tick 不再喝
     events2 = simulate_tick(session, tick_index=4)
     assert _events_of_kind(events2, "potion") == []
@@ -250,10 +253,16 @@ def test_kill_yields_exp_drop_and_pickup_with_real_gamedata() -> None:
 
     exp_seen = False
     drop_seen = False
+    kill_payload: dict[str, object] | None = None
+    exp_payload: dict[str, object] | None = None
     for n in range(1, 61):
         events = simulate_tick(session, n)
         if any(e[0] == "exp" for e in events):
             exp_seen = True
+            exp_payload = json.loads(next(e[1] for e in events if e[0] == "exp"))
+            kills = _events_of_kind(events, "kill")
+            if kills:
+                kill_payload = kills[0]
         if any(e[0] == "drop" for e in events):
             drop_seen = True
         if exp_seen and drop_seen:
@@ -262,6 +271,15 @@ def test_kill_yields_exp_drop_and_pickup_with_real_gamedata() -> None:
     assert drop_seen, "击杀后未产生掉落事件"
     assert session.char_snapshot.exp > 0
     assert session.char_snapshot.gold > 0 or session.inventory  # 金币或物品入账
+    # kill 事件结构化字段：monster_id/exp 与 exp 事件一致，target 指向被击杀实例
+    assert kill_payload is not None
+    assert exp_payload is not None
+    assert kill_payload["monster_id"] == exp_payload["monster_id"]
+    assert kill_payload["exp"] == exp_payload["amount"]
+    monster_id = cast("str", kill_payload["monster_id"])
+    monsters = cast("dict[str, MonsterDef]", gd["monsters"])
+    assert kill_payload["target_name"] == monsters[monster_id].name
+    assert kill_payload["target_id"]
 
 
 def test_monster_retaliates_and_regen_only_when_untouched() -> None:
@@ -295,6 +313,72 @@ def test_monster_retaliates_and_regen_only_when_untouched() -> None:
             break
     assert damaged, "60 tick 内怪物从未命中玩家"
 
+
+def test_combat_log_events_carry_structured_fields() -> None:
+    """attack/miss/skill/defend/dodge 事件携带结构化字段（battle-scene-ui todo 3）。"""
+    gd = cast("dict[str, object]", load_all())
+    spawns = cast("dict[str, SpawnEntry]", gd["spawns"])
+    table = {k: v for k, v in spawns.items() if v.map_id == "biqi-wild"}
+    zone = ZoneInstance(
+        map_id="biqi-wild",
+        static_spawn_table=table,
+        monster_defs=cast("dict[str, MonsterDef]", gd["monsters"]),
+    )
+    zone.fill_initial()
+    session = make_session(40, map_id="biqi-wild")
+    session.zone = zone
+    first = zone.alive_monsters[0]
+    expected_name = first.monster_def.name
+
+    attack: dict[str, object] | None = None
+    miss: dict[str, object] | None = None
+    skill: dict[str, object] | None = None
+    defend: dict[str, object] | None = None
+    dodge: dict[str, object] | None = None
+    for n in range(1, 61):
+        events = simulate_tick(session, n)
+        if attack is None:
+            hits = _events_of_kind(events, "attack")
+            if hits:
+                attack = hits[0]
+        if miss is None:
+            misses = _events_of_kind(events, "miss")
+            if misses:
+                miss = misses[0]
+        if skill is None:
+            skills = _events_of_kind(events, "skill")
+            if skills:
+                skill = skills[0]
+        if defend is None:
+            defends = _events_of_kind(events, "defend")
+            if defends:
+                defend = defends[0]
+        if dodge is None:
+            dodges = _events_of_kind(events, "dodge")
+            if dodges:
+                dodge = dodges[0]
+        if attack and miss and skill and defend and dodge:
+            break
+    assert attack is not None, "60 tick 内未产生 attack 事件"
+    assert miss is not None, "60 tick 内未产生 miss 事件"
+    assert skill is not None, "60 tick 内未产生 skill 事件"
+    assert defend is not None, "60 tick 内未产生 defend 事件"
+    assert dodge is not None, "60 tick 内未产生 dodge 事件"
+    # warrior L8 自动习得 basic_sword（learn_level=7 < 35）→ 施放即带 skill_id
+    assert skill["skill_id"] == "basic_sword"
+    assert attack["skill_id"] == "basic_sword"
+    assert miss["skill_id"] == "basic_sword"
+    assert attack["target_name"] == expected_name
+    assert miss["target_name"] == expected_name
+    assert attack["target_id"] == first.instance_id
+    assert miss["target_id"] == first.instance_id
+    assert cast("int", attack["dmg"]) > 0
+    assert cast("int", attack["remaining_hp"]) > 0
+    assert defend["attacker_name"] == expected_name
+    assert dodge["attacker_name"] == expected_name
+    assert defend["attacker_id"]
+    assert dodge["attacker_id"]
+    assert cast("int", defend["dmg"]) > 0
 
 # --- 落库 + 锁序列化（真实 PG）----------------------------------------------------
 

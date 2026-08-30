@@ -290,6 +290,8 @@ def attack_target(pet: Pet, target: MonsterInstance) -> int:
                 {
                     "kind": "pet_miss",
                     "text": f"{pet.monster_def.name}攻击{target.monster_def.name}未命中",
+                    "pet_id": pet.pet_id,
+                    "target_id": target.instance_id,
                 },
                 ensure_ascii=False,
             ),
@@ -336,6 +338,10 @@ def attack_target(pet: Pet, target: MonsterInstance) -> int:
             {
                 "kind": "pet_kill",
                 "text": f"{pet.monster_def.name}击杀了{slain.monster_def.name}，你获得 {exp_gain} 经验",
+                "pet_id": pet.pet_id,
+                "target_id": slain.instance_id,
+                "monster_id": slain.monster_id,
+                "exp": exp_gain,
             },
             ensure_ascii=False,
         ),

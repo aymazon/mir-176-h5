@@ -299,7 +299,43 @@ def test_pet_kill_exp_goes_to_owner(registry: SkillRegistry) -> None:
     assert payload["by"] == "pet"
     assert payload["amount"] == 77
     assert payload["total"] == 100 + 77
+    # pet_kill 事件结构化字段：pet_id/target_id/monster_id/exp
+    kill_payload = next(
+        json.loads(e.data)
+        for e in session.sse_state.buffer.after(0)
+        if e.event == "log" and json.loads(e.data).get("kind") == "pet_kill"
+    )
+    assert kill_payload["pet_id"] == pet.pet_id
+    assert kill_payload["target_id"] == target.instance_id
+    assert kill_payload["monster_id"] == "shimu"
+    assert kill_payload["exp"] == 77
 
+
+def test_pet_miss_event_carries_structured_fields(registry: SkillRegistry) -> None:
+    """pet_miss 事件携带 pet_id/target_id（battle-scene-ui todo 3）。"""
+    session = make_session(class_="taoist", level=35)
+    monster_def = make_monster_def("shimu", hp=10_000)
+    zone, monsters = make_zone(monster_def)
+    session.zone = zone
+    pet = summon_pet(session, "summon_beast", None, registry=registry)
+    target = monsters[0]
+    miss_payload = None
+    for _ in range(200):
+        attack_target(pet, target)
+        miss_payload = next(
+            (
+                json.loads(e.data)
+                for e in session.sse_state.buffer.after(0)
+                if e.event == "log"
+                and json.loads(e.data).get("kind") == "pet_miss"
+            ),
+            None,
+        )
+        if miss_payload is not None:
+            break
+    assert miss_payload is not None, "200 次出手内未产生 pet_miss 事件"
+    assert miss_payload["pet_id"] == pet.pet_id
+    assert miss_payload["target_id"] == target.instance_id
 
 def test_attack_noop_after_owner_teardown(registry: SkillRegistry) -> None:
     """teardown（disperse_all → release_session）后 pet 出手静默为 0。"""
