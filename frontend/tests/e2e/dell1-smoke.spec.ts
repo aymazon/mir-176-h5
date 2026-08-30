@@ -62,8 +62,8 @@ test('dell1 冒烟：注册→登录→建号→战斗页挂机30s→截图', as
 
   // stat 心跳驱动 HP 数值变动（承伤/回复每 tick 发生）
   await expect(page.getByTestId('stat-hp')).toBeVisible()
-  // 怪物血条出现（银杏村鸡群交战）
-  await expect(page.getByTestId('monster-list')).toBeVisible({ timeout: 60_000 })
+  // 怪物出现（scene-monster-count 文本变为「怪物 ×N」）
+  await expect(page.getByTestId('scene-monster-count')).toContainText('怪物', { timeout: 60_000 })
 
   await page.screenshot({ path: '../.omo/evidence/task-38-mir-176-h5-mvp-battle.png' })
 })

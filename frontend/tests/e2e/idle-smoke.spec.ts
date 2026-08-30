@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 /**
  * todo 31 真机冒烟（390×844，真实后端 127.0.0.1:8000 经 vite proxy）：
  *  注册 → UI 登录 → API 建角色 → 战斗页挂机 ≥10s（日志滚动 + 血条变化 + 怪物血条）
- *  → 攒金币买药（POST /api/shop/buy）→ 背包页数量+1 → 买木剑穿戴 → 装备页显示 → 三页截图
+ *  → 攒金币买药（POST /api/shop/buy）→ 背包页数量+1 → 买木刃穿戴 → 装备页显示 → 三页截图
  *
  * 商店无独立 Tab（六 Tab 契约），买入按验收口径直接走 REST；
  * 页面断言全部经由 UI（背包格/动作单/装备槽）。
@@ -82,12 +82,11 @@ test('挂机冒烟：登录→战斗10s→买药→背包+1→穿戴武器→装
     })
     .not.toBe(hpInitial)
 
-  // 怪物血条出现（银杏村鸡群交战）
-  await expect(page.getByTestId('monster-list')).toBeVisible({ timeout: 60_000 })
+  // 怪物出现在月华村（scene-monster-count 文本变为「怪物 ×N」）
+  await expect(page.getByTestId('scene-monster-count')).toContainText('怪物', { timeout: 60_000 })
 
-  // 地图抽象图：出生村高亮 + 邻接节点
-  await expect(page.getByTestId('map-current')).toContainText('银杏村')
-  await expect(page.getByTestId('map-node-biqi-wild')).toBeVisible()
+  // 地图名：月华村
+  await expect(page.getByTestId('scene-map-name')).toContainText('月华村')
 
   await page.screenshot({ path: '../.omo/evidence/task-31-battle.png' })
 
@@ -99,11 +98,11 @@ test('挂机冒烟：登录→战斗10s→买药→背包+1→穿戴武器→装
   expect(bought.status(), JSON.stringify(await bought.json())).toBe(200)
   const buyOut = (await bought.json()) as { quantity_in_bag: number }
 
-  // --- 背包页：金创药数量 = quantity_in_bag ---
+  // --- 背包页：止血草药数量 = quantity_in_bag ---
   await page.getByTestId('tab-inventory').click()
   await expect(page.getByTestId('tab-panel-inventory')).toBeVisible()
   const potionCell = page
-    .locator('[data-testid^="bag-cell-"]', { hasText: '金创药（小量）' })
+    .locator('[data-testid^="bag-cell-"]', { hasText: '止血草药（小）' })
     .first()
   await expect(potionCell).toBeVisible({ timeout: 10_000 })
   if (buyOut.quantity_in_bag > 1) {
@@ -117,7 +116,7 @@ test('挂机冒烟：登录→战斗10s→买药→背包+1→穿戴武器→装
 
   await page.screenshot({ path: '../.omo/evidence/task-31-inventory.png' })
 
-  // --- 买木剑并穿戴（背包动作单点击式）---
+  // --- 买木刃并穿戴（背包动作单点击式）---
   await waitGoldAtLeast(page.request, SWORD_PRICE, 240_000)
   const swordBought = await page.request.post('/api/shop/buy', {
     data: { npc_id: 'yinxing_blacksmith', item_id: 'wooden_sword', quantity: 1 },
@@ -128,17 +127,17 @@ test('挂机冒烟：登录→战斗10s→买药→背包+1→穿戴武器→装
   await page.getByTestId('tab-battle').click()
   await page.getByTestId('tab-inventory').click()
   const swordCell = page
-    .locator('[data-testid^="bag-cell-"]', { hasText: '木剑' })
+    .locator('[data-testid^="bag-cell-"]', { hasText: '木刃' })
     .first()
   await expect(swordCell).toBeVisible({ timeout: 10_000 })
   await swordCell.click()
   await expect(page.getByTestId('action-sheet')).toBeVisible()
   await page.getByTestId('act-wear').click()
-  await expect(page.getByTestId('toast')).toContainText('已穿戴 木剑')
+  await expect(page.getByTestId('toast')).toContainText('已穿戴 木刃')
 
-  // --- 装备页：武器槽显示木剑 + 耐久条 ---
+  // --- 装备页：武器槽显示木刃 + 耐久条 ---
   await page.getByTestId('tab-equip').click()
-  await expect(page.getByTestId('equip-item-weapon')).toContainText('木剑')
+  await expect(page.getByTestId('equip-item-weapon')).toContainText('木刃')
   await expect(page.getByTestId('durability-text-weapon')).toContainText('/4000')
   await expect(page.getByTestId('unequip-weapon')).toBeVisible()
 
